@@ -83,7 +83,7 @@ class SpaceIndex extends Component
 		$this->reset(['spaceName', 'spaceColor', 'spaceIcon', 'showCreateSpace']);
 		$this->spaceColor = '#6366f1';
 
-		Flux::toast('Space created successfully.', variant: 'success');
+		Flux::toast(__('messages.space_created'), variant: 'success');
 	}
 
 	public function editSpace(int $spaceId): void
@@ -110,7 +110,7 @@ class SpaceIndex extends Component
 
 		$this->reset(['editingSpaceId', 'editSpaceName', 'editSpaceColor', 'showEditSpace']);
 
-		Flux::toast('Space updated.', variant: 'success');
+		Flux::toast(__('messages.space_updated'), variant: 'success');
 	}
 
 	public function confirmDelete(int $spaceId): void
@@ -126,7 +126,7 @@ class SpaceIndex extends Component
 		}
 		$this->reset(['deletingSpaceId', 'showDeleteConfirm']);
 
-		Flux::toast('Space deleted.', variant: 'danger');
+		Flux::toast(__('messages.space_deleted'), variant: 'danger');
 	}
 
 	public function getAvailableColorsProperty(): array

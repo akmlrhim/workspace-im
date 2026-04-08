@@ -9,35 +9,35 @@ use Flux\Flux;
 
 class TaskDeleteModal extends Component
 {
-    public bool $showDeleteConfirm = false;
-    public ?int $deletingTaskId = null;
+	public bool $showDeleteConfirm = false;
+	public ?int $deletingTaskId = null;
 
-    #[On('open-delete-task-modal')]
-    public function confirmDelete(int $taskId): void
-    {
-        $task = Task::findOrFail($taskId);
-        
-        if (!$task->canBeManagedBy(auth()->user())) {
-            Flux::toast('You do not have permission to delete this task.', variant: 'danger');
-            return;
-        }
+	#[On('open-delete-task-modal')]
+	public function confirmDelete(int $taskId): void
+	{
+		$task = Task::findOrFail($taskId);
 
-        $this->deletingTaskId = $taskId;
-        $this->showDeleteConfirm = true;
-    }
+		if (!$task->canBeManagedBy(auth()->user())) {
+			Flux::toast(__('messages.no_permission_delete_task'), variant: 'danger');
+			return;
+		}
 
-    public function deleteTask(): void
-    {
-        if ($this->deletingTaskId) {
-            Task::findOrFail($this->deletingTaskId)->delete();
-            Flux::toast('Task deleted.', variant: 'danger');
-            $this->dispatch('task-updated'); // Tell parent views to refresh
-        }
-        $this->reset(['deletingTaskId', 'showDeleteConfirm']);
-    }
+		$this->deletingTaskId = $taskId;
+		$this->showDeleteConfirm = true;
+	}
 
-    public function render()
-    {
-        return view('livewire.project.task-delete-modal');
-    }
+	public function deleteTask(): void
+	{
+		if ($this->deletingTaskId) {
+			Task::findOrFail($this->deletingTaskId)->delete();
+			Flux::toast(__('messages.task_deleted'), variant: 'danger');
+			$this->dispatch('task-updated'); // Tell parent views to refresh
+		}
+		$this->reset(['deletingTaskId', 'showDeleteConfirm']);
+	}
+
+	public function render()
+	{
+		return view('livewire.project.task-delete-modal');
+	}
 }

@@ -61,7 +61,7 @@ class SpaceShow extends Component
 		$list->createDefaultStatuses();
 
 		$this->reset(['listName', 'listFolderId', 'showCreateList']);
-		Flux::toast('List created successfully.', variant: 'success');
+		Flux::toast(__('messages.list_created'), variant: 'success');
 	}
 
 	public function createFolder(): void
@@ -76,7 +76,7 @@ class SpaceShow extends Component
 		]);
 
 		$this->reset(['folderName', 'showCreateFolder']);
-		Flux::toast('Folder created.', variant: 'success');
+		Flux::toast(__('messages.folder_created'), variant: 'success');
 	}
 
 	public function openEditList(int $listId): void
@@ -96,7 +96,7 @@ class SpaceShow extends Component
 		]);
 
 		$this->reset(['editingListId', 'editListName', 'showEditList']);
-		Flux::toast('List updated.', variant: 'success');
+		Flux::toast(__('messages.list_updated'), variant: 'success');
 	}
 
 	public function openEditFolder(int $folderId): void
@@ -116,7 +116,7 @@ class SpaceShow extends Component
 		]);
 
 		$this->reset(['editingFolderId', 'editFolderName', 'showEditFolder']);
-		Flux::toast('Folder updated.', variant: 'success');
+		Flux::toast(__('messages.folder_updated'), variant: 'success');
 	}
 
 	public function confirmDeleteList(int $listId): void
@@ -131,7 +131,7 @@ class SpaceShow extends Component
 			TaskList::findOrFail($this->deletingListId)->delete();
 		}
 		$this->reset(['deletingListId', 'showDeleteListConfirm']);
-		Flux::toast('List deleted.', variant: 'danger');
+		Flux::toast(__('messages.list_deleted'), variant: 'danger');
 	}
 
 	public function confirmDeleteFolder(int $folderId): void
@@ -146,7 +146,7 @@ class SpaceShow extends Component
 			Folder::findOrFail($this->deletingFolderId)->delete();
 		}
 		$this->reset(['deletingFolderId', 'showDeleteFolderConfirm']);
-		Flux::toast('Folder deleted.', variant: 'danger');
+		Flux::toast(__('messages.folder_deleted'), variant: 'danger');
 	}
 
 	public function render()

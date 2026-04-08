@@ -1,18 +1,17 @@
 {
     "agents": [
-        "gemini-code-2.5-pro"
+        "cursor"
     ],
     "guidelines": true,
     "mcp": true,
     "nightwatch_mcp": false,
     "sail": false,
     "skills": [
+        "fortify-development",
         "laravel-best-practices",
         "fluxui-development",
         "livewire-development",
         "pest-testing",
-        "tailwindcss-development",
-        "laravel-expert",
-        "php-best-practices"
+        "tailwindcss-development"
     ]
 }

@@ -74,7 +74,7 @@ class TaskDetail extends Component
 	{
 		$task = Task::findOrFail($this->taskId);
 		if (!$task->canBeManagedBy(auth()->user())) {
-			Flux::toast('You do not have permission to modify this task.', variant: 'danger');
+			Flux::toast(__('messages.no_permission_modify_task'), variant: 'danger');
 			return false;
 		}
 		return true;
@@ -93,7 +93,7 @@ class TaskDetail extends Component
 		if (!$this->authorizeManageTask()) return;
 		$task = Task::findOrFail($this->taskId);
 		$task->update(['description' => $this->taskDescription]);
-		Flux::toast('Description saved.', variant: 'success');
+		Flux::toast(__('messages.description_saved'), variant: 'success');
 	}
 
 	public function updateStatus(int $statusId): void
@@ -114,7 +114,7 @@ class TaskDetail extends Component
 		]);
 
 		$this->dispatch('task-updated');
-		Flux::toast('Status updated.', variant: 'success');
+		Flux::toast(__('messages.status_updated'), variant: 'success');
 	}
 
 	public function updatePriority(string $priority): void
@@ -134,7 +134,7 @@ class TaskDetail extends Component
 		]);
 
 		$this->dispatch('task-updated');
-		Flux::toast('Priority updated.', variant: 'success');
+		Flux::toast(__('messages.priority_updated'), variant: 'success');
 	}
 
 	public function updateDueDate(): void
@@ -143,7 +143,7 @@ class TaskDetail extends Component
 		$task = Task::findOrFail($this->taskId);
 		$task->update(['due_date' => $this->taskDueDate ?: null]);
 		$this->dispatch('task-updated');
-		Flux::toast('Due date updated.', variant: 'success');
+		Flux::toast(__('messages.due_date_updated'), variant: 'success');
 	}
 
 	public function updateAssignees(): void
@@ -161,7 +161,7 @@ class TaskDetail extends Component
 		]);
 
 		$this->dispatch('task-updated');
-		Flux::toast('Assignees updated.', variant: 'success');
+		Flux::toast(__('messages.assignees_updated'), variant: 'success');
 	}
 
 	// ─── Labels ────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ class TaskDetail extends Component
 		$this->newLabelColor = '#6366f1';
 
 		$this->dispatch('task-updated');
-		Flux::toast('Label created & attached.', variant: 'success');
+		Flux::toast(__('messages.label_created_attached'), variant: 'success');
 	}
 
 	// Comments
@@ -213,13 +213,13 @@ class TaskDetail extends Component
 		]);
 
 		$this->reset('newComment');
-		Flux::toast('Comment added.', variant: 'success');
+		Flux::toast(__('messages.comment_added'), variant: 'success');
 	}
 
 	public function deleteComment(int $commentId): void
 	{
 		TaskComment::where('id', $commentId)->where('user_id', auth()->id())->delete();
-		Flux::toast('Comment deleted.', variant: 'danger');
+		Flux::toast(__('messages.comment_deleted'), variant: 'danger');
 	}
 
 	// Subtasks
@@ -244,7 +244,7 @@ class TaskDetail extends Component
 		]);
 
 		$this->reset(['newSubtaskTitle', 'showSubtaskForm']);
-		Flux::toast('Subtask added.', variant: 'success');
+		Flux::toast(__('messages.subtask_added'), variant: 'success');
 	}
 
 	public function toggleSubtaskComplete(int $subtaskId): void
@@ -272,13 +272,13 @@ class TaskDetail extends Component
 		if (!$this->authorizeManageTask()) return;
 		$newTitle = trim($newTitle);
 		if (empty($newTitle)) {
-			Flux::toast('Subtask title cannot be empty.', variant: 'warning');
+			Flux::toast(__('messages.subtask_title_empty'), variant: 'warning');
 			return;
 		}
-		
+
 		$subtask = Task::where('parent_id', $this->taskId)->findOrFail($subtaskId);
 		$subtask->update(['title' => $newTitle]);
-		Flux::toast('Subtask updated.', variant: 'success');
+		Flux::toast(__('messages.subtask_updated'), variant: 'success');
 	}
 
 	public function deleteSubtask(int $subtaskId): void
@@ -286,7 +286,7 @@ class TaskDetail extends Component
 		if (!$this->authorizeManageTask()) return;
 		$subtask = Task::where('parent_id', $this->taskId)->findOrFail($subtaskId);
 		$subtask->delete();
-		Flux::toast('Subtask deleted.', variant: 'success');
+		Flux::toast(__('messages.subtask_deleted'), variant: 'success');
 	}
 
 	// Attachments
@@ -307,14 +307,14 @@ class TaskDetail extends Component
 		]);
 
 		$this->reset('uploadFile');
-		Flux::toast('File uploaded.', variant: 'success');
+		Flux::toast(__('messages.file_uploaded'), variant: 'success');
 	}
 
 	public function deleteAttachment(int $attachmentId): void
 	{
 		if (!$this->authorizeManageTask()) return;
 		TaskAttachment::where('id', $attachmentId)->where('user_id', auth()->id())->delete();
-		Flux::toast('Attachment deleted.', variant: 'danger');
+		Flux::toast(__('messages.attachment_deleted'), variant: 'danger');
 	}
 
 	// Time tracking
@@ -327,7 +327,7 @@ class TaskDetail extends Component
 			'started_at' => now(),
 		]);
 		$this->activeTimerId = $timer->id;
-		Flux::toast('Timer started.', variant: 'success');
+		Flux::toast(__('messages.timer_started'), variant: 'success');
 	}
 
 	public function stopTimer(): void
@@ -341,7 +341,7 @@ class TaskDetail extends Component
 				'duration_seconds' => $timer->started_at->diffInSeconds($now),
 			]);
 			$this->activeTimerId = null;
-			Flux::toast('Timer stopped.', variant: 'success');
+			Flux::toast(__('messages.timer_stopped'), variant: 'success');
 		}
 	}
 
