@@ -50,7 +50,7 @@ return [
     'column_updated' => 'Nama kolom berhasil diubah.',
     'column_deleted' => 'Kolom berhasil dihapus.',
     'column_delete_error' => 'Tidak bisa menghapus kolom terakhir.',
-    'task_moved_to' => 'Dipindah ke {status}',
+    'task_moved_to' => 'Dipindah ke :status',
 
     // Permission messages
     'no_permission_edit_task' => 'Anda tidak memiliki izin untuk mengedit tugas ini.',

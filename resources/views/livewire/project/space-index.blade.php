@@ -1,5 +1,4 @@
 <div>
-  {{-- Page Header --}}
   <div class="mb-8">
     <div class="flex items-center justify-between">
       <div>
@@ -11,13 +10,10 @@
       </flux:button>
     </div>
   </div>
-
-  {{-- Spaces Grid --}}
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     @forelse ($spaces as $space)
       <div
         class="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white transition-all hover:shadow-lg hover:shadow-zinc-200/50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:shadow-zinc-900/50">
-        {{-- Color accent strip --}}
         <div class="h-1.5" style="background-color: {{ $space->color }}"></div>
 
         <div class="p-5">
@@ -39,7 +35,6 @@
               </div>
             </div>
 
-            {{-- Actions dropdown --}}
             <flux:dropdown position="bottom" align="end">
               <flux:button icon="ellipsis-horizontal" size="sm" variant="ghost"
                 class="opacity-0 transition-opacity group-hover:opacity-100" />
@@ -66,8 +61,6 @@
       </div>
     @endforelse
   </div>
-
-  {{-- Create Space Modal --}}
   <flux:modal wire:model="showCreateSpace" class="w-full max-w-lg">
     <div class="space-y-6">
       <flux:heading size="lg">Create New Space</flux:heading>
@@ -98,8 +91,6 @@
       </form>
     </div>
   </flux:modal>
-
-  {{-- Edit Space Modal --}}
   <flux:modal wire:model="showEditSpace" class="w-full max-w-lg">
     <div class="space-y-6">
       <flux:heading size="lg">Edit Space</flux:heading>
@@ -131,7 +122,6 @@
     </div>
   </flux:modal>
 
-  {{-- Delete Confirmation --}}
   <flux:modal wire:model="showDeleteConfirm" class="w-full max-w-sm">
     <div class="space-y-4 text-center">
       <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">

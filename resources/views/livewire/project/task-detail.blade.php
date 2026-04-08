@@ -1,8 +1,6 @@
 @php $ro = !$canManage; @endphp
 <div class="space-y-6">
   @if ($task)
-
-    {{-- Read-only banner --}}
     @if ($ro)
       <div
         class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
@@ -10,13 +8,10 @@
         <span>You are viewing this task in <strong>read-only</strong> mode. You are not assigned to this task.</span>
       </div>
     @endif
-
-    {{-- Header --}}
     <div class="space-y-4">
       <div class="flex items-start justify-between">
         <div class="flex-1">
-          <input type="text" wire:model.blur="taskTitle" {{ $canManage ? 'wire:change=saveTitle' : 'readonly' }}
-            class="w-full border-0 bg-transparent p-0 text-xl font-bold text-zinc-900 placeholder-zinc-400 focus:ring-0 dark:text-white {{ $ro ? 'cursor-not-allowed opacity-75 select-none' : '' }}"
+          <flux:input wire:model.blur="taskTitle" wire:change="saveTitle" :readonly="$ro" class="text-xl font-bold"
             placeholder="Task title..." />
         </div>
         @if ($canManage)
@@ -28,41 +23,36 @@
         @endif
       </div>
 
-      {{-- Quick Actions --}}
       <div class="flex flex-wrap gap-3">
-        {{-- Status --}}
-        <select wire:model.live="taskStatusId"
-          {{ $canManage ? 'wire:change=updateStatus($event.target.value)' : 'disabled' }}
-          class="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-700 shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 {{ $ro ? 'opacity-60 cursor-not-allowed' : '' }}">
-          @foreach ($statuses as $status)
-            <option value="{{ $status->id }}" {{ $taskStatusId == $status->id ? 'selected' : '' }}>{{ $status->name }}
-            </option>
-          @endforeach
-        </select>
+        <div class="w-auto min-w-[140px]">
+          <flux:select wire:model.live="taskStatusId" wire:change="updateStatus($event.target.value)"
+            :disabled="$ro">
+            @foreach ($statuses as $status)
+              <flux:select.option value="{{ $status->id }}">{{ $status->name }}</flux:select.option>
+            @endforeach
+          </flux:select>
+        </div>
 
-        {{-- Priority --}}
-        <select wire:model.live="taskPriority"
-          {{ $canManage ? 'wire:change=updatePriority($event.target.value)' : 'disabled' }}
-          class="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-700 shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 {{ $ro ? 'opacity-60 cursor-not-allowed' : '' }}">
-          <option value="urgent">🔴 Urgent</option>
-          <option value="high">🟠 High</option>
-          <option value="normal">🔵 Normal</option>
-          <option value="low">⚪ Low</option>
-        </select>
+        <div class="w-auto min-w-[140px]">
+          <flux:select wire:model.live="taskPriority" wire:change="updatePriority($event.target.value)"
+            :disabled="$ro">
+            <flux:select.option value="urgent">🔴 Urgent</flux:select.option>
+            <flux:select.option value="high">🟠 High</flux:select.option>
+            <flux:select.option value="normal">🔵 Normal</flux:select.option>
+            <flux:select.option value="low">⚪ Low</flux:select.option>
+          </flux:select>
+        </div>
 
-        {{-- Due Date --}}
-        <input type="date" wire:model="taskDueDate" {{ $ro ? 'readonly' : 'wire:change=updateDueDate' }}
-          class="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-700 shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 {{ $ro ? 'opacity-60 cursor-not-allowed' : '' }}"
-          value="{{ $taskDueDate }}" />
+        <div class="w-auto min-w-[150px]">
+          <flux:input type="date" wire:model="taskDueDate" wire:change="updateDueDate" :readonly="$ro" />
+        </div>
       </div>
 
-      {{-- Assignees --}}
       <div>
         <div class="mb-2 flex items-center justify-between">
           <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Assignees</span>
         </div>
 
-        {{-- Current assignees badges --}}
         <div class="mb-2 flex flex-wrap gap-1.5">
           @forelse ($task->assignees as $assignee)
             <span
@@ -75,15 +65,13 @@
           @endforelse
         </div>
 
-        {{-- Assignee picker --}}
         <div
           class="max-h-32 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700 {{ $ro ? 'opacity-60' : '' }}">
           @foreach ($workspaceUsers as $member)
             <label
               class="flex items-center gap-2 rounded-md px-2 py-1 text-sm {{ $canManage ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer' : 'cursor-not-allowed' }}">
-              <input type="checkbox" wire:model="taskAssigneeIds"
-                {{ $canManage ? 'wire:change=updateAssignees' : 'disabled' }} value="{{ $member->id }}"
-                class="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800" />
+              <flux:checkbox wire:model="taskAssigneeIds" :value="$member->id" wire:change="updateAssignees"
+                :disabled="$ro" />
               <flux:avatar :name="$member->name" :initials="$member->initials()" size="xs" />
               <span class="text-zinc-700 dark:text-zinc-300">{{ $member->name }}</span>
             </label>
@@ -91,7 +79,6 @@
         </div>
       </div>
 
-      {{-- Labels --}}
       <div>
         <div class="mb-2 flex items-center justify-between">
           <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Labels</span>
@@ -101,7 +88,6 @@
           @endif
         </div>
 
-        {{-- Current labels --}}
         <div class="mb-2 flex flex-wrap gap-1.5">
           @forelse ($task->labels as $label)
             <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white"
@@ -119,7 +105,6 @@
           @endforelse
         </div>
 
-        {{-- Toggle existing labels --}}
         @if ($canManage && $allLabels->isNotEmpty())
           <div class="max-h-28 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
             @foreach ($allLabels as $label)
@@ -139,7 +124,6 @@
           </div>
         @endif
 
-        {{-- Create new label --}}
         @if ($canManage && $showLabelForm)
           <form wire:submit="createLabel"
             class="mt-2 space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/50 p-2.5 dark:border-indigo-800/40 dark:bg-indigo-900/10">
@@ -165,18 +149,14 @@
 
     <flux:separator />
 
-    {{-- Description --}}
     <div>
       <h3 class="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Description</h3>
-      <textarea wire:model.blur="taskDescription"
-        @if ($canManage) wire:change="saveDescription" @else readonly @endif
-        class="w-full resize-y rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-700 shadow-sm transition-[border-color,box-shadow] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:focus:border-indigo-500 dark:focus:ring-indigo-500 {{ $ro ? 'cursor-not-allowed opacity-60' : '' }}"
-        rows="4" placeholder="{{ $canManage ? 'Add a detailed description...' : 'No description.' }}"></textarea>
+      <flux:textarea wire:model.blur="taskDescription" wire:change="saveDescription" :readonly="$ro"
+        rows="4" placeholder="{{ $canManage ? 'Add a detailed description...' : 'No description.' }}" />
     </div>
 
     <flux:separator />
 
-    {{-- subtask checklist --}}
     <div>
       <div class="mb-3 flex items-center justify-between">
         <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
@@ -195,7 +175,6 @@
         @endif
       </div>
 
-      {{-- progress bar --}}
       @if ($subtasks->isNotEmpty())
         @php $progress = $totalCount > 0 ? ($completedCount / $totalCount) * 100 : 0; @endphp
         <div class="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
@@ -227,25 +206,22 @@
               @endif
             </button>
 
-            {{-- subtask title --}}
             <span x-show="editingId !== {{ $subtask->id }}"
-              @if ($canManage) @dblclick="editingId = {{ $subtask->id }}; editTitle = '{{ addslashes($subtask->title) }}'; $nextTick(() => $refs['edit_subtask_{{ $subtask->id }}'].focus())" @endif
+              @if ($canManage) x-on:dblclick="editingId = {{ $subtask->id }}; editTitle = '{{ addslashes($subtask->title) }}'; $nextTick(() => $refs['edit_subtask_{{ $subtask->id }}'].focus())" @endif
               class="flex-1 text-sm {{ $subtask->is_completed ? 'line-through text-zinc-400 dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-300' }} {{ $canManage ? 'cursor-text cursor-pointer' : '' }}">
               {{ $subtask->title }}
             </span>
 
-            {{-- edit input --}}
-            <input x-ref="edit_subtask_{{ $subtask->id }}" x-show="editingId === {{ $subtask->id }}"
-              x-model="editTitle" x-cloak
-              @keydown.enter="$wire.editSubtaskTitle({{ $subtask->id }}, editTitle); editingId = null"
-              @keydown.escape="editingId = null" @blur="editingId = null"
-              class="flex-1 rounded-sm border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 border-zinc-300 px-2 py-0.5 text-sm outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200" />
-
+            <div x-show="editingId === {{ $subtask->id }}" x-cloak class="flex-1">
+              <flux:input x-ref="edit_subtask_{{ $subtask->id }}" x-model="editTitle"
+                x-on:keydown.enter="$wire.editSubtaskTitle({{ $subtask->id }}, editTitle); editingId = null"
+                x-on:keydown.escape="editingId = null" x-on:blur="editingId = null" size="sm" />
+            </div>
 
             @if ($canManage)
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button type="button"
-                  @click="editingId = {{ $subtask->id }}; editTitle = '{{ addslashes($subtask->title) }}'; $nextTick(() => $refs['edit_subtask_{{ $subtask->id }}'].focus())"
+                  x-on:click="editingId = {{ $subtask->id }}; editTitle = '{{ addslashes($subtask->title) }}'; $nextTick(() => $refs['edit_subtask_{{ $subtask->id }}'].focus())"
                   class="text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400">
                   <flux:icon name="pencil" class="size-3.5" />
                 </button>
@@ -262,7 +238,6 @@
 
     <flux:separator />
 
-    {{-- Time Tracking --}}
     <div>
       <div class="mb-3 flex items-center justify-between">
         <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Time Tracking</h3>
@@ -308,7 +283,6 @@
 
     <flux:separator />
 
-    {{-- Attachments --}}
     <div>
       <h3 class="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
         Attachments
@@ -354,7 +328,6 @@
 
     <flux:separator />
 
-    {{-- Comments - all viewers can post --}}
     <div>
       <h3 class="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
         Comments
@@ -409,7 +382,6 @@
 
     <flux:separator />
 
-    {{-- Activity Log --}}
     <div>
       <h3 class="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Activity</h3>
       <div class="space-y-2">
@@ -450,7 +422,6 @@
       </div>
     </div>
 
-    {{-- Created info --}}
     <div class="pt-2 text-xs text-zinc-400 dark:text-zinc-500">
       Created by {{ $task->creator?->name ?? 'Unknown' }} · {{ $task->created_at->format('M d, Y \a\t H:i') }}
     </div>

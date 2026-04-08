@@ -4,15 +4,8 @@
       <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Finance Dashboard</h1>
       <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Ringkasan keuangan & transaksi perusahaan</p>
     </div>
-
-    {{-- Stats --}}
     <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-      @foreach ([
-        ['label' => 'Total Invoice', 'value' => 'Rp 1,24 M', 'icon' => 'document-duplicate', 'color' => 'text-blue-500', 'bg' => 'bg-blue-500/10', 'trend' => '24 invoice aktif'],
-        ['label' => 'Total Pengeluaran', 'value' => 'Rp 485 Jt', 'icon' => 'credit-card', 'color' => 'text-red-500', 'bg' => 'bg-red-500/10', 'trend' => 'Bulan ini'],
-        ['label' => 'Profit Bersih', 'value' => 'Rp 755 Jt', 'icon' => 'trending-up', 'color' => 'text-emerald-500', 'bg' => 'bg-emerald-500/10', 'trend' => '+12% vs bulan lalu'],
-        ['label' => 'Tagihan Jatuh Tempo', 'value' => '7', 'icon' => 'exclamation-circle', 'color' => 'text-amber-500', 'bg' => 'bg-amber-500/10', 'trend' => 'Perlu tindakan'],
-      ] as $s)
+      @foreach ([['label' => 'Total Invoice', 'value' => 'Rp 1,24 M', 'icon' => 'document-duplicate', 'color' => 'text-blue-500', 'bg' => 'bg-blue-500/10', 'trend' => '24 invoice aktif'], ['label' => 'Total Pengeluaran', 'value' => 'Rp 485 Jt', 'icon' => 'credit-card', 'color' => 'text-red-500', 'bg' => 'bg-red-500/10', 'trend' => 'Bulan ini'], ['label' => 'Profit Bersih', 'value' => 'Rp 755 Jt', 'icon' => 'trending-up', 'color' => 'text-emerald-500', 'bg' => 'bg-emerald-500/10', 'trend' => '+12% vs bulan lalu'], ['label' => 'Tagihan Jatuh Tempo', 'value' => '7', 'icon' => 'exclamation-circle', 'color' => 'text-amber-500', 'bg' => 'bg-amber-500/10', 'trend' => 'Perlu tindakan']] as $s)
         <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
           <div class="flex items-center gap-3 mb-3">
             <div class="flex h-9 w-9 items-center justify-center rounded-lg {{ $s['bg'] }}">

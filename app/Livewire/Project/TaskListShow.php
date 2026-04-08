@@ -6,7 +6,6 @@ use App\Models\Project\Space;
 use App\Models\Project\Task;
 use App\Models\Project\TaskList;
 use App\Models\Project\TaskActivity;
-use App\Models\User;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;

@@ -30,13 +30,12 @@
             </flux:select>
           </flux:field>
         </div>
-
-        {{-- Multi-assignee checkboxes --}}
         <flux:field>
           <flux:label>Assignees</flux:label>
           <div class="max-h-40 overflow-y-auto rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
             @foreach ($workspaceUsers as $member)
-              <label class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
+              <label
+                class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
                 <input type="checkbox" wire:model="formTaskAssignees" value="{{ $member->id }}"
                   class="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800" />
                 <flux:avatar :name="$member->name" :initials="$member->initials()" size="xs" />

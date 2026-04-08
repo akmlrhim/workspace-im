@@ -49,7 +49,6 @@
 
       @if ($statusTasks->isNotEmpty() || empty($filterStatus))
         <div>
-          {{-- Status Header --}}
           <div class="mb-3 flex items-center gap-2 px-1">
             <div class="h-3 w-3 rounded-full" style="background-color: {{ $status->color }}"></div>
             <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ $status->name }}</h2>
@@ -57,11 +56,8 @@
               {{ $statusTasks->count() }}
             </span>
           </div>
-
-          {{-- Table for this status --}}
           <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
 
-            {{-- Desktop Flex Header --}}
             <div
               class="hidden border-b border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 lg:flex lg:items-center lg:gap-4">
               <div class="flex-1">Task</div>
@@ -74,7 +70,6 @@
             @forelse ($statusTasks as $task)
               <div wire:key="task-{{ $task->id }}"
                 class="group flex flex-col gap-3 border-b border-zinc-100 px-4 py-3 transition-colors last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/70 lg:flex-row lg:items-center lg:gap-4">
-                {{-- Task Title & Mobile Actions --}}
                 <div class="flex flex-1 items-start justify-between gap-3 min-w-0 lg:items-center">
                   <div class="flex min-w-0 items-center gap-3">
                     <div class="h-5 w-1 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}">
@@ -93,7 +88,6 @@
                     @endif
                   </div>
 
-                  {{-- Mobile Actions --}}
                   <div class="lg:hidden shrink-0">
                     @if ($task->canBeManagedBy(auth()->user()))
                       <div @click.stop>
@@ -117,10 +111,8 @@
                   </div>
                 </div>
 
-                {{-- Task Meta (Priority, Assignees, Due Date) --}}
                 <div class="flex items-center justify-between gap-3 lg:w-auto lg:justify-start lg:gap-4">
 
-                  {{-- Priority --}}
                   <div class="w-auto lg:w-32 lg:shrink-0">
                     <flux:select wire:change="updateTaskPriority({{ $task->id }}, $event.target.value)"
                       size="xs" class="text-xs">
@@ -131,10 +123,8 @@
                     </flux:select>
                   </div>
 
-                  {{-- Assignees & Due Date (Grouped for mobile right-alignment) --}}
                   <div class="flex flex-1 items-center justify-end gap-3 lg:flex-initial lg:justify-start lg:gap-4">
 
-                    {{-- Assignees --}}
                     <div class="flex items-center lg:w-32 lg:shrink-0">
                       @if ($task->assignees->isNotEmpty())
                         <div class="flex -space-x-1.5">
@@ -162,7 +152,6 @@
                       @endif
                     </div>
 
-                    {{-- Due Date --}}
                     <div class="flex items-center lg:w-24 lg:shrink-0">
                       @if ($task->due_date)
                         <span
@@ -177,7 +166,6 @@
                   </div>
                 </div>
 
-                {{-- Desktop Actions --}}
                 <div class="hidden lg:flex lg:w-10 lg:shrink-0 lg:justify-end">
                   @if ($task->canBeManagedBy(auth()->user()))
                     <div @click.stop class="opacity-0 transition-opacity group-hover:opacity-100">

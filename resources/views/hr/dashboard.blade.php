@@ -1,6 +1,5 @@
 <x-layouts::app :title="__('HR Dashboard')">
   <div>
-    {{-- Header --}}
     <div class="mb-6 flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">HR Dashboard</h1>
@@ -10,8 +9,6 @@
         Tambah Karyawan
       </flux:button>
     </div>
-
-    {{-- Stats Row --}}
     <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
       @foreach ([['label' => 'Total Karyawan', 'value' => '128', 'icon' => 'users', 'color' => 'text-emerald-500', 'bg' => 'bg-emerald-500/10', 'trend' => '+3 bulan ini'], ['label' => 'Hadir Hari Ini', 'value' => '112', 'icon' => 'check-badge', 'color' => 'text-blue-500', 'bg' => 'bg-blue-500/10', 'trend' => '87.5%'], ['label' => 'Pengajuan Cuti', 'value' => '8', 'icon' => 'calendar-days', 'color' => 'text-amber-500', 'bg' => 'bg-amber-500/10', 'trend' => '3 pending'], ['label' => 'Payroll Bulan Ini', 'value' => 'Rp 285 Jt', 'icon' => 'banknotes', 'color' => 'text-violet-500', 'bg' => 'bg-violet-500/10', 'trend' => 'Belum diproses']] as $s)
         <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
@@ -26,10 +23,7 @@
         </div>
       @endforeach
     </div>
-
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
-
-      {{-- Employee List Skeleton --}}
       <div class="lg:col-span-2 rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
         <div class="flex items-center justify-between border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
           <h2 class="text-sm font-semibold text-zinc-900 dark:text-white">Karyawan Terbaru</h2>
@@ -54,10 +48,7 @@
           @endforeach
         </div>
       </div>
-
-      {{-- Quick Actions & Leave Requests --}}
       <div class="space-y-5">
-        {{-- Quick Actions --}}
         <div class="rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 p-4">
           <h2 class="mb-3 text-sm font-semibold text-zinc-900 dark:text-white">Aksi Cepat</h2>
           <div class="space-y-2">
@@ -70,8 +61,6 @@
             @endforeach
           </div>
         </div>
-
-        {{-- Pending Leave --}}
         <div class="rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 p-4">
           <h2 class="mb-3 text-sm font-semibold text-zinc-900 dark:text-white">Pengajuan Cuti <span
               class="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">3

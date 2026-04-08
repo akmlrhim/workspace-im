@@ -1,5 +1,4 @@
 <div>
-  {{-- Header --}}
   <div class="mb-6">
     @include('livewire.project.partials.breadcrumb')
 
@@ -10,8 +9,6 @@
       </div>
     </div>
   </div>
-
-  {{-- Month Controls --}}
   <div class="mb-4 flex items-center justify-between">
     <div class="flex items-center gap-2">
       <flux:button icon="chevron-left" size="sm" variant="ghost" wire:click="previousMonth" />
@@ -20,10 +17,7 @@
     </div>
     <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ $monthLabel }}</h2>
   </div>
-
-  {{-- Calendar Grid --}}
   <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
-    {{-- Day headers --}}
     <div class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60">
       @foreach (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $dayName)
         <div
@@ -33,8 +27,6 @@
         </div>
       @endforeach
     </div>
-
-    {{-- Weeks --}}
     @foreach ($weeks as $week)
       <div class="grid grid-cols-7 border-b border-zinc-100 last:border-b-0 dark:border-zinc-800">
         @foreach ($week as $day)
@@ -44,8 +36,6 @@
             {{ $day['date']->isWeekend() ? 'bg-zinc-50 dark:bg-zinc-800/20' : '' }}
             {{ $day['isToday'] ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : '' }}"
             wire:key="cal-{{ $day['date']->format('Y-m-d') }}">
-
-            {{-- Day number --}}
             <div class="mb-1 flex items-center justify-between">
               <span
                 class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium
@@ -54,8 +44,6 @@
                 {{ $day['date']->day }}
               </span>
             </div>
-
-            {{-- Tasks --}}
             <div class="space-y-0.5">
               @foreach ($day['tasks']->take(3) as $task)
                 <div class="group relative flex w-full">
@@ -82,11 +70,8 @@
       </div>
     @endforeach
   </div>
-
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')
-
-  {{-- Task Detail Slideover --}}
   @if ($showTaskDetail && $selectedTaskId)
     <flux:modal wire:model="showTaskDetail" variant="flyout" class="w-full max-w-2xl">
       <livewire:project.task-detail :taskId="$selectedTaskId" :key="'cal-detail-' . $selectedTaskId" />

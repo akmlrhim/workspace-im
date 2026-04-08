@@ -1,6 +1,5 @@
 <x-layouts::app :title="__('Dashboard')">
   <div>
-    {{-- Greeting --}}
     <div class="mb-8">
       <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">
         Selamat datang, {{ auth()->user()->name }}
@@ -9,11 +8,8 @@
         Pilih modul yang ingin Anda akses hari ini.
       </p>
     </div>
-
-    {{-- Module Cards --}}
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
-      {{-- Project --}}
       <a href="{{ url('/project-management') }}" wire:navigate
         class="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
         <div
@@ -26,8 +22,6 @@
           <flux:icon name="folder-open" class="size-24 text-indigo-600" />
         </div>
       </a>
-
-      {{-- HR --}}
       <a href="{{ url('/hr') }}" wire:navigate
         class="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
         <div
@@ -40,8 +34,6 @@
           <flux:icon name="users" class="size-24 text-emerald-600" />
         </div>
       </a>
-
-      {{-- Finance --}}
       <a href="{{ url('/finance') }}" wire:navigate
         class="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
         <div

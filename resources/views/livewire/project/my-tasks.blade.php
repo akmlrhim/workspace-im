@@ -1,5 +1,4 @@
 <div>
-  {{-- Header & Filters --}}
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <flux:heading size="xl">My Tasks</flux:heading>
@@ -16,18 +15,14 @@
       </flux:select>
     </div>
   </div>
-
-  {{-- Tasks List --}}
   <div class="space-y-3">
     @forelse ($tasks as $task)
       <div wire:key="my-task-{{ $task->id }}"
         class="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition duration-200 hover:border-indigo-200 hover:bg-zinc-50/50 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-indigo-500/30 dark:hover:bg-zinc-800/50">
 
-        {{-- Priority indicator --}}
         <div class="h-10 w-1.5 shrink-0 rounded-full"
           style="background-color: {{ $task->priority_color ?? '#e4e4e7' }}"></div>
 
-        {{-- Task info --}}
         <div class="min-w-0 flex-1">
           <button wire:click="openTaskDetail({{ $task->id }})"
             class="block w-full truncate text-left text-sm font-semibold text-zinc-900 transition-colors hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400">
@@ -44,15 +39,12 @@
           </div>
         </div>
 
-        {{-- Badges & Meta --}}
         <div class="flex shrink-0 items-center gap-4">
-          {{-- Status chip --}}
           <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
             style="background-color: {{ $task->status->color ?? '#6b7280' }}15; color: {{ $task->status->color ?? '#6b7280' }}">
             {{ $task->status->name ?? 'Unknown' }}
           </span>
 
-          {{-- Due date --}}
           @if ($task->due_date)
             <div class="flex w-16 flex-col items-end justify-center">
               <span
@@ -64,7 +56,6 @@
         </div>
       </div>
     @empty
-      {{-- Empty State --}}
       <div
         class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/50 py-16 dark:border-zinc-700 dark:bg-zinc-800/20">
         <div class="mb-4 rounded-full bg-green-100 p-3 dark:bg-green-500/20">
@@ -75,8 +66,6 @@
       </div>
     @endforelse
   </div>
-
-  {{-- Task Detail Slideover --}}
   @if ($showTaskDetail && $selectedTaskId)
     <flux:modal wire:model="showTaskDetail" variant="flyout" class="w-full max-w-2xl space-y-0 p-0">
       <livewire:project.task-detail :taskId="$selectedTaskId" :key="'my-detail-' . $selectedTaskId" />

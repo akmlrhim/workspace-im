@@ -1,5 +1,4 @@
 <div>
-  {{-- Header --}}
   <div class="mb-6">
     @include('livewire.project.partials.breadcrumb')
 
@@ -10,8 +9,6 @@
       </div>
     </div>
   </div>
-
-  {{-- Timeline Controls --}}
   <div class="mb-4 flex items-center justify-between">
     <div class="flex items-center gap-2">
       <flux:button icon="chevron-left" size="sm" variant="ghost" wire:click="previousPeriod" />
@@ -22,18 +19,13 @@
       {{ \Carbon\Carbon::parse($startDate)->format('M d') }} — {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
     </span>
   </div>
-
-  {{-- Gantt Chart --}}
   <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
     <div class="min-w-[900px]">
-      {{-- Timeline header --}}
       <div class="flex border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60">
-        {{-- Task name column --}}
         <div
           class="w-64 shrink-0 border-r border-zinc-200 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
           Task
         </div>
-        {{-- Day columns --}}
         <div class="flex flex-1">
           @foreach ($days as $day)
             <div
@@ -50,8 +42,6 @@
           @endforeach
         </div>
       </div>
-
-      {{-- Task rows --}}
       @forelse ($tasks as $task)
         @php
           $taskCreated = $task->created_at->startOfDay();
@@ -71,7 +61,6 @@
         <div
           class="group flex border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
           wire:key="gantt-{{ $task->id }}">
-          {{-- Task name --}}
           <div class="w-64 shrink-0 border-r border-zinc-200 px-4 py-3 dark:border-zinc-700 relative">
             <button wire:click="openTaskDetail({{ $task->id }})"
               class="flex items-center gap-2 text-sm font-medium text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400 text-left truncate w-full pr-12">
@@ -88,10 +77,7 @@
               @endif
             </div>
           </div>
-
-          {{-- Timeline bar --}}
           <div class="relative flex-1 py-3">
-            {{-- Today line --}}
             @php
               $todayOffset = $timelineStart->diffInDays(now()->startOfDay());
               $todayPercent = ($todayOffset / $totalDays) * 100;
@@ -100,8 +86,6 @@
               <div class="absolute top-0 bottom-0 w-px bg-indigo-400 dark:bg-indigo-500 z-10"
                 style="left: {{ $todayPercent }}%"></div>
             @endif
-
-            {{-- Task bar --}}
             <div
               class="absolute top-1/2 -translate-y-1/2 h-6 rounded-full transition-all group-hover:h-7 cursor-pointer"
               style="left: {{ $leftPercent }}%; width: {{ max($widthPercent, 2) }}%; background-color: {{ $task->status->color ?? '#6366f1' }};"
@@ -125,11 +109,8 @@
       @endforelse
     </div>
   </div>
-
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')
-
-  {{-- Task Detail Slideover --}}
   @if ($showTaskDetail && $selectedTaskId)
     <flux:modal wire:model="showTaskDetail" variant="flyout" class="w-full max-w-2xl">
       <livewire:project.task-detail :taskId="$selectedTaskId" :key="'gantt-detail-' . $selectedTaskId" />
