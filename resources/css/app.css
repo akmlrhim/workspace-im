@@ -1,0 +1,99 @@
+@import "tailwindcss";
+@import "../../vendor/livewire/flux/dist/flux.css";
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans:
+        "Nunito", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+        "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f5f5f5;
+    --color-zinc-200: #e5e5e5;
+    --color-zinc-300: #d4d4d4;
+    --color-zinc-400: #a3a3a3;
+    --color-zinc-500: #737373;
+    --color-zinc-600: #525252;
+    --color-zinc-700: #404040;
+    --color-zinc-800: #262626;
+    --color-zinc-900: #171717;
+    --color-zinc-950: #0a0a0a;
+
+    --color-accent: var(--color-neutral-800);
+    --color-accent-content: var(--color-neutral-800);
+    --color-accent-foreground: var(--color-white);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-white);
+        --color-accent-content: var(--color-white);
+        --color-accent-foreground: var(--color-neutral-800);
+    }
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+.kanban-ghost {
+    @apply opacity-20 border-dashed border-indigo-400;
+}
+
+.kanban-chosen {
+    @apply ring-2 ring-indigo-500/40 shadow-lg shadow-indigo-500/10 rotate-1;
+}
+
+.kanban-drag {
+    @apply rotate-2 scale-105 shadow-2xl;
+}
+
+body.is-dragging .kanban-column {
+    @apply ring-1 ring-zinc-300 dark:ring-zinc-600 rounded-lg;
+}
+
+body.is-dragging .task-card {
+    @apply transition-transform;
+}
+
+.kanban-col-ghost {
+    @apply opacity-30 border-2 border-dashed border-indigo-400 rounded-xl;
+}
+
+.kanban-col-chosen {
+    @apply ring-2 ring-indigo-500/50 shadow-xl;
+}
+
+.kanban-col-drag {
+    @apply scale-[1.02] shadow-2xl rotate-1;
+}
+
+body.is-dragging-column .kanban-col-wrapper {
+    @apply transition-transform;
+}
