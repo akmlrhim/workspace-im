@@ -28,10 +28,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 			),
 		)
 		->name('security.edit');
-
-	// Roles & Permissions Management
-	Route::livewire('settings/roles', RoleManager::class)->name('settings.roles');
-	Route::livewire('settings/roles/{role}/permissions', RolePermissionManager::class)->name('settings.roles.permissions');
-	Route::livewire('settings/users/roles', UserRoleManager::class)->name('settings.users.roles');
 });
-

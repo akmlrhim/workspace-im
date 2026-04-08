@@ -1,6 +1,6 @@
 {
     "agents": [
-        "claude_code"
+        "gemini-code-2.5-pro"
     ],
     "guidelines": true,
     "mcp": true,
