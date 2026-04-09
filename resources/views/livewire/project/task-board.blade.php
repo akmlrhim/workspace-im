@@ -42,7 +42,7 @@
           </div>
 
           <div class="relative flex items-center gap-1" x-data="{ open: false }">
-            <button wire:click="$set('createInStatusId', {{ $status->id }})"
+            <button @click="$wire.set('createInStatusId', {{ $status->id }})"
               class="rounded-md p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 transition-colors"
               title="Tambah Tugas">
               <flux:icon name="plus" class="size-4" />
@@ -136,7 +136,7 @@
                 @if ($task->assignees->isNotEmpty())
                   <div class="flex -space-x-1.5">
                     @foreach ($task->assignees->take(3) as $assignee)
-                      <flux:avatar :name="$assignee->name" :initials="$assignee->initials()" size="xs"
+                      <flux:avatar :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar" size="xs"
                         class="ring-2 ring-white dark:ring-zinc-800" />
                     @endforeach
                     @if ($task->assignees->count() > 3)
@@ -158,13 +158,13 @@
               wire:key="create-in-{{ $status->id }}">
               <flux:input wire:model="newTaskTitle" placeholder="Nama tugas..." size="sm" autofocus />
               <div class="flex justify-end gap-1">
-                <flux:button size="xs" variant="ghost" wire:click="$set('createInStatusId', null)">Batal
+                <flux:button size="xs" variant="ghost" @click="$wire.set('createInStatusId', null)">Batal
                 </flux:button>
                 <flux:button size="xs" variant="primary" type="submit">Tambah</flux:button>
               </div>
             </form>
           @else
-            <button wire:click="$set('createInStatusId', {{ $status->id }})"
+            <button @click="$wire.set('createInStatusId', {{ $status->id }})"
               class="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-200/60 hover:text-zinc-600 dark:hover:bg-zinc-700/60 dark:hover:text-zinc-300">
               <flux:icon name="plus" class="size-4" />
               <span>Tambah Tugas</span>
@@ -184,21 +184,21 @@
               <span class="text-xs text-zinc-500 dark:text-zinc-400">Warna:</span>
               <div class="flex gap-1">
                 @foreach (['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] as $color)
-                  <button type="button" wire:click="$set('newColumnColor', '{{ $color }}')"
+                  <button type="button" @click="$wire.set('newColumnColor', '{{ $color }}')"
                     class="h-5 w-5 rounded-full border-2 transition-transform hover:scale-110 {{ $newColumnColor === $color ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent' }}"
                     style="background-color: {{ $color }}"></button>
                 @endforeach
               </div>
             </div>
             <div class="flex justify-end gap-1">
-              <flux:button size="xs" variant="ghost" wire:click="$set('showNewColumnInput', false)">Batal
+              <flux:button size="xs" variant="ghost" @click="$wire.set('showNewColumnInput', false)">Batal
               </flux:button>
               <flux:button size="xs" variant="primary" type="submit">Tambah Kolom</flux:button>
             </div>
           </form>
         </div>
       @else
-        <button wire:click="$set('showNewColumnInput', true)"
+        <button @click="$wire.set('showNewColumnInput', true)"
           class="group flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 text-sm font-medium text-zinc-400 transition-all hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-indigo-500 dark:border-zinc-600 dark:hover:border-indigo-500/50 dark:hover:bg-indigo-900/10 dark:hover:text-indigo-400">
           <flux:icon name="plus" class="size-5 transition-transform group-hover:rotate-90" />
           <span>Tambah Kolom Baru</span>
@@ -226,7 +226,7 @@
         Semua tugas dalam kolom ini akan dipindahkan ke kolom pertama yang tersedia.
       </p>
       <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-center">
-        <flux:button variant="ghost" class="w-full sm:w-auto" wire:click="$set('showDeleteColumnConfirm', false)">
+        <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteColumnConfirm', false)">
           Batal</flux:button>
         <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteColumn">Hapus</flux:button>
       </div>

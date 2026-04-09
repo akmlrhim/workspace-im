@@ -17,11 +17,11 @@
 
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         <flux:button icon="folder-plus" size="sm" variant="ghost" class="w-full justify-center sm:w-auto"
-          wire:click="$set('showCreateFolder', true)">
+          wire:click="openCreateFolder">
           New Folder
         </flux:button>
         <flux:button icon="plus" size="sm" variant="primary" class="w-full justify-center sm:w-auto"
-          wire:click="$set('showCreateList', true)">
+          wire:click="openCreateList">
           New List
         </flux:button>
       </div>
@@ -43,7 +43,7 @@
 
         <div class="flex w-full items-center justify-start gap-1 sm:w-auto sm:justify-end">
           <flux:button icon="plus" size="xs" variant="ghost"
-            wire:click="$set('listFolderId', {{ $folder->id }}); $set('showCreateList', true)">
+            wire:click="openCreateList({{ $folder->id }})">
             Add List
           </flux:button>
           <flux:button icon="pencil-square" size="xs" variant="ghost"
@@ -88,11 +88,11 @@
 
       <div class="mt-6 flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
         <flux:button icon="folder-plus" variant="ghost" class="w-full justify-center sm:w-auto"
-          wire:click="$set('showCreateFolder', true)">
+          wire:click="openCreateFolder">
           New Folder
         </flux:button>
         <flux:button icon="plus" variant="primary" class="w-full justify-center sm:w-auto"
-          wire:click="$set('showCreateList', true)">
+          wire:click="openCreateList">
           New List
         </flux:button>
       </div>
@@ -109,7 +109,7 @@
           <flux:error name="listName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
-          <flux:button variant="ghost" class="w-full sm:w-auto" wire:click="$set('showCreateList', false)">Cancel
+          <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showCreateList', false)">Cancel
           </flux:button>
           <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Create List</flux:button>
         </div>
@@ -127,7 +127,7 @@
           <flux:error name="folderName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
-          <flux:button variant="ghost" class="w-full sm:w-auto" wire:click="$set('showCreateFolder', false)">Cancel
+          <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showCreateFolder', false)">Cancel
           </flux:button>
           <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Create Folder</flux:button>
         </div>
@@ -145,7 +145,7 @@
           <flux:error name="editListName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
-          <flux:button variant="ghost" class="w-full sm:w-auto" wire:click="$set('showEditList', false)">Cancel
+          <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showEditList', false)">Cancel
           </flux:button>
           <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Save Changes</flux:button>
         </div>
@@ -163,7 +163,7 @@
           <flux:error name="editFolderName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
-          <flux:button variant="ghost" class="w-full sm:w-auto" wire:click="$set('showEditFolder', false)">Cancel
+          <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showEditFolder', false)">Cancel
           </flux:button>
           <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Save Changes</flux:button>
         </div>
@@ -179,9 +179,39 @@
       <flux:heading size="lg">Delete List?</flux:heading>
       <p class="text-sm text-zinc-500 dark:text-zinc-400">All tasks in this list will be permanently deleted.</p>
       <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-center">
-        <flux:button variant="ghost" class="w-full sm:w-auto" wire:click="$set('showDeleteListConfirm', false)">
+        <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteListConfirm', false)">
           Cancel</flux:button>
         <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteList">Delete</flux:button>
+      </div>
+    </div>
+  </flux:modal>
+
+  <flux:modal wire:model="showManageMembers" class="w-full max-w-md">
+    <div class="space-y-6">
+      <div>
+        <flux:heading size="lg">Kelola Anggota List</flux:heading>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Hanya anggota yang terdaftar di sini yang dapat di-assign ke task dalam list ini.</p>
+      </div>
+
+      <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
+        @foreach ($allUsers as $user)
+          <label class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
+            <flux:checkbox wire:model="listMemberIds" :value="$user->id" />
+            <flux:avatar :name="$user->name" :initials="$user->initials()" :src="$user->avatar" size="sm" />
+            <div>
+              <span class="font-medium text-zinc-800 dark:text-zinc-200">{{ $user->name }}</span>
+              <span class="block text-xs text-zinc-400">{{ $user->email }}</span>
+            </div>
+          </label>
+        @endforeach
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-zinc-400">{{ count($listMemberIds) }} anggota dipilih</span>
+        <div class="flex gap-2">
+          <flux:button variant="ghost" @click="$wire.set('showManageMembers', false)">Batal</flux:button>
+          <flux:button variant="primary" wire:click="saveMembers">Simpan Anggota</flux:button>
+        </div>
       </div>
     </div>
   </flux:modal>
@@ -195,7 +225,7 @@
       <p class="text-sm text-zinc-500 dark:text-zinc-400">All lists and tasks in this folder will be permanently
         deleted.</p>
       <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-center">
-        <flux:button variant="ghost" class="w-full sm:w-auto" wire:click="$set('showDeleteFolderConfirm', false)">
+        <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteFolderConfirm', false)">
           Cancel</flux:button>
         <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteFolder">Delete</flux:button>
       </div>

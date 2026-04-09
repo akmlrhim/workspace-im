@@ -7,7 +7,7 @@
       <flux:heading size="lg">Delete Task?</flux:heading>
       <p class="text-sm text-zinc-500 dark:text-zinc-400">This task and all its subtasks will be permanently deleted. This action cannot be undone.</p>
       <div class="flex justify-center gap-2 pt-2">
-        <flux:button variant="ghost" wire:click="$set('showDeleteConfirm', false)">Cancel</flux:button>
+        <flux:button variant="ghost" @click="$wire.set('showDeleteConfirm', false)">Cancel</flux:button>
         <flux:button variant="danger" wire:click="deleteTask">Delete</flux:button>
       </div>
     </div>

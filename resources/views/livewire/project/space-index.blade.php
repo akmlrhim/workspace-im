@@ -5,7 +5,7 @@
         <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Spaces</h1>
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Organize your projects into spaces</p>
       </div>
-      <flux:button icon="plus" variant="primary" wire:click="$set('showCreateSpace', true)">
+      <flux:button icon="plus" variant="primary" @click="$wire.set('showCreateSpace', true)">
         New Space
       </flux:button>
     </div>
@@ -55,7 +55,7 @@
         <flux:icon name="folder-plus" class="mb-3 size-12 text-zinc-400" />
         <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No spaces yet</h3>
         <p class="mt-1 text-sm text-zinc-500 text-center">Create your first space to start organizing projects</p>
-        <flux:button icon="plus" variant="primary" class="mt-4" wire:click="$set('showCreateSpace', true)">
+        <flux:button icon="plus" variant="primary" class="mt-4" @click="$wire.set('showCreateSpace', true)">
           Create Space
         </flux:button>
       </div>
@@ -76,7 +76,7 @@
           <flux:label>Color</flux:label>
           <div class="flex flex-wrap gap-2">
             @foreach ($this->availableColors as $color)
-              <button type="button" wire:click="$set('spaceColor', '{{ $color }}')"
+              <button type="button" @click="$wire.set('spaceColor', '{{ $color }}')"
                 class="h-8 w-8 rounded-full transition-transform hover:scale-110 {{ $spaceColor === $color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-zinc-800' : '' }}"
                 style="background-color: {{ $color }}; {{ $spaceColor === $color ? 'ring-color: ' . $color : '' }}">
               </button>
@@ -85,7 +85,7 @@
         </flux:field>
 
         <div class="flex justify-end gap-2 pt-2">
-          <flux:button variant="ghost" wire:click="$set('showCreateSpace', false)">Cancel</flux:button>
+          <flux:button variant="ghost" @click="$wire.set('showCreateSpace', false)">Cancel</flux:button>
           <flux:button type="submit" variant="primary">Create Space</flux:button>
         </div>
       </form>
@@ -106,7 +106,7 @@
           <flux:label>Color</flux:label>
           <div class="flex flex-wrap gap-2">
             @foreach ($this->availableColors as $color)
-              <button type="button" wire:click="$set('editSpaceColor', '{{ $color }}')"
+              <button type="button" @click="$wire.set('editSpaceColor', '{{ $color }}')"
                 class="h-8 w-8 rounded-full transition-transform hover:scale-110 {{ $editSpaceColor === $color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-zinc-800' : '' }}"
                 style="background-color: {{ $color }}; {{ $editSpaceColor === $color ? 'ring-color: ' . $color : '' }}">
               </button>
@@ -115,7 +115,7 @@
         </flux:field>
 
         <div class="flex justify-end gap-2 pt-2">
-          <flux:button variant="ghost" wire:click="$set('showEditSpace', false)">Cancel</flux:button>
+          <flux:button variant="ghost" @click="$wire.set('showEditSpace', false)">Cancel</flux:button>
           <flux:button type="submit" variant="primary">Save Changes</flux:button>
         </div>
       </form>
@@ -132,7 +132,7 @@
         All folders, lists, and tasks inside this space will be permanently deleted. This action cannot be undone.
       </p>
       <div class="flex justify-center gap-2 pt-2">
-        <flux:button variant="ghost" wire:click="$set('showDeleteConfirm', false)">Cancel</flux:button>
+        <flux:button variant="ghost" @click="$wire.set('showDeleteConfirm', false)">Cancel</flux:button>
         <flux:button variant="danger" wire:click="deleteSpace">Delete Space</flux:button>
       </div>
     </div>

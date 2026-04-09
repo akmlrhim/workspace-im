@@ -3,11 +3,16 @@
 
   <flux:heading class="sr-only">{{ __('Security settings') }}</flux:heading>
 
-  <x-settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
+  <x-settings.layout
+    :heading="$hasPassword ? __('Update password') : __('Set password')"
+    :subheading="$hasPassword ? __('Ensure your account is using a long, random password to stay secure') : __('Set a password so you can also sign in without Google')"
+  >
     <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
-      <flux:input wire:model="current_password" :label="__('Current password')" type="password" required
-        autocomplete="current-password" viewable />
-      <flux:input wire:model="password" :label="__('New password')" type="password" required autocomplete="new-password"
+      @if ($hasPassword)
+        <flux:input wire:model="current_password" :label="__('Current password')" type="password" required
+          autocomplete="current-password" viewable />
+      @endif
+      <flux:input wire:model="password" :label="$hasPassword ? __('New password') : __('Password')" type="password" required autocomplete="new-password"
         viewable />
       <flux:input wire:model="password_confirmation" :label="__('Confirm password')" type="password" required
         autocomplete="new-password" viewable />

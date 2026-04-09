@@ -32,20 +32,27 @@
         </div>
         <flux:field>
           <flux:label>Assignees</flux:label>
-          <div class="max-h-40 overflow-y-auto rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
-            @foreach ($workspaceUsers as $member)
-              <label
-                class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
-                <flux:checkbox wire:model="formTaskAssignees" :value="$member->id" />
-                <flux:avatar :name="$member->name" :initials="$member->initials()" size="xs" />
-                <span class="text-zinc-700 dark:text-zinc-300">{{ $member->name }}</span>
-              </label>
-            @endforeach
-          </div>
+          @if ($workspaceUsers->isEmpty())
+            <div class="flex items-center gap-2 rounded-lg border border-dashed border-zinc-200 px-3 py-3 text-xs text-zinc-400 dark:border-zinc-700">
+              <flux:icon name="users" class="size-4 shrink-0" />
+              <span>Belum ada anggota di list ini. Tambahkan anggota terlebih dahulu melalui halaman Space.</span>
+            </div>
+          @else
+            <div class="max-h-40 overflow-y-auto rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
+              @foreach ($workspaceUsers as $member)
+                <label
+                  class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
+                  <flux:checkbox wire:model="formTaskAssignees" :value="$member->id" />
+                  <flux:avatar :name="$member->name" :initials="$member->initials()" :src="$member->avatar" size="xs" />
+                  <span class="text-zinc-700 dark:text-zinc-300">{{ $member->name }}</span>
+                </label>
+              @endforeach
+            </div>
+          @endif
         </flux:field>
 
         <div class="flex justify-end gap-2 pt-2">
-          <flux:button variant="ghost" wire:click="$set('showTaskForm', false)">Cancel</flux:button>
+          <flux:button variant="ghost" @click="$wire.set('showTaskForm', false)">Cancel</flux:button>
           <flux:button type="submit" variant="primary">Save</flux:button>
         </div>
       </form>

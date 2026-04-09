@@ -57,7 +57,7 @@
           @forelse ($task->assignees as $assignee)
             <span
               class="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
-              <flux:avatar :name="$assignee->name" :initials="$assignee->initials()" size="xs" />
+              <flux:avatar :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar" size="xs" />
               {{ $assignee->name }}
             </span>
           @empty
@@ -65,18 +65,25 @@
           @endforelse
         </div>
 
-        <div
-          class="max-h-32 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700 {{ $ro ? 'opacity-60' : '' }}">
-          @foreach ($workspaceUsers as $member)
-            <label
-              class="flex items-center gap-2 rounded-md px-2 py-1 text-sm {{ $canManage ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer' : 'cursor-not-allowed' }}">
-              <flux:checkbox wire:model="taskAssigneeIds" :value="$member->id" wire:change="updateAssignees"
-                :disabled="$ro" />
-              <flux:avatar :name="$member->name" :initials="$member->initials()" size="xs" />
-              <span class="text-zinc-700 dark:text-zinc-300">{{ $member->name }}</span>
-            </label>
-          @endforeach
-        </div>
+        @if ($workspaceUsers->isEmpty())
+          <div class="flex items-center gap-2 rounded-lg border border-dashed border-zinc-200 px-3 py-3 text-xs text-zinc-400 dark:border-zinc-700">
+            <flux:icon name="users" class="size-4 shrink-0" />
+            <span>Belum ada anggota di list ini. Tambahkan anggota melalui halaman Space terlebih dahulu.</span>
+          </div>
+        @else
+          <div
+            class="max-h-32 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700 {{ $ro ? 'opacity-60' : '' }}">
+            @foreach ($workspaceUsers as $member)
+              <label
+                class="flex items-center gap-2 rounded-md px-2 py-1 text-sm {{ $canManage ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer' : 'cursor-not-allowed' }}">
+                <flux:checkbox wire:model="taskAssigneeIds" :value="$member->id" wire:change="updateAssignees"
+                  :disabled="$ro" />
+                <flux:avatar :name="$member->name" :initials="$member->initials()" :src="$member->avatar" size="xs" />
+                <span class="text-zinc-700 dark:text-zinc-300">{{ $member->name }}</span>
+              </label>
+            @endforeach
+          </div>
+        @endif
       </div>
 
       <div>
@@ -132,14 +139,14 @@
               <span class="text-xs text-zinc-500 dark:text-zinc-400">Warna:</span>
               <div class="flex gap-1">
                 @foreach (['#6366f1', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#6b7280'] as $color)
-                  <button type="button" wire:click="$set('newLabelColor', '{{ $color }}')"
+                  <button type="button" @click="$wire.set('newLabelColor', '{{ $color }}')"
                     class="h-4 w-4 rounded-full border-2 transition-transform hover:scale-125 {{ $newLabelColor === $color ? 'border-zinc-900 dark:border-white scale-125' : 'border-transparent' }}"
                     style="background-color: {{ $color }}"></button>
                 @endforeach
               </div>
             </div>
             <div class="flex justify-end gap-1">
-              <flux:button size="xs" variant="ghost" wire:click="$set('showLabelForm', false)">Batal</flux:button>
+              <flux:button size="xs" variant="ghost" @click="$wire.set('showLabelForm', false)">Batal</flux:button>
               <flux:button size="xs" variant="primary" type="submit">Buat Label</flux:button>
             </div>
           </form>
@@ -349,7 +356,7 @@
             wire:key="comment-{{ $comment->id }}">
             <div class="mb-2 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <flux:avatar :name="$comment->user->name" :initials="$comment->user->initials()" size="xs" />
+                <flux:avatar :name="$comment->user->name" :initials="$comment->user->initials()" :src="$comment->user->avatar" size="xs" />
                 <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $comment->user->name }}</span>
                 <span class="text-xs text-zinc-400">{{ $comment->created_at->diffForHumans() }}</span>
               </div>
@@ -365,7 +372,7 @@
                 @foreach ($comment->replies as $reply)
                   <div wire:key="reply-{{ $reply->id }}">
                     <div class="flex items-center gap-2 mb-1">
-                      <flux:avatar :name="$reply->user->name" :initials="$reply->user->initials()" size="xs" />
+                      <flux:avatar :name="$reply->user->name" :initials="$reply->user->initials()" :src="$reply->user->avatar" size="xs" />
                       <span
                         class="text-xs font-medium text-zinc-600 dark:text-zinc-400">{{ $reply->user->name }}</span>
                       <span class="text-[10px] text-zinc-400">{{ $reply->created_at->diffForHumans() }}</span>
@@ -387,7 +394,7 @@
       <div class="space-y-2">
         @foreach ($activities as $activity)
           <div class="flex items-start gap-2 text-xs" wire:key="activity-{{ $activity->id }}">
-            <flux:avatar :name="$activity->user->name" :initials="$activity->user->initials()" size="xs"
+            <flux:avatar :name="$activity->user->name" :initials="$activity->user->initials()" :src="$activity->user->avatar" size="xs"
               class="mt-0.5" />
             <div>
               <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ $activity->user->name }}</span>

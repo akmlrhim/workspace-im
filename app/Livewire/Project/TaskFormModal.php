@@ -4,115 +4,123 @@ namespace App\Livewire\Project;
 
 use App\Models\Project\Space;
 use App\Models\Project\Task;
-use App\Models\Project\TaskList;
 use App\Models\Project\TaskActivity;
-use App\Models\User;
-use Livewire\Component;
-use Livewire\Attributes\On;
+use App\Models\Project\TaskList;
 use Flux\Flux;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class TaskFormModal extends Component
 {
-	public Space $space;
-	public TaskList $taskList;
+    public Space $space;
 
-	public bool $showTaskForm = false;
-	public ?int $editingTaskId = null;
-	public string $formTaskTitle = '';
-	public string $formTaskPriority = 'normal';
-	public ?int $formTaskStatusId = null;
-	public array $formTaskAssignees = [];
+    public TaskList $taskList;
 
-	#[On('open-create-task-form')]
-	public function openCreateForm(): void
-	{
-		$this->resetForm();
-		$this->showTaskForm = true;
-	}
+    public bool $showTaskForm = false;
 
-	#[On('open-edit-task-form')]
-	public function openEditForm(int $taskId): void
-	{
-		$task = Task::with('assignees')->findOrFail($taskId);
+    public ?int $editingTaskId = null;
 
-		if (!$task->canBeManagedBy(auth()->user())) {
-			Flux::toast(__('messages.no_permission_edit_task'), variant: 'danger');
-			return;
-		}
+    public string $formTaskTitle = '';
 
-		$this->editingTaskId = $task->id;
-		$this->formTaskTitle = $task->title;
-		$this->formTaskPriority = $task->priority;
-		$this->formTaskStatusId = $task->task_status_id;
-		$this->formTaskAssignees = $task->assignees->pluck('id')->toArray();
-		$this->showTaskForm = true;
-	}
+    public string $formTaskPriority = 'normal';
 
-	public function saveTask(): void
-	{
-		$this->validate([
-			'formTaskTitle' => 'required|min:1|max:500',
-			'formTaskStatusId' => 'required|exists:task_statuses,id',
-		]);
+    public ?int $formTaskStatusId = null;
 
-		if ($this->editingTaskId) {
-			// Update existing
-			$task = Task::findOrFail($this->editingTaskId);
-			$task->update([
-				'title' => $this->formTaskTitle,
-				'task_status_id' => $this->formTaskStatusId,
-				'priority' => $this->formTaskPriority,
-			]);
-			$task->assignees()->sync($this->formTaskAssignees);
-			Flux::toast(__('messages.task_updated'), variant: 'success');
-		} else {
-			// Create new
-			$maxPosition = $this->taskList->tasks()->max('position') ?? -1;
+    public array $formTaskAssignees = [];
 
-			$task = $this->taskList->tasks()->create([
-				'title' => $this->formTaskTitle,
-				'task_status_id' => $this->formTaskStatusId,
-				'priority' => $this->formTaskPriority,
-				'position' => $maxPosition + 1,
-				'created_by' => auth()->id(),
-			]);
+    #[On('open-create-task-form')]
+    public function openCreateForm(): void
+    {
+        $this->resetForm();
+        $this->showTaskForm = true;
+    }
 
-			if (!empty($this->formTaskAssignees)) {
-				$task->assignees()->sync($this->formTaskAssignees);
-			}
+    #[On('open-edit-task-form')]
+    public function openEditForm(int $taskId): void
+    {
+        $task = Task::with('assignees')->findOrFail($taskId);
 
-			TaskActivity::create([
-				'task_id' => $task->id,
-				'user_id' => auth()->id(),
-				'type' => 'created',
-				'new_value' => $task->title,
-			]);
+        if (! $task->canBeManagedBy(auth()->user())) {
+            Flux::toast(__('messages.no_permission_edit_task'), variant: 'danger');
 
-			Flux::toast(__('messages.task_created'), variant: 'success');
-		}
+            return;
+        }
 
-		$this->resetForm();
-		$this->showTaskForm = false;
-		$this->dispatch('task-updated'); // Tell parent views to refresh
-	}
+        $this->editingTaskId = $task->id;
+        $this->formTaskTitle = $task->title;
+        $this->formTaskPriority = $task->priority;
+        $this->formTaskStatusId = $task->task_status_id;
+        $this->formTaskAssignees = $task->assignees->pluck('id')->toArray();
+        $this->showTaskForm = true;
+    }
 
-	private function resetForm(): void
-	{
-		$this->editingTaskId = null;
-		$this->formTaskTitle = '';
-		$this->formTaskPriority = 'normal';
-		$this->formTaskAssignees = [];
-		$statuses = $this->taskList->statuses;
-		if ($statuses->isNotEmpty()) {
-			$this->formTaskStatusId = $statuses->first()->id;
-		}
-	}
+    public function saveTask(): void
+    {
+        $this->validate([
+            'formTaskTitle' => 'required|min:1|max:500',
+            'formTaskStatusId' => 'required|exists:task_statuses,id',
+        ]);
 
-	public function render()
-	{
-		return view('livewire.project.task-form-modal', [
-			'statuses' => $this->taskList->statuses()->orderBy('position')->get(),
-			'workspaceUsers' => User::all(),
-		]);
-	}
+        if ($this->editingTaskId) {
+            // Update existing
+            $task = Task::findOrFail($this->editingTaskId);
+            $task->update([
+                'title' => $this->formTaskTitle,
+                'task_status_id' => $this->formTaskStatusId,
+                'priority' => $this->formTaskPriority,
+            ]);
+            $task->assignees()->sync($this->formTaskAssignees);
+            Flux::toast(__('messages.task_updated'), variant: 'success');
+        } else {
+            // Create new
+            $maxPosition = $this->taskList->tasks()->max('position') ?? -1;
+
+            $task = $this->taskList->tasks()->create([
+                'title' => $this->formTaskTitle,
+                'task_status_id' => $this->formTaskStatusId,
+                'priority' => $this->formTaskPriority,
+                'position' => $maxPosition + 1,
+                'created_by' => auth()->id(),
+            ]);
+
+            if (! empty($this->formTaskAssignees)) {
+                $listMemberIds = $this->taskList->members()->pluck('users.id')->toArray();
+                $validAssignees = array_values(array_intersect($this->formTaskAssignees, $listMemberIds));
+                $task->assignees()->sync($validAssignees);
+            }
+
+            TaskActivity::create([
+                'task_id' => $task->id,
+                'user_id' => auth()->id(),
+                'type' => 'created',
+                'new_value' => $task->title,
+            ]);
+
+            Flux::toast(__('messages.task_created'), variant: 'success');
+        }
+
+        $this->resetForm();
+        $this->showTaskForm = false;
+        $this->dispatch('task-updated'); // Tell parent views to refresh
+    }
+
+    private function resetForm(): void
+    {
+        $this->editingTaskId = null;
+        $this->formTaskTitle = '';
+        $this->formTaskPriority = 'normal';
+        $this->formTaskAssignees = [];
+        $statuses = $this->taskList->statuses;
+        if ($statuses->isNotEmpty()) {
+            $this->formTaskStatusId = $statuses->first()->id;
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.project.task-form-modal', [
+            'statuses' => $this->taskList->statuses()->orderBy('position')->get(),
+            'workspaceUsers' => $this->taskList->members()->orderBy('name')->get(),
+        ]);
+    }
 }

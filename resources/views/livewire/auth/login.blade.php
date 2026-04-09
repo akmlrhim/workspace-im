@@ -36,7 +36,7 @@
       <div class="grow border-t border-zinc-200 dark:border-zinc-800"></div>
     </div>
 
-    <flux:button variant="outline" class="w-full cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900">
+    <flux:button variant="outline" tag="a" :href="route('auth.google')" class="w-full cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900">
       <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path fill="#4285F4"
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

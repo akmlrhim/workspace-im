@@ -1,26 +1,37 @@
 <?php
 
+use App\Livewire\Project\MyTasks;
+use App\Livewire\Project\ProjectOverview;
+use App\Livewire\Project\SpaceIndex;
+use App\Livewire\Project\SpaceShow;
+use App\Livewire\Project\TaskBoard;
+use App\Livewire\Project\TaskCalendar;
+use App\Livewire\Project\TaskGantt;
+use App\Livewire\Project\TaskListShow;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('project-management')->name('project-management.')->group(function () {
-	// Spaces (dashboard)
-	Route::get('/', App\Livewire\Project\SpaceIndex::class)->name('index');
+    // Spaces (dashboard)
+    Route::get('/', SpaceIndex::class)->name('index');
 
-	// Space detail
-	Route::get('/spaces/{space}', App\Livewire\Project\SpaceShow::class)->name('spaces.show');
+    // Project Overview
+    Route::get('/overview', ProjectOverview::class)->name('overview');
 
-	// List view
-	Route::get('/spaces/{space}/lists/{taskList}', App\Livewire\Project\TaskListShow::class)->name('lists.show');
+    // Space detail
+    Route::get('/spaces/{space}', SpaceShow::class)->name('spaces.show');
 
-	// Board / Kanban view
-	Route::get('/spaces/{space}/lists/{taskList}/board', App\Livewire\Project\TaskBoard::class)->name('lists.board');
+    // List view
+    Route::get('/spaces/{space}/lists/{taskList}', TaskListShow::class)->name('lists.show');
 
-	// Gantt view
-	Route::get('/spaces/{space}/lists/{taskList}/gantt', App\Livewire\Project\TaskGantt::class)->name('lists.gantt');
+    // Board / Kanban view
+    Route::get('/spaces/{space}/lists/{taskList}/board', TaskBoard::class)->name('lists.board');
 
-	// Calendar view
-	Route::get('/spaces/{space}/lists/{taskList}/calendar', App\Livewire\Project\TaskCalendar::class)->name('lists.calendar');
+    // Gantt view
+    Route::get('/spaces/{space}/lists/{taskList}/gantt', TaskGantt::class)->name('lists.gantt');
 
-	// My Tasks
-	Route::get('/my-tasks', App\Livewire\Project\MyTasks::class)->name('my-tasks');
+    // Calendar view
+    Route::get('/spaces/{space}/lists/{taskList}/calendar', TaskCalendar::class)->name('lists.calendar');
+
+    // My Tasks
+    Route::get('/my-tasks', MyTasks::class)->name('my-tasks');
 });

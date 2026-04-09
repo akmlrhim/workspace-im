@@ -5,161 +5,221 @@ namespace App\Livewire\Project;
 use App\Models\Project\Folder;
 use App\Models\Project\Space;
 use App\Models\Project\TaskList;
-use Livewire\Component;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
+use App\Models\User;
 use Flux\Flux;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.app')]
 class SpaceShow extends Component
 {
-	public Space $space;
+    public Space $space;
 
-	public bool $showCreateList = false;
-	public string $listName = '';
-	public ?int $listFolderId = null;
+    public bool $showCreateList = false;
 
-	public bool $showCreateFolder = false;
-	public string $folderName = '';
+    public string $listName = '';
 
-	public bool $showEditList = false;
-	public ?int $editingListId = null;
-	public string $editListName = '';
+    public ?int $listFolderId = null;
 
-	public bool $showEditFolder = false;
-	public ?int $editingFolderId = null;
-	public string $editFolderName = '';
+    public bool $showCreateFolder = false;
 
-	public bool $showDeleteListConfirm = false;
-	public ?int $deletingListId = null;
+    public string $folderName = '';
 
-	public bool $showDeleteFolderConfirm = false;
-	public ?int $deletingFolderId = null;
+    public bool $showEditList = false;
 
-	public function mount(Space $space): void
-	{
-		$this->space = $space;
-	}
+    public ?int $editingListId = null;
 
-	public function getTitle(): string
-	{
-		return $this->space->name . ' — Space';
-	}
+    public string $editListName = '';
 
-	public function createList(): void
-	{
-		$this->validate(['listName' => 'required|min:2|max:100']);
+    public bool $showEditFolder = false;
 
-		$maxPosition = $this->space->lists()->max('position') ?? -1;
+    public ?int $editingFolderId = null;
 
-		$list = $this->space->lists()->create([
-			'name' => $this->listName,
-			'folder_id' => $this->listFolderId,
-			'position' => $maxPosition + 1,
-		]);
+    public string $editFolderName = '';
 
-		$list->createDefaultStatuses();
+    public bool $showDeleteListConfirm = false;
 
-		$this->reset(['listName', 'listFolderId', 'showCreateList']);
-		Flux::toast(__('messages.list_created'), variant: 'success');
-	}
+    public ?int $deletingListId = null;
 
-	public function createFolder(): void
-	{
-		$this->validate(['folderName' => 'required|min:2|max:100']);
+    public bool $showDeleteFolderConfirm = false;
 
-		$maxPosition = $this->space->folders()->max('position') ?? -1;
+    public ?int $deletingFolderId = null;
 
-		$this->space->folders()->create([
-			'name' => $this->folderName,
-			'position' => $maxPosition + 1,
-		]);
+    // Member management
+    public bool $showManageMembers = false;
 
-		$this->reset(['folderName', 'showCreateFolder']);
-		Flux::toast(__('messages.folder_created'), variant: 'success');
-	}
+    public ?int $managingListId = null;
 
-	public function openEditList(int $listId): void
-	{
-		$list = TaskList::findOrFail($listId);
-		$this->editingListId = $listId;
-		$this->editListName = $list->name;
-		$this->showEditList = true;
-	}
+    public array $listMemberIds = [];
 
-	public function updateList(): void
-	{
-		$this->validate(['editListName' => 'required|min:2|max:100']);
+    public function mount(Space $space): void
+    {
+        $this->space = $space;
+    }
 
-		TaskList::findOrFail($this->editingListId)->update([
-			'name' => $this->editListName,
-		]);
+    public function getTitle(): string
+    {
+        return $this->space->name.' — Space';
+    }
 
-		$this->reset(['editingListId', 'editListName', 'showEditList']);
-		Flux::toast(__('messages.list_updated'), variant: 'success');
-	}
+    public function openCreateList(?int $folderId = null): void
+    {
+        $this->listFolderId = $folderId;
+        $this->showCreateList = true;
+    }
 
-	public function openEditFolder(int $folderId): void
-	{
-		$folder = Folder::findOrFail($folderId);
-		$this->editingFolderId = $folderId;
-		$this->editFolderName = $folder->name;
-		$this->showEditFolder = true;
-	}
+    public function openCreateFolder(): void
+    {
+        $this->showCreateFolder = true;
+    }
 
-	public function updateFolder(): void
-	{
-		$this->validate(['editFolderName' => 'required|min:2|max:100']);
+    public function createList(): void
+    {
+        $this->validate(['listName' => 'required|min:2|max:100']);
 
-		Folder::findOrFail($this->editingFolderId)->update([
-			'name' => $this->editFolderName,
-		]);
+        $maxPosition = $this->space->lists()->max('position') ?? -1;
 
-		$this->reset(['editingFolderId', 'editFolderName', 'showEditFolder']);
-		Flux::toast(__('messages.folder_updated'), variant: 'success');
-	}
+        $list = $this->space->lists()->create([
+            'name' => $this->listName,
+            'folder_id' => $this->listFolderId,
+            'position' => $maxPosition + 1,
+        ]);
 
-	public function confirmDeleteList(int $listId): void
-	{
-		$this->deletingListId = $listId;
-		$this->showDeleteListConfirm = true;
-	}
+        $list->createDefaultStatuses();
 
-	public function deleteList(): void
-	{
-		if ($this->deletingListId) {
-			TaskList::findOrFail($this->deletingListId)->delete();
-		}
-		$this->reset(['deletingListId', 'showDeleteListConfirm']);
-		Flux::toast(__('messages.list_deleted'), variant: 'danger');
-	}
+        $this->reset(['listName', 'listFolderId', 'showCreateList']);
+        Flux::toast(__('messages.list_created'), variant: 'success');
+    }
 
-	public function confirmDeleteFolder(int $folderId): void
-	{
-		$this->deletingFolderId = $folderId;
-		$this->showDeleteFolderConfirm = true;
-	}
+    public function createFolder(): void
+    {
+        $this->validate(['folderName' => 'required|min:2|max:100']);
 
-	public function deleteFolder(): void
-	{
-		if ($this->deletingFolderId) {
-			Folder::findOrFail($this->deletingFolderId)->delete();
-		}
-		$this->reset(['deletingFolderId', 'showDeleteFolderConfirm']);
-		Flux::toast(__('messages.folder_deleted'), variant: 'danger');
-	}
+        $maxPosition = $this->space->folders()->max('position') ?? -1;
 
-	public function render()
-	{
-		$folders = $this->space->folders()->with(['lists' => function ($q) {
-			$q->withCount('tasks');
-		}])->get();
+        $this->space->folders()->create([
+            'name' => $this->folderName,
+            'position' => $maxPosition + 1,
+        ]);
 
-		$listsWithoutFolder = $this->space->listsWithoutFolder()->withCount('tasks')->get();
+        $this->reset(['folderName', 'showCreateFolder']);
+        Flux::toast(__('messages.folder_created'), variant: 'success');
+    }
 
-		return view('livewire.project.space-show', [
-			'folders' => $folders,
-			'listsWithoutFolder' => $listsWithoutFolder,
-		]);
-	}
+    public function openEditList(int $listId): void
+    {
+        $list = TaskList::findOrFail($listId);
+        $this->editingListId = $listId;
+        $this->editListName = $list->name;
+        $this->showEditList = true;
+    }
+
+    public function updateList(): void
+    {
+        $this->validate(['editListName' => 'required|min:2|max:100']);
+
+        TaskList::findOrFail($this->editingListId)->update([
+            'name' => $this->editListName,
+        ]);
+
+        $this->reset(['editingListId', 'editListName', 'showEditList']);
+        Flux::toast(__('messages.list_updated'), variant: 'success');
+    }
+
+    public function openEditFolder(int $folderId): void
+    {
+        $folder = Folder::findOrFail($folderId);
+        $this->editingFolderId = $folderId;
+        $this->editFolderName = $folder->name;
+        $this->showEditFolder = true;
+    }
+
+    public function updateFolder(): void
+    {
+        $this->validate(['editFolderName' => 'required|min:2|max:100']);
+
+        Folder::findOrFail($this->editingFolderId)->update([
+            'name' => $this->editFolderName,
+        ]);
+
+        $this->reset(['editingFolderId', 'editFolderName', 'showEditFolder']);
+        Flux::toast(__('messages.folder_updated'), variant: 'success');
+    }
+
+    public function confirmDeleteList(int $listId): void
+    {
+        $this->deletingListId = $listId;
+        $this->showDeleteListConfirm = true;
+    }
+
+    public function deleteList(): void
+    {
+        if ($this->deletingListId) {
+            TaskList::findOrFail($this->deletingListId)->delete();
+        }
+        $this->reset(['deletingListId', 'showDeleteListConfirm']);
+        Flux::toast(__('messages.list_deleted'), variant: 'danger');
+    }
+
+    public function confirmDeleteFolder(int $folderId): void
+    {
+        $this->deletingFolderId = $folderId;
+        $this->showDeleteFolderConfirm = true;
+    }
+
+    public function openManageMembers(int $listId): void
+    {
+        $list = TaskList::with('members')->findOrFail($listId);
+        $this->managingListId = $listId;
+        $this->listMemberIds = $list->members->pluck('id')->toArray();
+        $this->showManageMembers = true;
+    }
+
+    public function saveMembers(): void
+    {
+        $list = TaskList::with(['members', 'tasks'])->findOrFail($this->managingListId);
+
+        // Determine users being removed
+        $currentMemberIds = $list->members->pluck('id')->toArray();
+        $removedIds = array_diff($currentMemberIds, $this->listMemberIds);
+
+        // Sync members
+        $list->members()->sync($this->listMemberIds);
+
+        // Remove detached users from all tasks in this list
+        if (! empty($removedIds)) {
+            foreach ($list->tasks as $task) {
+                $task->assignees()->detach($removedIds);
+            }
+        }
+
+        $this->reset(['managingListId', 'listMemberIds', 'showManageMembers']);
+        Flux::toast(__('messages.list_members_updated'), variant: 'success');
+    }
+
+    public function deleteFolder(): void
+    {
+        if ($this->deletingFolderId) {
+            Folder::findOrFail($this->deletingFolderId)->delete();
+        }
+        $this->reset(['deletingFolderId', 'showDeleteFolderConfirm']);
+        Flux::toast(__('messages.folder_deleted'), variant: 'danger');
+    }
+
+    public function render()
+    {
+        $folders = $this->space->folders()->with(['lists' => function ($q) {
+            $q->withCount('tasks');
+        }])->get();
+
+        $listsWithoutFolder = $this->space->listsWithoutFolder()->withCount('tasks')->get();
+
+        $allUsers = User::orderBy('name')->get();
+
+        return view('livewire.project.space-show', [
+            'folders' => $folders,
+            'listsWithoutFolder' => $listsWithoutFolder,
+            'allUsers' => $allUsers,
+        ]);
+    }
 }

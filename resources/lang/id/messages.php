@@ -52,8 +52,16 @@ return [
     'column_delete_error' => 'Tidak bisa menghapus kolom terakhir.',
     'task_moved_to' => 'Dipindah ke :status',
 
+    // List member messages
+    'list_members_updated' => 'Anggota list berhasil diperbarui.',
+    'assignee_not_list_member' => 'User yang dipilih bukan anggota dari list ini.',
+
     // Permission messages
     'no_permission_edit_task' => 'Anda tidak memiliki izin untuk mengedit tugas ini.',
     'no_permission_modify_task' => 'Anda tidak memiliki izin untuk mengubah tugas ini.',
     'no_permission_delete_task' => 'Anda tidak memiliki izin untuk menghapus tugas ini.',
+
+    // Profile / connected accounts
+    'google_linked' => 'Akun Google berhasil dihubungkan.',
+    'google_unlinked' => 'Akun Google berhasil diputuskan.',
 ];

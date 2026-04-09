@@ -9,73 +9,86 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Flux\Flux;
 
 #[Title('Profile settings')]
 class Profile extends Component
 {
-    use ProfileValidationRules;
+	use ProfileValidationRules;
 
-    public string $name = '';
+	public string $name = '';
 
-    public string $email = '';
+	public string $email = '';
 
-    /**
-     * Mount the component.
-     */
-    public function mount(): void
-    {
-        $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
-    }
+	/**
+	 * Mount the component.
+	 */
+	public function mount(): void
+	{
+		$this->name = Auth::user()->name;
+		$this->email = Auth::user()->email;
 
-    /**
-     * Update the profile information for the currently authenticated user.
-     */
-    public function updateProfileInformation(): void
-    {
-        $user = Auth::user();
+		match (Session::pull('status')) {
+			'google-linked' => Flux::toast(__('messages.google_linked'), variant: 'success'),
+			'google-unlinked' => Flux::toast(__('messages.google_unlinked'), variant: 'warning'),
+			default => null,
+		};
+	}
 
-        $validated = $this->validate($this->profileRules($user->id));
+	/**
+	 * Update the profile information for the currently authenticated user.
+	 */
+	public function updateProfileInformation(): void
+	{
+		$user = Auth::user();
 
-        $user->fill($validated);
+		$validated = $this->validate($this->profileRules($user->id));
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
+		$user->fill($validated);
 
-        $user->save();
+		if ($user->isDirty('email')) {
+			$user->email_verified_at = null;
+		}
 
-        $this->dispatch('profile-updated', name: $user->name);
-    }
+		$user->save();
 
-    /**
-     * Send an email verification notification to the current user.
-     */
-    public function resendVerificationNotification(): void
-    {
-        $user = Auth::user();
+		$this->dispatch('profile-updated', name: $user->name);
+	}
 
-        if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('dashboard', absolute: false));
+	/**
+	 * Send an email verification notification to the current user.
+	 */
+	public function resendVerificationNotification(): void
+	{
+		$user = Auth::user();
 
-            return;
-        }
+		if ($user->hasVerifiedEmail()) {
+			$this->redirectIntended(default: route('dashboard', absolute: false));
 
-        $user->sendEmailVerificationNotification();
+			return;
+		}
 
-        Session::flash('status', 'verification-link-sent');
-    }
+		$user->sendEmailVerificationNotification();
 
-    #[Computed]
-    public function hasUnverifiedEmail(): bool
-    {
-        return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
-    }
+		Session::flash('status', 'verification-link-sent');
+	}
 
-    #[Computed]
-    public function showDeleteUser(): bool
-    {
-        return ! Auth::user() instanceof MustVerifyEmail
-            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
-    }
+	#[Computed]
+	public function hasUnverifiedEmail(): bool
+	{
+		return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
+	}
+
+	#[Computed]
+	public function showDeleteUser(): bool
+	{
+		return ! Auth::user() instanceof MustVerifyEmail
+			|| (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
+	}
+
+	#[Computed]
+	public function isGoogleLinked(): bool
+	{
+		return ! is_null(Auth::user()->google_id);
+	}
 }

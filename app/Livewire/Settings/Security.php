@@ -28,6 +28,9 @@ class Security extends Component
     public string $password_confirmation = '';
 
     #[Locked]
+    public bool $hasPassword;
+
+    #[Locked]
     public bool $canManageTwoFactor;
 
     #[Locked]
@@ -54,6 +57,8 @@ class Security extends Component
      */
     public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
     {
+        $this->hasPassword = ! is_null(auth()->user()->password);
+
         $this->canManageTwoFactor = Features::canManageTwoFactorAuthentication();
 
         if ($this->canManageTwoFactor) {
@@ -71,11 +76,14 @@ class Security extends Component
      */
     public function updatePassword(): void
     {
+        $rules = ['password' => $this->passwordRules()];
+
+        if ($this->hasPassword) {
+            $rules['current_password'] = $this->currentPasswordRules();
+        }
+
         try {
-            $validated = $this->validate([
-                'current_password' => $this->currentPasswordRules(),
-                'password' => $this->passwordRules(),
-            ]);
+            $validated = $this->validate($rules);
         } catch (ValidationException $e) {
             $this->reset('current_password', 'password', 'password_confirmation');
 
@@ -85,6 +93,8 @@ class Security extends Component
         Auth::user()->update([
             'password' => $validated['password'],
         ]);
+
+        $this->hasPassword = true;
 
         $this->reset('current_password', 'password', 'password_confirmation');
 

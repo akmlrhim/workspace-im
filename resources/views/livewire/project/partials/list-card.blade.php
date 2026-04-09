@@ -20,6 +20,11 @@
       title="Board view">
       <flux:icon name="view-columns" class="size-4" />
     </a>
+    <button wire:click.prevent="openManageMembers({{ $list->id }})"
+      class="rounded-md p-1.5 text-zinc-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-zinc-100 hover:text-indigo-600 dark:hover:bg-zinc-700 dark:hover:text-indigo-400"
+      title="Kelola Anggota List">
+      <flux:icon name="users" class="size-4" />
+    </button>
     <button wire:click.prevent="openEditList({{ $list->id }})"
       class="rounded-md p-1.5 text-zinc-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-zinc-100 hover:text-blue-600 dark:hover:bg-zinc-700 dark:hover:text-blue-400"
       title="Edit list">
