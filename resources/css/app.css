@@ -10,7 +10,7 @@
 
 @theme {
     --font-sans:
-        ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+        "Noto Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
     --color-zinc-50: #fafafa;
@@ -45,6 +45,14 @@
     ::backdrop,
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
+    }
+
+    html {
+        font-size: 14px;
+    }
+
+    html.auth-page {
+        font-size: 16px;
     }
 }
 

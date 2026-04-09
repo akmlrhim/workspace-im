@@ -22,9 +22,9 @@
 
             @if ($renamingColumnId === $status->id)
               <form wire:submit="saveColumnRename" class="flex items-center gap-1 min-w-0 flex-1">
-                <input type="text" wire:model="renamingColumnName"
-                  class="w-full rounded border border-indigo-300 bg-white px-1.5 py-0.5 text-sm font-semibold text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
-                  autofocus @keydown.escape="$wire.cancelColumnRename()" />
+                <flux:input wire:model="renamingColumnName"
+                  class="w-full !px-1.5 !py-0.5 text-sm font-semibold !rounded" autofocus
+                  @keydown.escape="$wire.cancelColumnRename()" />
                 <button type="submit" class="p-0.5 text-emerald-500 hover:text-emerald-600">
                   <flux:icon name="check" class="size-3.5" />
                 </button>

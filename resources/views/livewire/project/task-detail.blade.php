@@ -297,7 +297,7 @@
             class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 px-4 py-3 text-sm text-zinc-500 transition-colors hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-600 dark:hover:border-zinc-500 dark:hover:text-zinc-300">
             <flux:icon name="cloud-arrow-up" class="size-5" />
             <span>Upload file</span>
-            <input type="file" wire:model="uploadFile" class="hidden" />
+            <flux:input type="file" wire:model="uploadFile" class="hidden" />
           </label>
           @if ($uploadFile)
             <div class="mt-2 flex items-center gap-2">

@@ -36,8 +36,7 @@
             @foreach ($workspaceUsers as $member)
               <label
                 class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
-                <input type="checkbox" wire:model="formTaskAssignees" value="{{ $member->id }}"
-                  class="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800" />
+                <flux:checkbox wire:model="formTaskAssignees" :value="$member->id" />
                 <flux:avatar :name="$member->name" :initials="$member->initials()" size="xs" />
                 <span class="text-zinc-700 dark:text-zinc-300">{{ $member->name }}</span>
               </label>
