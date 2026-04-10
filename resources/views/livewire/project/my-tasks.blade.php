@@ -67,8 +67,11 @@
     @endforelse
   </div>
   @if ($showTaskDetail && $selectedTaskId)
-    <flux:modal wire:model="showTaskDetail" variant="flyout" class="w-full max-w-2xl space-y-0 p-0">
-      <livewire:project.task-detail :taskId="$selectedTaskId" :key="'my-detail-' . $selectedTaskId" />
+    <flux:modal wire:model="showTaskDetail"
+      class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+      <div class="max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:h-[calc(100dvh-4rem)]">
+        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'my-detail-' . $selectedTaskId" />
+      </div>
     </flux:modal>
   @endif
 </div>

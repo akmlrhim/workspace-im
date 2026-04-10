@@ -3,7 +3,7 @@
     @include('livewire.project.partials.breadcrumb')
 
     <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{{ $taskList->name }}</h1>
+      <h1 class="hidden lg:block lg:text-2xl font-bold text-zinc-900 dark:text-white">{{ $taskList->name }}</h1>
 
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         <div class="w-full sm:w-auto">
@@ -11,7 +11,7 @@
         </div>
         <flux:button icon="plus" variant="primary" size="sm" class="w-full justify-center sm:w-auto"
           wire:click="$dispatch('open-create-task-form')">
-          Add Task
+          Tambah Task
         </flux:button>
       </div>
     </div>
@@ -51,7 +51,7 @@
         <div>
           <div class="mb-3 flex items-center gap-2 px-1">
             <div class="h-3 w-3 rounded-full" style="background-color: {{ $status->color }}"></div>
-            <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ $status->name }}</h2>
+            <h2 class="text-sm lg:text-lg font-semibold text-zinc-900 dark:text-white">{{ $status->name }}</h2>
             <span class="rounded bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
               {{ $statusTasks->count() }}
             </span>
@@ -129,8 +129,9 @@
                       @if ($task->assignees->isNotEmpty())
                         <div class="flex -space-x-1.5">
                           @foreach ($task->assignees->take(3) as $assignee)
-                            <flux:avatar :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar" size="xs"
-                              class="ring-2 ring-white dark:ring-zinc-900" title="{{ $assignee->name }}" />
+                            <flux:avatar :name="$assignee->name" :initials="$assignee->initials()"
+                              :src="$assignee->avatar" size="xs" class="ring-2 ring-white dark:ring-zinc-900"
+                              title="{{ $assignee->name }}" />
                           @endforeach
                           @if ($task->assignees->count() > 3)
                             <div
@@ -141,8 +142,8 @@
                         </div>
                       @elseif ($task->assignee)
                         <div class="flex items-center gap-2">
-                          <flux:avatar :name="$task->assignee->name" :initials="$task->assignee->initials()" :src="$task->assignee->avatar"
-                            size="xs" />
+                          <flux:avatar :name="$task->assignee->name" :initials="$task->assignee->initials()"
+                            :src="$task->assignee->avatar" size="xs" />
                           <span class="hidden truncate text-xs text-zinc-600 dark:text-zinc-400 sm:inline-block">
                             {{ $task->assignee->name }}
                           </span>
@@ -168,7 +169,7 @@
 
                 <div class="hidden lg:flex lg:w-10 lg:shrink-0 lg:justify-end">
                   @if ($task->canBeManagedBy(auth()->user()))
-                    <div @click.stop class="opacity-0 transition-opacity group-hover:opacity-100">
+                    <div @click.stop>
                       <flux:dropdown position="bottom" align="end">
                         <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"
                           class="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300" />
@@ -219,8 +220,11 @@
   @livewire('project.task-delete-modal')
 
   @if ($showTaskDetail && $selectedTaskId)
-    <flux:modal wire:model="showTaskDetail" variant="flyout" class="w-full max-w-2xl">
-      <livewire:project.task-detail :taskId="$selectedTaskId" :key="'task-detail-' . $selectedTaskId" />
+    <flux:modal wire:model="showTaskDetail"
+      class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+      <div class="max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:h-[calc(100dvh-4rem)]">
+        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'task-detail-' . $selectedTaskId" />
+      </div>
     </flux:modal>
   @endif
 </div>

@@ -12,8 +12,19 @@
         <flux:input wire:model="current_password" :label="__('Current password')" type="password" required
           autocomplete="current-password" viewable />
       @endif
-      <flux:input wire:model="password" :label="$hasPassword ? __('New password') : __('Password')" type="password" required autocomplete="new-password"
-        viewable />
+      <div class="flex flex-col gap-1">
+        <flux:input wire:model="password" :label="$hasPassword ? __('New password') : __('Password')" type="password" required autocomplete="new-password"
+          viewable />
+        @if (app()->isProduction())
+          <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
+            {{ __('Minimum 12 characters with uppercase, lowercase, numbers, and symbols.') }}
+          </flux:text>
+        @else
+          <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
+            {{ __('Minimum 8 characters.') }}
+          </flux:text>
+        @endif
+      </div>
       <flux:input wire:model="password_confirmation" :label="__('Confirm password')" type="password" required
         autocomplete="new-password" viewable />
 

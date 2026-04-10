@@ -36,17 +36,17 @@
       <flux:icon name="view-columns" class="size-4" />
     </a>
     <button wire:click.prevent="openManageMembers({{ $list->id }})"
-      class="rounded-md p-1.5 text-zinc-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-zinc-100 hover:text-indigo-600 dark:hover:bg-zinc-700 dark:hover:text-indigo-400"
+      class="cursor-pointer rounded-md p-1.5 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-indigo-600 dark:hover:bg-zinc-700 dark:hover:text-indigo-400"
       title="Kelola Anggota List">
       <flux:icon name="users" class="size-4" />
     </button>
     <button wire:click.prevent="openEditList({{ $list->id }})"
-      class="rounded-md p-1.5 text-zinc-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-zinc-100 hover:text-blue-600 dark:hover:bg-zinc-700 dark:hover:text-blue-400"
+      class="cursor-pointer rounded-md p-1.5 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-blue-600 dark:hover:bg-zinc-700 dark:hover:text-blue-400"
       title="Edit list">
       <flux:icon name="pencil-square" class="size-4" />
     </button>
     <button wire:click.prevent="confirmDeleteList({{ $list->id }})"
-      class="rounded-md p-1.5 text-zinc-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+      class="cursor-pointer rounded-md p-1.5 text-zinc-400 transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
       title="Delete list">
       <flux:icon name="trash" class="size-4" />
     </button>

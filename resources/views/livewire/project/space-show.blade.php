@@ -1,7 +1,8 @@
 <div>
   <div class="mb-6">
     <div class="mb-3 flex flex-wrap items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-      <a href="{{ route('project-management.index') }}" wire:navigate class="hover:text-zinc-700 dark:hover:text-zinc-200">Spaces</a>
+      <a href="{{ route('project-management.index') }}" wire:navigate
+        class="hover:text-zinc-700 dark:hover:text-zinc-200">Spaces</a>
       <flux:icon name="chevron-right" class="size-3.5" />
       <span class="font-medium text-zinc-900 dark:text-white">{{ $space->name }}</span>
     </div>
@@ -42,8 +43,7 @@
         </div>
 
         <div class="flex w-full items-center justify-start gap-1 sm:w-auto sm:justify-end">
-          <flux:button icon="plus" size="xs" variant="ghost"
-            wire:click="openCreateList({{ $folder->id }})">
+          <flux:button icon="plus" size="xs" variant="ghost" wire:click="openCreateList({{ $folder->id }})">
             Add List
           </flux:button>
           <flux:button icon="pencil-square" size="xs" variant="ghost"
@@ -89,11 +89,11 @@
       <div class="mt-6 flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
         <flux:button icon="folder-plus" variant="ghost" class="w-full justify-center sm:w-auto"
           wire:click="openCreateFolder">
-          New Folder
+          Buat Folder
         </flux:button>
         <flux:button icon="plus" variant="primary" class="w-full justify-center sm:w-auto"
           wire:click="openCreateList">
-          New List
+          Buat List
         </flux:button>
       </div>
     </div>
@@ -101,17 +101,17 @@
 
   <flux:modal wire:model="showCreateList" class="w-full max-w-md">
     <div class="space-y-6">
-      <flux:heading size="lg">Create New List</flux:heading>
+      <flux:heading size="lg">Buat List Baru</flux:heading>
       <form wire:submit="createList" class="space-y-4">
         <flux:field>
-          <flux:label>List Name</flux:label>
-          <flux:input wire:model="listName" placeholder="e.g. Sprint 1, Backlog..." autofocus />
+          <flux:label>Nama List</flux:label>
+          <flux:input wire:model="listName" placeholder="Masukkan nama list" autofocus />
           <flux:error name="listName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
           <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showCreateList', false)">Cancel
           </flux:button>
-          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Create List</flux:button>
+          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Buat List</flux:button>
         </div>
       </form>
     </div>
@@ -119,17 +119,17 @@
 
   <flux:modal wire:model="showCreateFolder" class="w-full max-w-md">
     <div class="space-y-6">
-      <flux:heading size="lg">Create New Folder</flux:heading>
+      <flux:heading size="lg">Buat Folder Baru</flux:heading>
       <form wire:submit="createFolder" class="space-y-4">
         <flux:field>
-          <flux:label>Folder Name</flux:label>
+          <flux:label>Nama Folder</flux:label>
           <flux:input wire:model="folderName" placeholder="e.g. Q2 2026, Product..." autofocus />
           <flux:error name="folderName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
           <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showCreateFolder', false)">Cancel
           </flux:button>
-          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Create Folder</flux:button>
+          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Buat Folder</flux:button>
         </div>
       </form>
     </div>
@@ -140,14 +140,14 @@
       <flux:heading size="lg">Edit List</flux:heading>
       <form wire:submit="updateList" class="space-y-4">
         <flux:field>
-          <flux:label>List Name</flux:label>
-          <flux:input wire:model="editListName" placeholder="e.g. Sprint 1, Backlog..." autofocus />
+          <flux:label>Nama List</flux:label>
+          <flux:input wire:model="editListName" placeholder="Masukkan nama list" autofocus />
           <flux:error name="editListName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
           <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showEditList', false)">Cancel
           </flux:button>
-          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Save Changes</flux:button>
+          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Simpan</flux:button>
         </div>
       </form>
     </div>
@@ -158,14 +158,14 @@
       <flux:heading size="lg">Edit Folder</flux:heading>
       <form wire:submit="updateFolder" class="space-y-4">
         <flux:field>
-          <flux:label>Folder Name</flux:label>
-          <flux:input wire:model="editFolderName" placeholder="e.g. Q2 2026, Product..." autofocus />
+          <flux:label>Nama Folder</flux:label>
+          <flux:input wire:model="editFolderName" placeholder="Masukkan nama folder" autofocus />
           <flux:error name="editFolderName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
           <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showEditFolder', false)">Cancel
           </flux:button>
-          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Save Changes</flux:button>
+          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Simpan Perubahan</flux:button>
         </div>
       </form>
     </div>
@@ -176,8 +176,8 @@
       <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
         <flux:icon name="exclamation-triangle" class="size-6 text-red-600 dark:text-red-400" />
       </div>
-      <flux:heading size="lg">Delete List?</flux:heading>
-      <p class="text-sm text-zinc-500 dark:text-zinc-400">All tasks in this list will be permanently deleted.</p>
+      <flux:heading size="lg">Hapus List?</flux:heading>
+      <p class="text-sm text-zinc-500 dark:text-zinc-400">Semua task dalam list ini akan dihapus secara permanen.</p>
       <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-center">
         <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteListConfirm', false)">
           Cancel</flux:button>
@@ -186,17 +186,19 @@
     </div>
   </flux:modal>
 
-  {{-- Modal: Kelola Anggota List --}}
+
   <flux:modal wire:model="showManageMembers" class="w-full max-w-md">
     <div class="space-y-6">
       <div>
         <flux:heading size="lg">Kelola Anggota List</flux:heading>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Anggota yang terdaftar di sini dapat di-assign ke task dalam list ini dan space akan muncul di sidebar mereka.</p>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Anggota yang terdaftar di sini dapat di-assign ke task
+          dalam list ini dan space akan muncul di sidebar mereka.</p>
       </div>
 
       <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
         @foreach ($allUsers as $user)
-          <label class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
+          <label
+            class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
             <flux:checkbox wire:model="listMemberIds" :value="$user->id" />
             <flux:avatar :name="$user->name" :initials="$user->initials()" :src="$user->avatar" size="sm" />
             <div class="min-w-0 flex-1">
@@ -222,13 +224,13 @@
       <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
         <flux:icon name="exclamation-triangle" class="size-6 text-red-600 dark:text-red-400" />
       </div>
-      <flux:heading size="lg">Delete Folder?</flux:heading>
-      <p class="text-sm text-zinc-500 dark:text-zinc-400">All lists and tasks in this folder will be permanently
-        deleted.</p>
+      <flux:heading size="lg">Hapus Folder?</flux:heading>
+      <p class="text-sm text-zinc-500 dark:text-zinc-400">Semua list dan task dalam folder ini akan dihapus secara
+        permanen.</p>
       <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-center">
         <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteFolderConfirm', false)">
           Cancel</flux:button>
-        <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteFolder">Delete</flux:button>
+        <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteFolder">Hapus</flux:button>
       </div>
     </div>
   </flux:modal>

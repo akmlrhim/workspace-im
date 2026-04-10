@@ -56,6 +56,15 @@
     html.auth-page {
         font-size: 16px;
     }
+
+    * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    *::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 [data-flux-field]:not(ui-radio, ui-checkbox) {

@@ -8,8 +8,19 @@
       <flux:input type="hidden" name="token" value="{{ request()->route('token') }}" />
       <flux:input name="email" value="{{ request('email') }}" :label="__('Email')" type="email" required
         autocomplete="email" />
-      <flux:input name="password" :label="__('Password')" type="password" required autocomplete="new-password"
-        :placeholder="__('Password')" viewable />
+      <div class="flex flex-col gap-1">
+        <flux:input name="password" :label="__('Password')" type="password" required autocomplete="new-password"
+          :placeholder="__('Password')" viewable />
+        @if (app()->isProduction())
+          <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
+            {{ __('Minimum 12 characters with uppercase, lowercase, numbers, and symbols.') }}
+          </flux:text>
+        @else
+          <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
+            {{ __('Minimum 8 characters.') }}
+          </flux:text>
+        @endif
+      </div>
       <flux:input name="password_confirmation" :label="__('Confirm password')" type="password" required
         autocomplete="new-password" :placeholder="__('Confirm password')" viewable />
 

@@ -12,6 +12,7 @@ use App\Models\Project\TaskLabel;
 use App\Models\Project\TimeTracking;
 use App\Models\User;
 use Flux\Flux;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -43,7 +44,8 @@ class TaskDetail extends Component
     public bool $showSubtaskForm = false;
 
     // Attachments (task-level)
-    public mixed $uploadFile = null;
+    #[Rule(['uploadFiles.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'])]
+    public array $uploadFiles = [];
 
     // Labels
     public bool $showLabelForm = false;
@@ -72,7 +74,7 @@ class TaskDetail extends Component
 
     public array $activeItemAssigneeIds = [];
 
-    #[Rule(['activeItemFiles.*' => 'file|max:10240'])]
+    #[Rule(['activeItemFiles.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'])]
     public array $activeItemFiles = [];
 
     public function mount(?int $taskId = null): void
@@ -351,25 +353,32 @@ class TaskDetail extends Component
 
     // ─── Task-level Attachments ────────────────────────────────────
 
+    public function updatedUploadFiles(): void
+    {
+        $this->uploadAttachment();
+    }
+
     public function uploadAttachment(): void
     {
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $this->validate(['uploadFile' => 'required|file|max:10240']);
+        $this->validate(['uploadFiles.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip']);
 
-        $path = $this->uploadFile->store('task-attachments', 'public');
+        foreach ($this->uploadFiles as $file) {
+            $path = $file->store('task-attachments', 'public');
 
-        TaskAttachment::create([
-            'task_id' => $this->taskId,
-            'user_id' => auth()->id(),
-            'filename' => $this->uploadFile->getClientOriginalName(),
-            'path' => $path,
-            'mime_type' => $this->uploadFile->getMimeType(),
-            'size' => $this->uploadFile->getSize(),
-        ]);
+            TaskAttachment::create([
+                'task_id' => $this->taskId,
+                'user_id' => auth()->id(),
+                'filename' => $file->getClientOriginalName(),
+                'path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+            ]);
+        }
 
-        $this->reset('uploadFile');
+        $this->reset('uploadFiles');
         Flux::toast(__('messages.file_uploaded'), variant: 'success');
     }
 
@@ -378,7 +387,9 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        TaskAttachment::where('id', $attachmentId)->where('user_id', auth()->id())->delete();
+        $attachment = TaskAttachment::where('id', $attachmentId)->where('user_id', auth()->id())->firstOrFail();
+        Storage::disk('public')->delete($attachment->path);
+        $attachment->delete();
         Flux::toast(__('messages.attachment_deleted'), variant: 'danger');
     }
 
@@ -524,6 +535,17 @@ class TaskDetail extends Component
         Flux::toast(__('messages.checklist_item_due_date_updated'), variant: 'success');
     }
 
+    public function clearChecklistItemDueDate(): void
+    {
+        if (! $this->authorizeManageTask() || ! $this->activeChecklistItemId) {
+            return;
+        }
+        $this->activeItemDueDate = '';
+        TaskChecklistItem::findOrFail($this->activeChecklistItemId)
+            ->update(['due_date' => null]);
+        Flux::toast(__('messages.checklist_item_due_date_updated'), variant: 'success');
+    }
+
     public function updateChecklistItemAssignees(): void
     {
         if (! $this->authorizeManageTask() || ! $this->activeChecklistItemId) {
@@ -539,13 +561,18 @@ class TaskDetail extends Component
         Flux::toast(__('messages.checklist_item_assignees_updated'), variant: 'success');
     }
 
+    public function updatedActiveItemFiles(): void
+    {
+        $this->uploadChecklistItemFiles();
+    }
+
     public function uploadChecklistItemFiles(): void
     {
         if (! $this->authorizeManageTask() || ! $this->activeChecklistItemId) {
             return;
         }
 
-        $this->validate(['activeItemFiles.*' => 'file|max:10240']);
+        $this->validate(['activeItemFiles.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip']);
 
         $item = TaskChecklistItem::with('checklist')->findOrFail($this->activeChecklistItemId);
 
@@ -572,10 +599,12 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        TaskAttachment::where('id', $attachmentId)
+        $attachment = TaskAttachment::where('id', $attachmentId)
             ->where('task_checklist_item_id', $this->activeChecklistItemId)
             ->where('user_id', auth()->id())
-            ->delete();
+            ->firstOrFail();
+        Storage::disk('public')->delete($attachment->path);
+        $attachment->delete();
         Flux::toast(__('messages.attachment_deleted'), variant: 'danger');
     }
 
