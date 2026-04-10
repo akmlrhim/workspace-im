@@ -6,7 +6,15 @@
       "mcp__laravel-boost__database-schema",
       "Bash(vendor/bin/pint --dirty --format agent)",
       "mcp__laravel-boost__browser-logs",
-      "mcp__laravel-boost__search-docs"
+      "mcp__laravel-boost__search-docs",
+      "mcp__laravel-boost__last-error",
+      "Bash(node -e ':*)",
+      "Bash(npm run:*)",
+      "Bash(grep -E \"^\\\\[data-flux-modal\\\\]$|^\\\\[data-flux-dropdown\\\\]$|^ui-modal|^ui-dropdown|display.*block.*modal|display.*none\" e:/laragon/www/erp_im/vendor/livewire/flux/dist/flux.css)",
+      "Bash(xargs grep:*)",
+      "Bash(vendor/bin/pint --dirty --format agent app/Models/Project/Space.php app/Models/Project/SpaceMember.php app/Livewire/Project/SpaceShow.php)",
+      "mcp__laravel-boost__database-query",
+      "Bash(vendor/bin/pint app/Livewire/Project/SpaceIndex.php app/Livewire/Project/SpaceShow.php --format agent)"
     ]
   }
 }

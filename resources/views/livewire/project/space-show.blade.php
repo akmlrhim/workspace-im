@@ -186,11 +186,12 @@
     </div>
   </flux:modal>
 
+  {{-- Modal: Kelola Anggota List --}}
   <flux:modal wire:model="showManageMembers" class="w-full max-w-md">
     <div class="space-y-6">
       <div>
         <flux:heading size="lg">Kelola Anggota List</flux:heading>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Hanya anggota yang terdaftar di sini yang dapat di-assign ke task dalam list ini.</p>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Anggota yang terdaftar di sini dapat di-assign ke task dalam list ini dan space akan muncul di sidebar mereka.</p>
       </div>
 
       <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
@@ -198,9 +199,9 @@
           <label class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
             <flux:checkbox wire:model="listMemberIds" :value="$user->id" />
             <flux:avatar :name="$user->name" :initials="$user->initials()" :src="$user->avatar" size="sm" />
-            <div>
-              <span class="font-medium text-zinc-800 dark:text-zinc-200">{{ $user->name }}</span>
-              <span class="block text-xs text-zinc-400">{{ $user->email }}</span>
+            <div class="min-w-0 flex-1">
+              <span class="block font-medium text-zinc-800 dark:text-zinc-200">{{ $user->name }}</span>
+              <span class="block truncate text-xs text-zinc-400">{{ $user->email }}</span>
             </div>
           </label>
         @endforeach

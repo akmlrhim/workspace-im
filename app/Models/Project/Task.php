@@ -90,6 +90,11 @@ class Task extends Model
         return $this->hasMany(TimeTracking::class);
     }
 
+    public function checklists(): HasMany
+    {
+        return $this->hasMany(TaskChecklist::class)->orderBy('position');
+    }
+
     public function getPriorityColorAttribute(): string
     {
         return match ($this->priority) {
@@ -104,14 +109,22 @@ class Task extends Model
     public function canBeManagedBy(User $user): bool
     {
         // Creator
-        if ($this->created_by === $user->id) return true;
+        if ($this->created_by === $user->id) {
+            return true;
+        }
         // Legacy assigned setting
-        if ($this->assigned_to === $user->id) return true;
+        if ($this->assigned_to === $user->id) {
+            return true;
+        }
         // Member of the task via multiple assignees
-        if ($this->assignees->contains('id', $user->id)) return true;
+        if ($this->assignees->contains('id', $user->id)) {
+            return true;
+        }
         // Workspace Owner
         $workspace = $this->taskList?->space?->workspace;
-        if ($workspace && $workspace->owner_id === $user->id) return true;
+        if ($workspace && $workspace->owner_id === $user->id) {
+            return true;
+        }
 
         return false;
     }

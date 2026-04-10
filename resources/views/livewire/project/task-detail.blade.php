@@ -164,83 +164,270 @@
 
     <flux:separator />
 
+    {{-- ── Ceklis ────────────────────────────────────────────────── --}}
     <div>
       <div class="mb-3 flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-          Checklist
-          @if ($subtasks->isNotEmpty())
-            @php
-              $completedCount = $subtasks->where('is_completed', true)->count();
-              $totalCount = $subtasks->count();
-            @endphp
-            <span class="ml-1 text-zinc-400">({{ $completedCount }}/{{ $totalCount }})</span>
-          @endif
-        </h3>
+        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Ceklis</h3>
         @if ($canManage)
-          <flux:button icon="plus" size="xs" variant="ghost" wire:click="$toggle('showSubtaskForm')">Add
+          <flux:button icon="plus" size="xs" variant="ghost" wire:click="$toggle('showChecklistForm')">
+            Tambah Ceklis
           </flux:button>
         @endif
       </div>
 
-      @if ($subtasks->isNotEmpty())
-        @php $progress = $totalCount > 0 ? ($completedCount / $totalCount) * 100 : 0; @endphp
-        <div class="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-          <div
-            class="h-full rounded-full transition-all duration-300 {{ $progress == 100 ? 'bg-green-500' : 'bg-indigo-500' }}"
-            style="width: {{ $progress }}%"></div>
-        </div>
-      @endif
-
-      @if ($canManage && $showSubtaskForm)
-        <form wire:submit="addSubtask" class="mb-3 flex gap-2">
-          <flux:input wire:model="newSubtaskTitle" placeholder="Subtask title..." size="sm" class="flex-1"
-            autofocus />
-          <flux:button type="submit" size="sm" variant="primary">Add</flux:button>
+      @if ($canManage && $showChecklistForm)
+        <form wire:submit="addChecklist" class="mb-4 flex gap-2">
+          <flux:input wire:model="newChecklistName" placeholder="Nama ceklis..." size="sm" class="flex-1" autofocus />
+          <flux:button type="submit" size="sm" variant="primary">Tambah</flux:button>
+          <flux:button type="button" size="sm" variant="ghost" wire:click="$set('showChecklistForm', false)">Batal</flux:button>
         </form>
       @endif
 
-      <div class="space-y-0.5" x-data="{ editingId: null, editTitle: '' }">
-        @foreach ($subtasks as $subtask)
-          <div class="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 group"
-            wire:key="subtask-{{ $subtask->id }}">
-            <button
-              @if ($canManage) wire:click="toggleSubtaskComplete({{ $subtask->id }})" @else disabled @endif
-              class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors
-                {{ $subtask->is_completed ? 'border-green-500 bg-green-500 text-white' : 'border-zinc-300 dark:border-zinc-600' }}
-                {{ $canManage ? 'hover:border-indigo-400' : 'cursor-not-allowed opacity-60' }}">
-              @if ($subtask->is_completed)
-                <flux:icon name="check" class="size-3.5 text-white stroke-[3]" />
-              @endif
-            </button>
+      @forelse ($checklists as $checklist)
+        @php
+          $allItems   = $checklist->items;
+          $doneCount  = $allItems->where('is_completed', true)->count();
+          $totalItems = $allItems->count();
+          $pct        = $totalItems > 0 ? round(($doneCount / $totalItems) * 100) : 0;
+        @endphp
 
-            <span x-show="editingId !== {{ $subtask->id }}"
-              @if ($canManage) x-on:dblclick="editingId = {{ $subtask->id }}; editTitle = '{{ addslashes($subtask->title) }}'; $nextTick(() => $refs['edit_subtask_{{ $subtask->id }}'].focus())" @endif
-              class="flex-1 text-sm {{ $subtask->is_completed ? 'line-through text-zinc-400 dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-300' }} {{ $canManage ? 'cursor-text cursor-pointer' : '' }}">
-              {{ $subtask->title }}
+        <div class="mb-5" wire:key="cl-{{ $checklist->id }}">
+          {{-- Header --}}
+          <div class="mb-1 flex items-center gap-2" x-data="{ editing: false, name: '{{ addslashes($checklist->name) }}' }">
+            <flux:icon name="check-circle" class="size-4 shrink-0 text-indigo-500" />
+
+            <span x-show="!editing" @if ($canManage) x-on:dblclick="editing = true; $nextTick(() => $refs['cl_name_{{ $checklist->id }}'].focus())" @endif
+              class="flex-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300 {{ $canManage ? 'cursor-text' : '' }}">
+              {{ $checklist->name }}
             </span>
 
-            <div x-show="editingId === {{ $subtask->id }}" x-cloak class="flex-1">
-              <flux:input x-ref="edit_subtask_{{ $subtask->id }}" x-model="editTitle"
-                x-on:keydown.enter="$wire.editSubtaskTitle({{ $subtask->id }}, editTitle); editingId = null"
-                x-on:keydown.escape="editingId = null" x-on:blur="editingId = null" size="sm" />
-            </div>
+            <input x-show="editing" x-cloak x-ref="cl_name_{{ $checklist->id }}" x-model="name"
+              x-on:keydown.enter="$wire.editChecklistName({{ $checklist->id }}, name); editing = false"
+              x-on:keydown.escape="editing = false" x-on:blur="editing = false"
+              class="flex-1 rounded border border-zinc-300 bg-white px-2 py-0.5 text-sm text-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200" />
+
+            <span class="text-xs text-zinc-400">{{ $doneCount }}/{{ $totalItems }}</span>
 
             @if ($canManage)
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button type="button"
-                  x-on:click="editingId = {{ $subtask->id }}; editTitle = '{{ addslashes($subtask->title) }}'; $nextTick(() => $refs['edit_subtask_{{ $subtask->id }}'].focus())"
-                  class="text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400">
-                  <flux:icon name="pencil" class="size-3.5" />
-                </button>
-                <button type="button" wire:click="deleteSubtask({{ $subtask->id }})"
-                  class="text-zinc-400 hover:text-red-600 dark:hover:text-red-400">
-                  <flux:icon name="trash" class="size-3.5" />
-                </button>
-              </div>
+              <button wire:click="deleteChecklist({{ $checklist->id }})"
+                class="text-zinc-300 hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 transition-colors">
+                <flux:icon name="trash" class="size-3.5" />
+              </button>
             @endif
           </div>
-        @endforeach
-      </div>
+
+          {{-- Progress bar --}}
+          <div class="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+            <div class="h-full rounded-full transition-all duration-300 {{ $pct == 100 ? 'bg-green-500' : 'bg-indigo-500' }}"
+              style="width: {{ $pct }}%"></div>
+          </div>
+
+          {{-- Items --}}
+          <div class="space-y-0.5" x-data="{ editingItemId: null, editTitle: '' }">
+            @foreach ($allItems as $item)
+              @php $isActive = $activeChecklistItemId === $item->id; @endphp
+              <div wire:key="cli-{{ $item->id }}"
+                class="rounded-lg border {{ $isActive ? 'border-indigo-200 dark:border-indigo-800' : 'border-transparent' }}">
+
+                {{-- Item row --}}
+                <div class="group flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 rounded-lg">
+                  {{-- Checkbox --}}
+                  <button
+                    @if ($canManage) wire:click="toggleChecklistItem({{ $item->id }})" @else disabled @endif
+                    class="flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors
+                      {{ $item->is_completed ? 'border-green-500 bg-green-500' : 'border-zinc-300 dark:border-zinc-600' }}
+                      {{ $canManage ? 'hover:border-indigo-400' : 'cursor-not-allowed opacity-60' }}">
+                    @if ($item->is_completed)
+                      <flux:icon name="check" class="size-3 text-white stroke-[3]" />
+                    @endif
+                  </button>
+
+                  {{-- Title (inline edit) --}}
+                  <span x-show="editingItemId !== {{ $item->id }}"
+                    @if ($canManage) x-on:dblclick="editingItemId = {{ $item->id }}; editTitle = '{{ addslashes($item->title) }}'; $nextTick(() => $refs['edit_cli_{{ $item->id }}'].focus())" @endif
+                    class="flex-1 text-sm {{ $item->is_completed ? 'line-through text-zinc-400 dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-300' }} {{ $canManage ? 'cursor-text' : '' }}">
+                    {{ $item->title }}
+                  </span>
+                  <input x-show="editingItemId === {{ $item->id }}" x-cloak
+                    x-ref="edit_cli_{{ $item->id }}" x-model="editTitle"
+                    x-on:keydown.enter="$wire.editChecklistItemTitle({{ $item->id }}, editTitle); editingItemId = null"
+                    x-on:keydown.escape="editingItemId = null" x-on:blur="editingItemId = null"
+                    class="flex-1 rounded border border-zinc-300 bg-white px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200" />
+
+                  {{-- Action buttons --}}
+                  <div class="flex shrink-0 items-center gap-1 {{ $canManage ? 'opacity-0 group-hover:opacity-100' : 'opacity-60' }} transition-opacity">
+                    @if ($canManage)
+                      {{-- Expand panel --}}
+                      <button wire:click="openChecklistItemPanel({{ $item->id }})"
+                        class="flex items-center gap-0.5 rounded px-1 py-0.5 text-xs transition-colors {{ $isActive ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' : 'text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400' }}"
+                        title="Kelola assignee, tanggal & lampiran">
+                        <flux:icon name="ellipsis-horizontal" class="size-4" />
+                      </button>
+                    @endif
+
+                    {{-- Assignee avatars --}}
+                    @if ($item->assignees->isNotEmpty())
+                      <div class="flex -space-x-1">
+                        @foreach ($item->assignees->take(3) as $a)
+                          <flux:avatar :name="$a->name" :initials="$a->initials()" :src="$a->avatar" size="xs"
+                            class="ring-1 ring-white dark:ring-zinc-800" />
+                        @endforeach
+                      </div>
+                    @endif
+
+                    {{-- Attachment count --}}
+                    @if ($item->attachments->isNotEmpty())
+                      <span class="flex items-center gap-0.5 text-xs text-zinc-400">
+                        <flux:icon name="paper-clip" class="size-3.5" />
+                        {{ $item->attachments->count() }}
+                      </span>
+                    @endif
+
+                    {{-- Due date badge --}}
+                    @if ($item->due_date)
+                      @php
+                        $badgeClass = $item->is_completed
+                            ? 'bg-green-500 text-white'
+                            : ($item->due_date->isPast()
+                                ? 'bg-red-500 text-white'
+                                : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300');
+                      @endphp
+                      <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $badgeClass }}">
+                        {{ $item->due_date->format('d M') }}
+                        @if ($item->is_completed) ✓ @endif
+                      </span>
+                    @endif
+
+                    @if ($canManage)
+                      {{-- Delete --}}
+                      <button wire:click="deleteChecklistItem({{ $item->id }})"
+                        class="text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                        <flux:icon name="trash" class="size-3.5" />
+                      </button>
+                    @endif
+                  </div>
+                </div>
+
+                {{-- Expanded panel for active item --}}
+                @if ($isActive)
+                  <div class="mx-2 mb-2 space-y-3 rounded-lg border border-zinc-100 bg-zinc-50/80 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+
+                    {{-- Assignees --}}
+                    <div>
+                      <p class="mb-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">Assign ke</p>
+                      @if ($task->assignees->isEmpty())
+                        <p class="text-xs text-zinc-400">Belum ada anggota di task ini.</p>
+                      @else
+                        <div class="flex flex-wrap gap-1.5">
+                          @foreach ($task->assignees as $member)
+                            @php $checked = in_array($member->id, $activeItemAssigneeIds); @endphp
+                            <label class="flex cursor-pointer items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition-colors
+                              {{ $checked ? 'border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 dark:border-zinc-600 dark:text-zinc-400' }}">
+                              <input type="checkbox" wire:model="activeItemAssigneeIds" value="{{ $member->id }}"
+                                wire:change="updateChecklistItemAssignees" class="hidden" />
+                              <flux:avatar :name="$member->name" :initials="$member->initials()" :src="$member->avatar" size="xs" />
+                              {{ $member->name }}
+                            </label>
+                          @endforeach
+                        </div>
+                      @endif
+                    </div>
+
+                    {{-- Due date --}}
+                    <div>
+                      <p class="mb-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">Tanggal</p>
+                      <div class="flex items-center gap-2">
+                        <flux:input type="date" wire:model="activeItemDueDate" size="sm" class="w-44" />
+                        <flux:button size="xs" variant="primary" wire:click="updateChecklistItemDueDate">Simpan</flux:button>
+                        @if ($activeItemDueDate)
+                          <flux:button size="xs" variant="ghost" wire:click="$set('activeItemDueDate', '')" class="text-red-500">Hapus</flux:button>
+                        @endif
+                      </div>
+                    </div>
+
+                    {{-- Attachments --}}
+                    <div>
+                      <p class="mb-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                        Lampiran
+                        @if ($activeItemAttachments->isNotEmpty())
+                          <span class="text-zinc-400">({{ $activeItemAttachments->count() }})</span>
+                        @endif
+                      </p>
+
+                      {{-- Multi-upload zone --}}
+                      <label class="mb-2 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-zinc-300 px-3 py-2 text-xs text-zinc-500 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600">
+                        <flux:icon name="cloud-arrow-up" class="size-4" />
+                        <span>Pilih file (multi)</span>
+                        <input type="file" wire:model="activeItemFiles" multiple class="hidden" />
+                      </label>
+
+                      @if (!empty($activeItemFiles))
+                        <div class="mb-2 space-y-1">
+                          @foreach ($activeItemFiles as $f)
+                            <div class="flex items-center gap-1.5 text-xs text-zinc-500">
+                              <flux:icon name="document" class="size-3.5 shrink-0" />
+                              <span class="truncate">{{ $f->getClientOriginalName() }}</span>
+                              <span class="shrink-0 text-zinc-400">{{ number_format($f->getSize() / 1024, 0) }} KB</span>
+                            </div>
+                          @endforeach
+                        </div>
+                        <flux:button size="xs" variant="primary" wire:click="uploadChecklistItemFiles" class="w-full">
+                          Upload {{ count($activeItemFiles) }} file
+                        </flux:button>
+                      @endif
+
+                      {{-- Existing attachments --}}
+                      @if ($activeItemAttachments->isNotEmpty())
+                        <div class="mt-2 space-y-1">
+                          @foreach ($activeItemAttachments as $att)
+                            <div class="flex items-center justify-between rounded-md px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                              wire:key="cli-att-{{ $att->id }}">
+                              <div class="flex min-w-0 items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
+                                <flux:icon name="document" class="size-3.5 shrink-0 text-zinc-400" />
+                                <span class="truncate">{{ $att->filename }}</span>
+                                <span class="shrink-0 text-zinc-400">{{ number_format($att->size / 1024, 1) }} KB</span>
+                              </div>
+                              <button wire:click="deleteChecklistItemAttachment({{ $att->id }})"
+                                class="ml-2 text-zinc-400 hover:text-red-500">
+                                <flux:icon name="trash" class="size-3.5" />
+                              </button>
+                            </div>
+                          @endforeach
+                        </div>
+                      @endif
+                    </div>
+
+                    <div class="flex justify-end">
+                      <flux:button size="xs" variant="ghost" wire:click="closeChecklistItemPanel">Tutup</flux:button>
+                    </div>
+                  </div>
+                @endif
+              </div>
+            @endforeach
+          </div>
+
+          {{-- Add item button / form --}}
+          @if ($canManage)
+            @if ($addingItemToChecklistId === $checklist->id)
+              <form wire:submit="addChecklistItem" class="mt-2 flex gap-2 pl-2">
+                <flux:input wire:model="newChecklistItemTitle" placeholder="Judul sub tugas..." size="sm" class="flex-1" autofocus />
+                <flux:button type="submit" size="sm" variant="primary">Tambah</flux:button>
+                <flux:button type="button" size="sm" variant="ghost" wire:click="openAddChecklistItem({{ $checklist->id }})">Batal</flux:button>
+              </form>
+            @else
+              <button wire:click="openAddChecklistItem({{ $checklist->id }})"
+                class="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 transition-colors hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-600 dark:hover:border-zinc-500 dark:hover:text-zinc-300">
+                <flux:icon name="plus" class="size-3.5" />
+                Tambah Sub Tugas
+              </button>
+            @endif
+          @endif
+        </div>
+      @empty
+        @if (!$showChecklistForm)
+          <p class="text-xs text-zinc-400">Belum ada ceklis. Klik "Tambah Ceklis" untuk memulai.</p>
+        @endif
+      @endforelse
     </div>
 
     <flux:separator />

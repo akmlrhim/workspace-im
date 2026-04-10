@@ -11,6 +11,21 @@
     <div>
       <span class="font-medium text-zinc-900 dark:text-white group-hover:underline">{{ $list->name }}</span>
       <span class="mx-2 text-xs text-zinc-400 dark:text-zinc-500">{{ $list->tasks_count }} tasks</span>
+      @if ($list->members->isNotEmpty())
+        <div class="mt-1 flex items-center">
+          <flux:avatar.group>
+            @foreach ($list->members->take(4) as $member)
+              <flux:avatar :name="$member->name" :initials="$member->initials()" :src="$member->avatar" size="xs"
+                class="ring-1 ring-white dark:ring-zinc-800" />
+            @endforeach
+            @if ($list->members->count() > 4)
+              <flux:avatar size="xs" class="ring-1 ring-white dark:ring-zinc-800">
+                +{{ $list->members->count() - 4 }}
+              </flux:avatar>
+            @endif
+          </flux:avatar.group>
+        </div>
+      @endif
     </div>
   </div>
 

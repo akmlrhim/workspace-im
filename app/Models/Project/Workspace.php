@@ -16,7 +16,7 @@ class Workspace extends Model
     {
         static::creating(function (Workspace $workspace) {
             if (empty($workspace->slug)) {
-                $workspace->slug = Str::slug($workspace->name);
+                $workspace->slug = Str::slug($workspace->name).uniqid();
             }
         });
     }

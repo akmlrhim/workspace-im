@@ -83,11 +83,13 @@ class TaskFormModal extends Component
                 'created_by' => auth()->id(),
             ]);
 
-            if (! empty($this->formTaskAssignees)) {
-                $listMemberIds = $this->taskList->members()->pluck('users.id')->toArray();
-                $validAssignees = array_values(array_intersect($this->formTaskAssignees, $listMemberIds));
-                $task->assignees()->sync($validAssignees);
-            }
+            // Ensure creator is a list member so they can be auto-assigned
+            $this->taskList->members()->syncWithoutDetaching([auth()->id()]);
+
+            $listMemberIds = $this->taskList->members()->pluck('users.id')->toArray();
+            // Always include creator; merge with any selected assignees, filter to list members only
+            $toSync = array_values(array_unique(array_merge($this->formTaskAssignees, [auth()->id()])));
+            $task->assignees()->sync(array_values(array_intersect($toSync, $listMemberIds)));
 
             TaskActivity::create([
                 'task_id' => $task->id,

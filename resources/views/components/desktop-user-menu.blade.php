@@ -1,4 +1,4 @@
-<flux:dropdown position="top" align="start" x-on:scroll.window="$popover.close()">
+<flux:dropdown position="top" align="start" teleport>
   <flux:sidebar.profile :name="auth()->user()->name" :initials="auth()->user()->initials()"
     :avatar="auth()->user()->avatar" icon:trailing="chevrons-up-down" data-test="sidebar-menu-button" />
 

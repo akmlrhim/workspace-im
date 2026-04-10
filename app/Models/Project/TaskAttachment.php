@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TaskAttachment extends Model
 {
-    protected $fillable = ['task_id', 'task_comment_id', 'user_id', 'filename', 'path', 'mime_type', 'size'];
+    protected $fillable = ['task_id', 'task_comment_id', 'task_checklist_item_id', 'user_id', 'filename', 'path', 'mime_type', 'size'];
 
     public function task(): BelongsTo
     {
@@ -18,6 +18,11 @@ class TaskAttachment extends Model
     public function comment(): BelongsTo
     {
         return $this->belongsTo(TaskComment::class, 'task_comment_id');
+    }
+
+    public function checklistItem(): BelongsTo
+    {
+        return $this->belongsTo(TaskChecklistItem::class, 'task_checklist_item_id');
     }
 
     public function user(): BelongsTo

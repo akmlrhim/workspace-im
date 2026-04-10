@@ -5,11 +5,14 @@ namespace App\Livewire\Project;
 use App\Models\Project\Task;
 use App\Models\Project\TaskActivity;
 use App\Models\Project\TaskAttachment;
+use App\Models\Project\TaskChecklist;
+use App\Models\Project\TaskChecklistItem;
 use App\Models\Project\TaskComment;
 use App\Models\Project\TaskLabel;
 use App\Models\Project\TimeTracking;
 use App\Models\User;
 use Flux\Flux;
+use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -34,13 +37,13 @@ class TaskDetail extends Component
     // Comments
     public string $newComment = '';
 
-    // Subtasks
+    // Subtasks (legacy, kept for backward compat)
     public string $newSubtaskTitle = '';
 
     public bool $showSubtaskForm = false;
 
-    // Attachments
-    public $uploadFile = null;
+    // Attachments (task-level)
+    public mixed $uploadFile = null;
 
     // Labels
     public bool $showLabelForm = false;
@@ -51,6 +54,26 @@ class TaskDetail extends Component
 
     // Timer
     public ?int $activeTimerId = null;
+
+    // ── Checklist ────────────────────────────────────────────────────
+    public bool $showChecklistForm = false;
+
+    public string $newChecklistName = '';
+
+    // Which checklist's "add item" form is open
+    public ?int $addingItemToChecklistId = null;
+
+    public string $newChecklistItemTitle = '';
+
+    // Active item panel (for assignees / due date / attachments)
+    public ?int $activeChecklistItemId = null;
+
+    public string $activeItemDueDate = '';
+
+    public array $activeItemAssigneeIds = [];
+
+    #[Rule(['activeItemFiles.*' => 'file|max:10240'])]
+    public array $activeItemFiles = [];
 
     public function mount(?int $taskId = null): void
     {
@@ -70,7 +93,6 @@ class TaskDetail extends Component
         $this->taskDueDate = $task->due_date?->format('Y-m-d');
         $this->taskAssigneeIds = $task->assignees->pluck('id')->toArray();
 
-        // Check active timer
         $activeTimer = TimeTracking::where('task_id', $taskId)
             ->where('user_id', auth()->id())
             ->whereNull('stopped_at')
@@ -80,7 +102,7 @@ class TaskDetail extends Component
 
     private function authorizeManageTask(): bool
     {
-        $task = Task::findOrFail($this->taskId);
+        $task = Task::with('assignees')->findOrFail($this->taskId);
         if (! $task->canBeManagedBy(auth()->user())) {
             Flux::toast(__('messages.no_permission_modify_task'), variant: 'danger');
 
@@ -95,8 +117,7 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $task = Task::findOrFail($this->taskId);
-        $task->update(['title' => $this->taskTitle]);
+        Task::findOrFail($this->taskId)->update(['title' => $this->taskTitle]);
         $this->dispatch('task-updated');
     }
 
@@ -105,8 +126,7 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $task = Task::findOrFail($this->taskId);
-        $task->update(['description' => $this->taskDescription]);
+        Task::findOrFail($this->taskId)->update(['description' => $this->taskDescription]);
         Flux::toast(__('messages.description_saved'), variant: 'success');
     }
 
@@ -160,8 +180,7 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $task = Task::findOrFail($this->taskId);
-        $task->update(['due_date' => $this->taskDueDate ?: null]);
+        Task::findOrFail($this->taskId)->update(['due_date' => $this->taskDueDate ?: null]);
         $this->dispatch('task-updated');
         Flux::toast(__('messages.due_date_updated'), variant: 'success');
     }
@@ -173,13 +192,11 @@ class TaskDetail extends Component
         }
         $task = Task::with('taskList.members')->findOrFail($this->taskId);
 
-        // Validate: only list members can be assigned
         $listMemberIds = $task->taskList->members->pluck('id')->toArray();
         $invalidIds = array_diff($this->taskAssigneeIds, $listMemberIds);
 
         if (! empty($invalidIds)) {
             Flux::toast(__('messages.assignee_not_list_member'), variant: 'danger');
-            // Revert selection to valid members only
             $this->taskAssigneeIds = array_values(array_intersect($this->taskAssigneeIds, $listMemberIds));
 
             return;
@@ -206,8 +223,7 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $task = Task::findOrFail($this->taskId);
-        $task->labels()->toggle($labelId);
+        Task::findOrFail($this->taskId)->labels()->toggle($labelId);
         $this->dispatch('task-updated');
     }
 
@@ -217,9 +233,7 @@ class TaskDetail extends Component
             return;
         }
 
-        $this->validate([
-            'newLabelName' => 'required|min:1|max:100',
-        ]);
+        $this->validate(['newLabelName' => 'required|min:1|max:100']);
 
         $task = Task::with('taskList.space.workspace')->findOrFail($this->taskId);
         $workspaceId = $task->taskList->space->workspace->id;
@@ -230,7 +244,6 @@ class TaskDetail extends Component
             'color' => $this->newLabelColor,
         ]);
 
-        // Auto-attach to current task
         $task->labels()->attach($label->id);
 
         $this->reset(['newLabelName', 'newLabelColor', 'showLabelForm']);
@@ -240,7 +253,8 @@ class TaskDetail extends Component
         Flux::toast(__('messages.label_created_attached'), variant: 'success');
     }
 
-    // Comments
+    // ─── Comments ──────────────────────────────────────────────────
+
     public function addComment(): void
     {
         $this->validate(['newComment' => 'required|min:1']);
@@ -261,7 +275,8 @@ class TaskDetail extends Component
         Flux::toast(__('messages.comment_deleted'), variant: 'danger');
     }
 
-    // Subtasks
+    // ─── Subtasks (legacy) ─────────────────────────────────────────
+
     public function addSubtask(): void
     {
         if (! $this->authorizeManageTask()) {
@@ -296,7 +311,6 @@ class TaskDetail extends Component
         $subtask = Task::where('parent_id', $this->taskId)->findOrFail($subtaskId);
         $subtask->update(['is_completed' => ! $subtask->is_completed]);
 
-        // If completed, move to last status (Done)
         if ($subtask->is_completed) {
             $doneStatus = $subtask->taskList->statuses()->orderByDesc('position')->first();
             if ($doneStatus) {
@@ -322,8 +336,7 @@ class TaskDetail extends Component
             return;
         }
 
-        $subtask = Task::where('parent_id', $this->taskId)->findOrFail($subtaskId);
-        $subtask->update(['title' => $newTitle]);
+        Task::where('parent_id', $this->taskId)->findOrFail($subtaskId)->update(['title' => $newTitle]);
         Flux::toast(__('messages.subtask_updated'), variant: 'success');
     }
 
@@ -332,12 +345,12 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $subtask = Task::where('parent_id', $this->taskId)->findOrFail($subtaskId);
-        $subtask->delete();
+        Task::where('parent_id', $this->taskId)->findOrFail($subtaskId)->delete();
         Flux::toast(__('messages.subtask_deleted'), variant: 'success');
     }
 
-    // Attachments
+    // ─── Task-level Attachments ────────────────────────────────────
+
     public function uploadAttachment(): void
     {
         if (! $this->authorizeManageTask()) {
@@ -369,7 +382,205 @@ class TaskDetail extends Component
         Flux::toast(__('messages.attachment_deleted'), variant: 'danger');
     }
 
-    // Time tracking
+    // ─── Checklist Groups ──────────────────────────────────────────
+
+    public function addChecklist(): void
+    {
+        if (! $this->authorizeManageTask()) {
+            return;
+        }
+        $this->validate(['newChecklistName' => 'required|min:1|max:200']);
+
+        $maxPosition = TaskChecklist::where('task_id', $this->taskId)->max('position') ?? -1;
+
+        TaskChecklist::create([
+            'task_id' => $this->taskId,
+            'name' => trim($this->newChecklistName),
+            'position' => $maxPosition + 1,
+        ]);
+
+        $this->reset(['newChecklistName', 'showChecklistForm']);
+        Flux::toast(__('messages.checklist_created'), variant: 'success');
+    }
+
+    public function deleteChecklist(int $checklistId): void
+    {
+        if (! $this->authorizeManageTask()) {
+            return;
+        }
+        TaskChecklist::where('task_id', $this->taskId)->findOrFail($checklistId)->delete();
+        Flux::toast(__('messages.checklist_deleted'), variant: 'danger');
+    }
+
+    public function editChecklistName(int $checklistId, string $name): void
+    {
+        if (! $this->authorizeManageTask()) {
+            return;
+        }
+        $name = trim($name);
+        if (empty($name)) {
+            return;
+        }
+        TaskChecklist::where('task_id', $this->taskId)->findOrFail($checklistId)->update(['name' => $name]);
+    }
+
+    // ─── Checklist Items ───────────────────────────────────────────
+
+    public function openAddChecklistItem(int $checklistId): void
+    {
+        $this->addingItemToChecklistId = $this->addingItemToChecklistId === $checklistId ? null : $checklistId;
+        $this->newChecklistItemTitle = '';
+    }
+
+    public function addChecklistItem(): void
+    {
+        if (! $this->authorizeManageTask()) {
+            return;
+        }
+        $this->validate(['newChecklistItemTitle' => 'required|min:1|max:500']);
+
+        $checklist = TaskChecklist::where('task_id', $this->taskId)->findOrFail($this->addingItemToChecklistId);
+        $maxPosition = $checklist->items()->max('position') ?? -1;
+
+        TaskChecklistItem::create([
+            'task_checklist_id' => $checklist->id,
+            'title' => trim($this->newChecklistItemTitle),
+            'position' => $maxPosition + 1,
+            'created_by' => auth()->id(),
+        ]);
+
+        $this->reset(['newChecklistItemTitle', 'addingItemToChecklistId']);
+        Flux::toast(__('messages.checklist_item_added'), variant: 'success');
+    }
+
+    public function toggleChecklistItem(int $itemId): void
+    {
+        if (! $this->authorizeManageTask()) {
+            return;
+        }
+        $item = TaskChecklistItem::findOrFail($itemId);
+        $item->update(['is_completed' => ! $item->is_completed]);
+    }
+
+    public function editChecklistItemTitle(int $itemId, string $title): void
+    {
+        if (! $this->authorizeManageTask()) {
+            return;
+        }
+        $title = trim($title);
+        if (empty($title)) {
+            return;
+        }
+        TaskChecklistItem::findOrFail($itemId)->update(['title' => $title]);
+        Flux::toast(__('messages.checklist_item_updated'), variant: 'success');
+    }
+
+    public function deleteChecklistItem(int $itemId): void
+    {
+        if (! $this->authorizeManageTask()) {
+            return;
+        }
+        TaskChecklistItem::findOrFail($itemId)->delete();
+
+        if ($this->activeChecklistItemId === $itemId) {
+            $this->closeChecklistItemPanel();
+        }
+
+        Flux::toast(__('messages.checklist_item_deleted'), variant: 'danger');
+    }
+
+    // ─── Checklist Item Panel (assignees / due date / attachments) ─
+
+    public function openChecklistItemPanel(int $itemId): void
+    {
+        if ($this->activeChecklistItemId === $itemId) {
+            $this->closeChecklistItemPanel();
+
+            return;
+        }
+
+        $item = TaskChecklistItem::with('assignees')->findOrFail($itemId);
+        $this->activeChecklistItemId = $itemId;
+        $this->activeItemDueDate = $item->due_date?->format('Y-m-d') ?? '';
+        $this->activeItemAssigneeIds = $item->assignees->pluck('id')->toArray();
+        $this->activeItemFiles = [];
+    }
+
+    public function closeChecklistItemPanel(): void
+    {
+        $this->activeChecklistItemId = null;
+        $this->activeItemDueDate = '';
+        $this->activeItemAssigneeIds = [];
+        $this->activeItemFiles = [];
+    }
+
+    public function updateChecklistItemDueDate(): void
+    {
+        if (! $this->authorizeManageTask() || ! $this->activeChecklistItemId) {
+            return;
+        }
+        TaskChecklistItem::findOrFail($this->activeChecklistItemId)
+            ->update(['due_date' => $this->activeItemDueDate ?: null]);
+        Flux::toast(__('messages.checklist_item_due_date_updated'), variant: 'success');
+    }
+
+    public function updateChecklistItemAssignees(): void
+    {
+        if (! $this->authorizeManageTask() || ! $this->activeChecklistItemId) {
+            return;
+        }
+
+        // Only allow task assignees
+        $taskAssigneeIds = Task::findOrFail($this->taskId)->assignees()->pluck('users.id')->toArray();
+        $validIds = array_values(array_intersect($this->activeItemAssigneeIds, $taskAssigneeIds));
+        $this->activeItemAssigneeIds = $validIds;
+
+        TaskChecklistItem::findOrFail($this->activeChecklistItemId)->assignees()->sync($validIds);
+        Flux::toast(__('messages.checklist_item_assignees_updated'), variant: 'success');
+    }
+
+    public function uploadChecklistItemFiles(): void
+    {
+        if (! $this->authorizeManageTask() || ! $this->activeChecklistItemId) {
+            return;
+        }
+
+        $this->validate(['activeItemFiles.*' => 'file|max:10240']);
+
+        $item = TaskChecklistItem::with('checklist')->findOrFail($this->activeChecklistItemId);
+
+        foreach ($this->activeItemFiles as $file) {
+            $path = $file->store('task-attachments', 'public');
+
+            TaskAttachment::create([
+                'task_id' => $item->checklist->task_id,
+                'task_checklist_item_id' => $item->id,
+                'user_id' => auth()->id(),
+                'filename' => $file->getClientOriginalName(),
+                'path' => $path,
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+            ]);
+        }
+
+        $this->activeItemFiles = [];
+        Flux::toast(__('messages.file_uploaded'), variant: 'success');
+    }
+
+    public function deleteChecklistItemAttachment(int $attachmentId): void
+    {
+        if (! $this->authorizeManageTask()) {
+            return;
+        }
+        TaskAttachment::where('id', $attachmentId)
+            ->where('task_checklist_item_id', $this->activeChecklistItemId)
+            ->where('user_id', auth()->id())
+            ->delete();
+        Flux::toast(__('messages.attachment_deleted'), variant: 'danger');
+    }
+
+    // ─── Time tracking ─────────────────────────────────────────────
+
     public function startTimer(): void
     {
         if (! $this->authorizeManageTask()) {
@@ -411,6 +622,7 @@ class TaskDetail extends Component
         $task = null;
         $comments = collect();
         $subtasks = collect();
+        $checklists = collect();
         $attachments = collect();
         $activities = collect();
         $timeEntries = collect();
@@ -418,22 +630,36 @@ class TaskDetail extends Component
         $totalTimeSeconds = 0;
         $workspaceUsers = collect();
         $canManage = false;
-
         $allLabels = collect();
+        $activeItemAttachments = collect();
 
         if ($this->taskId) {
-            $task = Task::with(['status', 'assignees', 'labels', 'creator', 'taskList.statuses.tasks', 'taskList.space.workspace'])->find($this->taskId);
+            $task = Task::with([
+                'status', 'assignees', 'labels', 'creator',
+                'taskList.statuses.tasks', 'taskList.space.workspace',
+            ])->find($this->taskId);
+
             if ($task) {
                 $canManage = $task->canBeManagedBy(auth()->user());
                 $comments = $task->comments()->with(['user', 'replies.user'])->get();
                 $subtasks = $task->subtasks()->with('status')->get();
-                $attachments = $task->attachments()->with('user')->latest()->get();
+                $checklists = $task->checklists()->with([
+                    'items' => fn ($q) => $q->with(['assignees', 'attachments.user']),
+                ])->get();
+                $attachments = $task->attachments()
+                    ->whereNull('task_checklist_item_id')
+                    ->with('user')->latest()->get();
                 $activities = $task->activities()->with('user')->latest()->take(20)->get();
                 $timeEntries = $task->timeTrackings()->where('user_id', auth()->id())->latest()->take(10)->get();
                 $statuses = $task->taskList->statuses()->orderBy('position')->get();
                 $totalTimeSeconds = $task->timeTrackings()->where('user_id', auth()->id())->sum('duration_seconds');
                 $workspaceUsers = $task->taskList->members()->orderBy('name')->get();
                 $allLabels = TaskLabel::where('workspace_id', $task->taskList->space->workspace->id)->orderBy('name')->get();
+
+                if ($this->activeChecklistItemId) {
+                    $activeItemAttachments = TaskAttachment::where('task_checklist_item_id', $this->activeChecklistItemId)
+                        ->with('user')->latest()->get();
+                }
             }
         }
 
@@ -442,6 +668,7 @@ class TaskDetail extends Component
             'canManage' => $canManage,
             'comments' => $comments,
             'subtasks' => $subtasks,
+            'checklists' => $checklists,
             'attachments' => $attachments,
             'activities' => $activities,
             'timeEntries' => $timeEntries,
@@ -449,6 +676,7 @@ class TaskDetail extends Component
             'totalTimeSeconds' => $totalTimeSeconds,
             'workspaceUsers' => $workspaceUsers,
             'allLabels' => $allLabels,
+            'activeItemAttachments' => $activeItemAttachments,
         ]);
     }
 }

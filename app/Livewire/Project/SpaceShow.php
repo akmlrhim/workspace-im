@@ -45,7 +45,7 @@ class SpaceShow extends Component
 
     public ?int $deletingFolderId = null;
 
-    // Member management
+    // List member management
     public bool $showManageMembers = false;
 
     public ?int $managingListId = null;
@@ -59,7 +59,7 @@ class SpaceShow extends Component
 
     public function getTitle(): string
     {
-        return $this->space->name.' — Space';
+        return $this->space->name.' Space';
     }
 
     public function openCreateList(?int $folderId = null): void
@@ -75,7 +75,7 @@ class SpaceShow extends Component
 
     public function createList(): void
     {
-        $this->validate(['listName' => 'required|min:2|max:100']);
+        $this->validate(['listName' => 'required|min:2|max:100|unique:task_lists,name,NULL,id,space_id,'.$this->space->id]);
 
         $maxPosition = $this->space->lists()->max('position') ?? -1;
 
@@ -86,6 +86,7 @@ class SpaceShow extends Component
         ]);
 
         $list->createDefaultStatuses();
+        $list->members()->attach(auth()->id());
 
         $this->reset(['listName', 'listFolderId', 'showCreateList']);
         Flux::toast(__('messages.list_created'), variant: 'success');
@@ -93,7 +94,7 @@ class SpaceShow extends Component
 
     public function createFolder(): void
     {
-        $this->validate(['folderName' => 'required|min:2|max:100']);
+        $this->validate(['folderName' => 'required|min:2|max:100|unique:folders,name,NULL,id,space_id,'.$this->space->id]);
 
         $maxPosition = $this->space->folders()->max('position') ?? -1;
 
@@ -116,7 +117,7 @@ class SpaceShow extends Component
 
     public function updateList(): void
     {
-        $this->validate(['editListName' => 'required|min:2|max:100']);
+        $this->validate(['editListName' => 'required|min:2|max:100|unique:task_lists,name,'.$this->editingListId.',id,space_id,'.$this->space->id]);
 
         TaskList::findOrFail($this->editingListId)->update([
             'name' => $this->editListName,
@@ -136,7 +137,7 @@ class SpaceShow extends Component
 
     public function updateFolder(): void
     {
-        $this->validate(['editFolderName' => 'required|min:2|max:100']);
+        $this->validate(['editFolderName' => 'required|min:2|max:100|unique:folders,name,'.$this->editingFolderId.',id,space_id,'.$this->space->id]);
 
         Folder::findOrFail($this->editingFolderId)->update([
             'name' => $this->editFolderName,
@@ -167,6 +168,16 @@ class SpaceShow extends Component
         $this->showDeleteFolderConfirm = true;
     }
 
+    public function deleteFolder(): void
+    {
+        if ($this->deletingFolderId) {
+            Folder::findOrFail($this->deletingFolderId)->delete();
+        }
+        $this->reset(['deletingFolderId', 'showDeleteFolderConfirm']);
+        Flux::toast(__('messages.folder_deleted'), variant: 'danger');
+    }
+
+    // List member management
     public function openManageMembers(int $listId): void
     {
         $list = TaskList::with('members')->findOrFail($listId);
@@ -179,14 +190,10 @@ class SpaceShow extends Component
     {
         $list = TaskList::with(['members', 'tasks'])->findOrFail($this->managingListId);
 
-        // Determine users being removed
-        $currentMemberIds = $list->members->pluck('id')->toArray();
-        $removedIds = array_diff($currentMemberIds, $this->listMemberIds);
+        $removedIds = array_diff($list->members->pluck('id')->toArray(), $this->listMemberIds);
 
-        // Sync members
         $list->members()->sync($this->listMemberIds);
 
-        // Remove detached users from all tasks in this list
         if (! empty($removedIds)) {
             foreach ($list->tasks as $task) {
                 $task->assignees()->detach($removedIds);
@@ -197,22 +204,13 @@ class SpaceShow extends Component
         Flux::toast(__('messages.list_members_updated'), variant: 'success');
     }
 
-    public function deleteFolder(): void
-    {
-        if ($this->deletingFolderId) {
-            Folder::findOrFail($this->deletingFolderId)->delete();
-        }
-        $this->reset(['deletingFolderId', 'showDeleteFolderConfirm']);
-        Flux::toast(__('messages.folder_deleted'), variant: 'danger');
-    }
-
     public function render()
     {
         $folders = $this->space->folders()->with(['lists' => function ($q) {
-            $q->withCount('tasks');
+            $q->withCount('tasks')->with('members');
         }])->get();
 
-        $listsWithoutFolder = $this->space->listsWithoutFolder()->withCount('tasks')->get();
+        $listsWithoutFolder = $this->space->listsWithoutFolder()->withCount('tasks')->with('members')->get();
 
         $allUsers = User::orderBy('name')->get();
 

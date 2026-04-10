@@ -34,6 +34,7 @@ return [
     'space_created' => 'Ruang berhasil dibuat.',
     'space_updated' => 'Ruang berhasil diperbarui.',
     'space_deleted' => 'Ruang berhasil dihapus.',
+    'space_members_updated' => 'Anggota space berhasil diperbarui.',
 
     // List messages
     'list_created' => 'Daftar berhasil dibuat.',
@@ -51,6 +52,15 @@ return [
     'column_deleted' => 'Kolom berhasil dihapus.',
     'column_delete_error' => 'Tidak bisa menghapus kolom terakhir.',
     'task_moved_to' => 'Dipindah ke :status',
+
+    // Checklist messages
+    'checklist_created' => 'Ceklis berhasil dibuat.',
+    'checklist_deleted' => 'Ceklis berhasil dihapus.',
+    'checklist_item_added' => 'Sub tugas berhasil ditambahkan.',
+    'checklist_item_updated' => 'Sub tugas berhasil diperbarui.',
+    'checklist_item_deleted' => 'Sub tugas berhasil dihapus.',
+    'checklist_item_assignees_updated' => 'Penugasan sub tugas berhasil diperbarui.',
+    'checklist_item_due_date_updated' => 'Tanggal sub tugas berhasil diperbarui.',
 
     // List member messages
     'list_members_updated' => 'Anggota list berhasil diperbarui.',
