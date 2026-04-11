@@ -2,12 +2,15 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\GeneratesUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WorkspaceMember extends Model
 {
+    use GeneratesUuid;
+
     protected $fillable = ['workspace_id', 'user_id', 'role'];
 
     public function workspace(): BelongsTo

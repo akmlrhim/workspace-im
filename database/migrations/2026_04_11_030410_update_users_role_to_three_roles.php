@@ -9,7 +9,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Set first user to super_user, all others null/old roles → member
         $firstUserId = DB::table('users')->min('id');
 
         DB::table('users')

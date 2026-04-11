@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('task_comments', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->foreignId('task_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->longText('body');

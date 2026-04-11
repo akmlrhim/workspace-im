@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('spaces', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('slug');

@@ -2,12 +2,15 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\GeneratesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class TaskLabel extends Model
 {
+    use GeneratesUuid;
+
     protected $fillable = ['workspace_id', 'name', 'color'];
 
     public function workspace(): BelongsTo

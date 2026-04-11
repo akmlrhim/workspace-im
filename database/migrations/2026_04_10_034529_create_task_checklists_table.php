@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('task_checklists', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->foreignId('task_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->unsignedSmallInteger('position')->default(0);

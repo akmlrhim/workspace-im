@@ -2,6 +2,7 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\HasUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaskList extends Model
 {
+    use HasUuid;
+
     protected $fillable = ['space_id', 'folder_id', 'name', 'position'];
 
     public function space(): BelongsTo
@@ -63,6 +66,12 @@ class TaskList extends Model
      */
     public function scopeAccessibleBy(Builder $query, int $userId): Builder
     {
+        $user = User::find($userId);
+
+        if ($user && $user->canManageAllProjects()) {
+            return $query;
+        }
+
         return $query->where(function (Builder $q) use ($userId) {
             $q->whereHas('space.workspace', fn (Builder $q2) => $q2->where('owner_id', $userId))
                 ->orWhereHas('members', fn (Builder $q2) => $q2->where('users.id', $userId))

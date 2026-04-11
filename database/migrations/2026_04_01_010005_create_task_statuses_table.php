@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('task_statuses', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->foreignId('task_list_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('color')->default('#6b7280');

@@ -2,6 +2,7 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\GeneratesUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaskComment extends Model
 {
+    use GeneratesUuid;
+
     protected $fillable = ['task_id', 'user_id', 'body', 'parent_id'];
 
     public function task(): BelongsTo

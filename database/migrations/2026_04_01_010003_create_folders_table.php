@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('folders', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->unsignedInteger('position')->default(0);

@@ -2,6 +2,7 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\GeneratesUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaskChecklistItem extends Model
 {
+    use GeneratesUuid;
+
     protected $fillable = ['task_checklist_id', 'title', 'is_completed', 'due_date', 'position', 'created_by'];
 
     protected function casts(): array

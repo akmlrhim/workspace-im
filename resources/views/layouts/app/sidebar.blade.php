@@ -61,12 +61,12 @@
 
               @foreach ($sidebarSpaces as $sidebarSpace)
                 @php
-                  $spacePath = 'project-management/spaces/' . $sidebarSpace->id;
+                  $spacePath = 'project-management/spaces/' . $sidebarSpace->uuid;
                 @endphp
 
                 <flux:sidebar.group expandable :expanded="request()->is($spacePath . '*')" class="grid">
                   <x-slot:heading>
-                    <a href="{{ route('project-management.spaces.show', $sidebarSpace->id) }}" wire:navigate
+                    <a href="{{ route('project-management.spaces.show', $sidebarSpace) }}" wire:navigate
                       class="block w-full font-semibold text-zinc-900 dark:text-white hover:underline">
                       {{ $sidebarSpace->name }}
                     </a>
@@ -74,7 +74,7 @@
 
                   @foreach ($sidebarSpace->lists as $sidebarList)
                     <flux:sidebar.item :href="route('project-management.lists.show', [$sidebarSpace, $sidebarList])"
-                      :current="request()->is($spacePath . '/lists/' . $sidebarList->id . '*')" wire:navigate>
+                      :current="request()->is($spacePath . '/lists/' . $sidebarList->uuid . '*')" wire:navigate>
                       {{ $sidebarList->name }}
                     </flux:sidebar.item>
                   @endforeach

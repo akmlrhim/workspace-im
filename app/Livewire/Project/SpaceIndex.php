@@ -5,6 +5,7 @@ namespace App\Livewire\Project;
 use App\Models\Project\Space;
 use App\Models\Project\Workspace;
 use App\Models\Project\WorkspaceMember;
+use App\Models\User;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -143,7 +144,17 @@ class SpaceIndex extends Component
 
     public function render()
     {
-        $spaces = $this->workspace->spaces()->withCount(['lists', 'folders'])->get();
+        /** @var User $user */
+        $user = auth()->user();
+
+        if ($user->canManageAllProjects()) {
+            $spaces = Space::withCount(['lists', 'folders'])
+                ->with('workspace')
+                ->orderBy('position')
+                ->get();
+        } else {
+            $spaces = $this->workspace->spaces()->withCount(['lists', 'folders'])->get();
+        }
 
         return view('livewire.project.space-index', [
             'spaces' => $spaces,

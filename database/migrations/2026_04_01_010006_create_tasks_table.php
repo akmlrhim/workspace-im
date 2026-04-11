@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->foreignId('task_list_id')->constrained()->cascadeOnDelete();
             $table->foreignId('task_status_id')->constrained()->cascadeOnDelete();
             $table->foreignId('parent_id')->nullable()->constrained('tasks')->nullOnDelete();

@@ -2,6 +2,7 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\GeneratesUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,8 @@ use Illuminate\Support\Str;
 
 class Workspace extends Model
 {
+    use GeneratesUuid;
+
     protected $fillable = ['name', 'slug', 'owner_id'];
 
     protected static function booted(): void

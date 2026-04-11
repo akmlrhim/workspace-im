@@ -17,7 +17,11 @@
       "Bash(vendor/bin/pint app/Livewire/Project/SpaceIndex.php app/Livewire/Project/SpaceShow.php --format agent)",
       "Bash(grep -rn 'canBeManagedBy\\\\|canManage\\\\|$canManage' /e/laragon/www/erp_im/app '--include=*.php')",
       "Bash(mkdir -p app/Livewire/Users)",
-      "Bash(mkdir -p resources/views/livewire/users)"
+      "Bash(mkdir -p resources/views/livewire/users)",
+      "Bash(php -v)",
+      "Bash(/e/laragon/bin/php/php-8.3.9-nts-Win32-vs16-x64/php.exe artisan:*)",
+      "Bash(/e/laragon/bin/php/php-8.3.9-nts-Win32-vs16-x64/php.exe vendor/bin/pint --dirty --format agent)",
+      "Bash(ls -la .env*)"
     ]
   }
 }

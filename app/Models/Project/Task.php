@@ -2,6 +2,7 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\GeneratesUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
+    use GeneratesUuid;
+
     protected $fillable = [
         'task_list_id', 'task_status_id', 'parent_id', 'title', 'description',
         'priority', 'assigned_to', 'due_date', 'position', 'created_by', 'is_completed',
@@ -108,6 +111,10 @@ class Task extends Model
 
     public function canBeManagedBy(User $user): bool
     {
+        // Elevated roles (super user / administrator / manager) manage everything
+        if ($user->canManageAllProjects()) {
+            return true;
+        }
         // Creator
         if ($this->created_by === $user->id) {
             return true;

@@ -2,12 +2,15 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\GeneratesUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TaskAttachment extends Model
 {
+    use GeneratesUuid;
+
     protected $fillable = ['task_id', 'task_comment_id', 'task_checklist_item_id', 'user_id', 'filename', 'path', 'mime_type', 'size'];
 
     public function task(): BelongsTo

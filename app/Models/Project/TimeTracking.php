@@ -2,12 +2,15 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\GeneratesUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TimeTracking extends Model
 {
+    use GeneratesUuid;
+
     protected $fillable = ['task_id', 'user_id', 'started_at', 'stopped_at', 'duration_seconds'];
 
     protected function casts(): array

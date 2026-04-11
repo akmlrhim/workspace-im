@@ -2,6 +2,7 @@
 
 namespace App\Models\Project;
 
+use App\Models\Concerns\HasUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,8 @@ use Illuminate\Support\Str;
 
 class Space extends Model
 {
+    use HasUuid;
+
     protected $fillable = ['workspace_id', 'name', 'slug', 'color', 'icon', 'position'];
 
     protected static function booted(): void
@@ -61,6 +64,12 @@ class Space extends Model
      */
     public function scopeAccessibleBy(Builder $query, int $userId): Builder
     {
+        $user = User::find($userId);
+
+        if ($user && $user->canManageAllProjects()) {
+            return $query;
+        }
+
         return $query->where(function (Builder $q) use ($userId) {
             $q->whereHas('workspace', fn (Builder $q2) => $q2->where('owner_id', $userId))
                 ->orWhereHas('lists.members', fn (Builder $q2) => $q2->where('users.id', $userId))
