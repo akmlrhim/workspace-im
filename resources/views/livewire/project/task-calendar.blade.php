@@ -12,7 +12,7 @@
   <div class="mb-4 flex items-center justify-between">
     <div class="flex items-center gap-2">
       <flux:button icon="chevron-left" size="sm" variant="ghost" wire:click="previousMonth" />
-      <flux:button size="sm" variant="ghost" wire:click="goToToday">Today</flux:button>
+      <flux:button size="sm" variant="ghost" wire:click="goToToday">Hari Ini</flux:button>
       <flux:button icon="chevron-right" size="sm" variant="ghost" wire:click="nextMonth" />
     </div>
     <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ $monthLabel }}</h2>

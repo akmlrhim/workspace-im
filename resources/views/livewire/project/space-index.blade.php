@@ -2,12 +2,16 @@
   <div class="mb-8">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Spaces</h1>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Organize your projects into spaces</p>
+        <h1 class="text-md lg:text-2xl font-bold text-zinc-900 dark:text-white">Spaces</h1>
+        <p class="mt-1 text-xs lg:text-sm text-zinc-500 dark:text-zinc-400">Kelola tugas dan proyek Anda dalam
+          ruang-ruang yang
+          terorganisir</p>
       </div>
-      <flux:button icon="plus" variant="primary" @click="$wire.set('showCreateSpace', true)">
-        New Space
-      </flux:button>
+      <div class="flex items-center gap-2">
+        <flux:button icon="plus" variant="primary" @click="$wire.set('showCreateSpace', true)">
+          Buat space baru
+        </flux:button>
+      </div>
     </div>
   </div>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -127,9 +131,10 @@
       <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
         <flux:icon name="exclamation-triangle" class="size-6 text-red-600 dark:text-red-400" />
       </div>
-      <flux:heading size="lg">Delete Space?</flux:heading>
+      <flux:heading size="lg">Hapus space?</flux:heading>
       <p class="text-sm text-zinc-500 dark:text-zinc-400">
-        All folders, lists, and tasks inside this space will be permanently deleted. This action cannot be undone.
+        Apakah Anda yakin ingin menghapus space ini? Semua proyek, tugas, dan data terkait dalam space ini akan
+        dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
       </p>
       <div class="flex justify-center gap-2 pt-2">
         <flux:button variant="ghost" @click="$wire.set('showDeleteConfirm', false)">Cancel</flux:button>

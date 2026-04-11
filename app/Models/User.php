@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'password', 'google_id', 'avatar', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'google_id', 'avatar', 'email_verified_at', 'role', 'position'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -30,6 +30,30 @@ class User extends Authenticatable implements MustVerifyEmail
     public function taskLists(): BelongsToMany
     {
         return $this->belongsToMany(TaskList::class, 'task_list_user')->withTimestamps();
+    }
+
+    public function isAdmin(): bool
+    {
+        return in_array($this->role, ['super_user', 'administrator']) || $this->id === self::min('id');
+    }
+
+    public function isSuperUser(): bool
+    {
+        return $this->role === 'super_user' || $this->id === self::min('id');
+    }
+
+    public static function roles(): array
+    {
+        return [
+            'super_user' => 'Super User',
+            'administrator' => 'Administrator',
+            'member' => 'Member',
+        ];
+    }
+
+    public static function positions(): array
+    {
+        return ['CEO', 'Finance', 'HR', 'Admin', 'Kreatif'];
     }
 
     public function initials(): string

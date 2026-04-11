@@ -41,16 +41,6 @@
             </flux:sidebar.item>
           @endforeach
 
-          @if (!empty($currentModule['favorites']))
-            <flux:sidebar.group expandable heading="Favorites" class="grid">
-              @foreach ($currentModule['favorites'] as $fav)
-                <flux:sidebar.item :href="url($fav['url'])" wire:navigate>
-                  {{ $fav['name'] }}
-                </flux:sidebar.item>
-              @endforeach
-            </flux:sidebar.group>
-          @endif
-
           @if ($currentModuleKey === 'project' && auth()->check())
             @php
               $userId = auth()->id();
@@ -134,7 +124,7 @@
       @foreach ($modules as $key => $module)
         <flux:navbar.item :icon="$module['icon']" :href="url($module['url'])" :current="$currentModuleKey === $key"
           wire:navigate>
-          {{ $module['name'] }}
+          <span class="hidden sm:inline">{{ $module['name'] }}</span>
         </flux:navbar.item>
       @endforeach
     </flux:navbar>
@@ -148,7 +138,6 @@
 
   <script>
     (function() {
-      // Track scroll position continuously before any lock happens
       let lastScrollY = 0;
       window.addEventListener('scroll', function() {
         lastScrollY = window.scrollY;

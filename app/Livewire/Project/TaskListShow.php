@@ -4,118 +4,120 @@ namespace App\Livewire\Project;
 
 use App\Models\Project\Space;
 use App\Models\Project\Task;
-use App\Models\Project\TaskList;
 use App\Models\Project\TaskActivity;
-use Livewire\Component;
+use App\Models\Project\TaskList;
+use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
-use Flux\Flux;
+use Livewire\Component;
 
 #[Layout('layouts.app')]
 class TaskListShow extends Component
 {
-	public Space $space;
-	public TaskList $taskList;
+    public Space $space;
 
-	// Filters
-	public string $filterPriority = '';
-	public string $filterStatus = '';
-	public string $searchQuery = '';
+    public TaskList $taskList;
 
-	// App\Livewire\Project\TaskListShow.php simplified
-	// Task detail
-	public ?int $selectedTaskId = null;
-	public bool $showTaskDetail = false;
+    // Filters
+    public string $filterPriority = '';
 
-	public function mount(Space $space, TaskList $taskList): void
-	{
-		$this->space = $space;
-		$this->taskList = $taskList;
-	}
+    public string $filterStatus = '';
 
-	public function getTitle(): string
-	{
-		return $this->taskList->name . ' — ' . $this->space->name;
-	}
+    public string $searchQuery = '';
 
-	public function updateTaskStatus(int $taskId, int $statusId): void
-	{
-		$task = Task::findOrFail($taskId);
-		$oldStatus = $task->status->name;
-		$task->update(['task_status_id' => $statusId]);
-		$task->refresh();
+    public ?int $selectedTaskId = null;
 
-		TaskActivity::create([
-			'task_id' => $task->id,
-			'user_id' => auth()->id(),
-			'type' => 'status_changed',
-			'old_value' => $oldStatus,
-			'new_value' => $task->status->name,
-		]);
+    public bool $showTaskDetail = false;
 
-		Flux::toast(__('messages.status_updated'), variant: 'success');
-	}
+    public function mount(Space $space, TaskList $taskList): void
+    {
+        $this->space = $space;
+        $this->taskList = $taskList;
+    }
 
-	public function updateTaskPriority(int $taskId, string $priority): void
-	{
-		$task = Task::findOrFail($taskId);
-		$old = $task->priority;
-		$task->update(['priority' => $priority]);
+    public function getTitle(): string
+    {
+        return $this->taskList->name.' — '.$this->space->name;
+    }
 
-		TaskActivity::create([
-			'task_id' => $task->id,
-			'user_id' => auth()->id(),
-			'type' => 'priority_changed',
-			'old_value' => $old,
-			'new_value' => $priority,
-		]);
+    public function updateTaskStatus(int $taskId, int $statusId): void
+    {
+        $task = Task::findOrFail($taskId);
+        $oldStatus = $task->status->name;
+        $task->update(['task_status_id' => $statusId]);
+        $task->refresh();
 
-		Flux::toast(__('messages.priority_updated'), variant: 'success');
-	}
+        TaskActivity::create([
+            'task_id' => $task->id,
+            'user_id' => auth()->id(),
+            'type' => 'status_changed',
+            'old_value' => $oldStatus,
+            'new_value' => $task->status->name,
+        ]);
 
-	public function openTaskDetail(int $taskId): void
-	{
-		$this->selectedTaskId = $taskId;
-		$this->showTaskDetail = true;
-	}
+        Flux::toast(__('messages.status_updated'), variant: 'success');
+    }
 
-	#[On('task-updated')]
-	public function refreshList(): void
-	{
-		// Re-render
-	}
+    public function updateTaskPriority(int $taskId, string $priority): void
+    {
+        $task = Task::findOrFail($taskId);
+        $old = $task->priority;
+        $task->update(['priority' => $priority]);
 
-	#[On('close-task-detail')]
-	public function closeTaskDetail(): void
-	{
-		$this->showTaskDetail = false;
-		$this->selectedTaskId = null;
-	}
+        TaskActivity::create([
+            'task_id' => $task->id,
+            'user_id' => auth()->id(),
+            'type' => 'priority_changed',
+            'old_value' => $old,
+            'new_value' => $priority,
+        ]);
 
-	public function render()
-	{
-		$query = $this->taskList->tasks()
-			->with(['status', 'assignee', 'assignees', 'labels', 'subtasks'])
-			->whereNull('parent_id');
+        Flux::toast(__('messages.priority_updated'), variant: 'success');
+    }
 
-		if ($this->filterPriority) {
-			$query->where('priority', $this->filterPriority);
-		}
+    public function openTaskDetail(int $taskId): void
+    {
+        $this->selectedTaskId = $taskId;
+        $this->showTaskDetail = true;
+    }
 
-		if ($this->filterStatus) {
-			$query->where('task_status_id', $this->filterStatus);
-		}
+    #[On('task-updated')]
+    public function refreshList(): void
+    {
+        // Re-render
+    }
 
-		if ($this->searchQuery) {
-			$query->where('title', 'like', '%' . $this->searchQuery . '%');
-		}
+    #[On('close-task-detail')]
+    public function closeTaskDetail(): void
+    {
+        $this->showTaskDetail = false;
+        $this->selectedTaskId = null;
+    }
 
-		$tasks = $query->orderBy('position')->get();
-		$statuses = $this->taskList->statuses()->orderBy('position')->get();
+    public function render()
+    {
+        $query = $this->taskList->tasks()
+            ->with(['status', 'assignee', 'assignees', 'labels', 'subtasks'])
+            ->whereNull('parent_id');
 
-		return view('livewire.project.task-list-show', [
-			'tasks' => $tasks,
-			'statuses' => $statuses,
-		]);
-	}
+        if ($this->filterPriority) {
+            $query->where('priority', $this->filterPriority);
+        }
+
+        if ($this->filterStatus) {
+            $query->where('task_status_id', $this->filterStatus);
+        }
+
+        if ($this->searchQuery) {
+            $query->where('title', 'like', '%'.$this->searchQuery.'%');
+        }
+
+        $tasks = $query->orderBy('position')->get();
+        $statuses = $this->taskList->statuses()->orderBy('position')->get();
+
+        return view('livewire.project.task-list-show', [
+            'tasks' => $tasks,
+            'statuses' => $statuses,
+        ]);
+    }
 }

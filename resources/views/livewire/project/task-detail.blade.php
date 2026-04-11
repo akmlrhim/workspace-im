@@ -5,14 +5,15 @@
       <div
         class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
         <flux:icon name="lock-closed" class="size-4 shrink-0" />
-        <span>You are viewing this task in <strong>read-only</strong> mode. You are not assigned to this task.</span>
+        <span>Anda sedang melihat tugas ini dalam mode <strong>lihat saja</strong>. Anda tidak ditugaskan untuk tugas
+          ini.</span>
       </div>
     @endif
     <div class="space-y-4">
       <div class="flex items-start justify-between gap-3 pr-8 sm:pr-10">
         <div class="flex-1 min-w-0">
           <flux:input wire:model.blur="taskTitle" wire:change="saveTitle" :readonly="$ro" class="text-xl font-bold"
-            placeholder="Task title..." />
+            placeholder="Judul tugas..." />
         </div>
         @if ($canManage)
           <div class="flex shrink-0 items-center pt-1">
@@ -169,10 +170,10 @@
 
     <div>
       <div class="mb-3 flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Ceklis</h3>
+        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Ceklist</h3>
         @if ($canManage)
           <flux:button icon="plus" size="xs" variant="ghost" wire:click="$toggle('showChecklistForm')">
-            Tambah Ceklis
+            Tambah Ceklist
           </flux:button>
         @endif
       </div>
@@ -255,8 +256,7 @@
                     x-on:keydown.escape="editingItemId = null" x-on:blur="editingItemId = null"
                     class="flex-1 rounded border border-zinc-300 bg-white px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200" />
 
-                  <div
-                    class="flex shrink-0 items-center gap-1 {{ $canManage ? '' : 'opacity-60' }}">
+                  <div class="flex shrink-0 items-center gap-1 {{ $canManage ? '' : 'opacity-60' }}">
                     @if ($canManage)
                       <button wire:click="openChecklistItemPanel({{ $item->id }})"
                         class="flex items-center gap-0.5 rounded px-1 py-0.5 text-xs transition-colors {{ $isActive ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' : 'text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400' }}"
@@ -523,13 +523,11 @@
             @endif
             <span class="truncate text-sm">{{ $attachment->filename }}</span>
             <span class="shrink-0 text-xs text-zinc-400">{{ number_format($attachment->size / 1024, 1) }} KB</span>
-            <flux:icon name="arrow-top-right-on-square"
-              class="size-3.5 shrink-0 text-zinc-400" />
+            <flux:icon name="arrow-top-right-on-square" class="size-3.5 shrink-0 text-zinc-400" />
           </a>
           <div class="flex shrink-0 items-center gap-1">
             <a href="{{ Storage::disk('public')->url($attachment->path) }}" download="{{ $attachment->filename }}"
-              class="text-zinc-400 hover:text-indigo-500 transition-all"
-              title="Download">
+              class="text-zinc-400 hover:text-indigo-500 transition-all" title="Download">
               <flux:icon name="arrow-down-tray" class="size-4" />
             </a>
             @if ($canManage)

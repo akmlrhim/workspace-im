@@ -1,7 +1,5 @@
 {
-    "agents": [
-        "claude_code"
-    ],
+    "agents": ["claude_code"],
     "guidelines": true,
     "mcp": true,
     "nightwatch_mcp": false,

@@ -46,7 +46,6 @@
           <flux:icon name="banknotes" class="size-24 text-amber-600" />
         </div>
       </a>
-
     </div>
   </div>
 </x-layouts::app>

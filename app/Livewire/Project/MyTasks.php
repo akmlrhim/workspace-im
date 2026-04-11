@@ -3,18 +3,19 @@
 namespace App\Livewire\Project;
 
 use App\Models\Project\Task;
-use Livewire\Component;
+use App\Models\Project\TaskStatus;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Component;
 
 #[Layout('layouts.app')]
 #[Title('My Tasks')]
 class MyTasks extends Component
 {
     public string $filterPriority = '';
-    public string $filterStatus = '';
 
     public ?int $selectedTaskId = null;
+
     public bool $showTaskDetail = false;
 
     public function openTaskDetail(int $taskId): void
@@ -34,20 +35,33 @@ class MyTasks extends Component
         $userId = auth()->id();
 
         $query = Task::where(function ($q) use ($userId) {
-                $q->where('assigned_to', $userId)
-                  ->orWhereHas('assignees', fn ($sub) => $sub->where('user_id', $userId));
-            })
-            ->with(['status', 'taskList.space', 'labels', 'assignees'])
+            $q->where('assigned_to', $userId)
+                ->orWhereHas('assignees', fn ($sub) => $sub->where('user_id', $userId));
+        })
+            ->with(['status', 'taskList.space', 'assignees'])
             ->whereNull('parent_id');
 
         if ($this->filterPriority) {
             $query->where('priority', $this->filterPriority);
         }
 
-        $tasks = $query->orderByDesc('updated_at')->get();
+        $tasks = $query->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC')->get();
+
+        $statuses = TaskStatus::orderBy('position')->get();
+
+        $grouped = $statuses->map(function (TaskStatus $status) use ($tasks) {
+            return [
+                'status' => $status,
+                'tasks' => $tasks->filter(fn ($t) => $t->task_status_id === $status->id)->values(),
+            ];
+        })->filter(fn ($group) => $group['tasks']->isNotEmpty());
+
+        $ungrouped = $tasks->filter(fn ($t) => $t->task_status_id === null)->values();
 
         return view('livewire.project.my-tasks', [
-            'tasks' => $tasks,
+            'grouped' => $grouped,
+            'ungrouped' => $ungrouped,
+            'totalCount' => $tasks->count(),
         ]);
     }
 }

@@ -4,23 +4,26 @@ namespace App\Livewire\Project;
 
 use App\Models\Project\Space;
 use App\Models\Project\TaskList;
-use Livewire\Component;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\On;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 #[Layout('layouts.app')]
 class TaskGantt extends Component
 {
     public Space $space;
+
     public TaskList $taskList;
 
     public ?int $selectedTaskId = null;
+
     public bool $showTaskDetail = false;
 
     // Timeline range
     public string $startDate;
+
     public string $endDate;
 
     public function mount(Space $space, TaskList $taskList): void
@@ -35,7 +38,7 @@ class TaskGantt extends Component
 
     public function getTitle(): string
     {
-        return $this->taskList->name . ' — Gantt';
+        return $this->taskList->name.' — Gantt';
     }
 
     public function previousPeriod(): void

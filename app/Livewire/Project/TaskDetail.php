@@ -664,8 +664,12 @@ class TaskDetail extends Component
 
         if ($this->taskId) {
             $task = Task::with([
-                'status', 'assignees', 'labels', 'creator',
-                'taskList.statuses.tasks', 'taskList.space.workspace',
+                'status',
+                'assignees',
+                'labels',
+                'creator',
+                'taskList.statuses.tasks',
+                'taskList.space.workspace',
             ])->find($this->taskId);
 
             if ($task) {

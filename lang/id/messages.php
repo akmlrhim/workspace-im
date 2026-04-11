@@ -74,4 +74,9 @@ return [
     // Profile / connected accounts
     'google_linked' => 'Akun Google berhasil dihubungkan.',
     'google_unlinked' => 'Akun Google berhasil diputuskan.',
+
+    // users
+    'user_created' => 'Pengguna berhasil dibuat.',
+    'user_updated' => 'Pengguna berhasil diperbarui.',
+    'user_deleted' => 'Pengguna berhasil dihapus.',
 ];
