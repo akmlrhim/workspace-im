@@ -8,18 +8,21 @@
 <body class="h-dvh bg-white dark:bg-zinc-800 antialiased overflow-hidden">
   @php
     $modules = config('erp.modules', []);
-
-    $currentModuleKey = 'project';
     $path = request()->path();
 
-    foreach ($modules as $key => $module) {
-        $modulePath = ltrim($module['url'], '/');
-        if ($path === $modulePath || str_starts_with($path, $modulePath . '/')) {
-            $currentModuleKey = $key;
-            break;
+    $currentModuleKey = request()->query('module');
+
+    if (!$currentModuleKey) {
+        foreach ($modules as $key => $module) {
+            $modulePath = ltrim($module['url'], '/');
+            if ($path === $modulePath || str_starts_with($path, $modulePath . '/')) {
+                $currentModuleKey = $key;
+                break;
+            }
         }
     }
 
+    $currentModuleKey ??= 'project';
     $currentModule = $modules[$currentModuleKey] ?? null;
   @endphp
 
@@ -33,6 +36,7 @@
 
     <div class="flex-1 min-h-0 overflow-y-auto">
       <flux:sidebar.nav>
+
         @if ($currentModule)
           @foreach ($currentModule['sidebar'] as $item)
             <flux:sidebar.item :icon="$item['icon']" :href="url($item['url'])" :badge="$item['badge']"
@@ -45,37 +49,9 @@
             @php
               $userId = auth()->id();
 
-              $sidebarSpaces = \App\Models\Project\Space::where(function ($q) use ($userId) {
-                  $q->whereHas('workspace', function ($q2) use ($userId) {
-                      $q2->where('owner_id', $userId);
-                  })
-                      ->orWhereHas('lists.members', function ($q2) use ($userId) {
-                          $q2->where('users.id', $userId);
-                      })
-                      ->orWhereHas('lists.tasks.assignees', function ($q2) use ($userId) {
-                          $q2->where('users.id', $userId);
-                      })
-                      ->orWhereHas('lists.tasks', function ($q2) use ($userId) {
-                          $q2->where('assigned_to', $userId);
-                      });
-              })
+              $sidebarSpaces = \App\Models\Project\Space::accessibleBy($userId)
                   ->with([
-                      'lists' => function ($q) use ($userId) {
-                          $q->where(function ($q2) use ($userId) {
-                              $q2->whereHas('space.workspace', function ($q3) use ($userId) {
-                                  $q3->where('owner_id', $userId);
-                              })
-                                  ->orWhereHas('members', function ($q3) use ($userId) {
-                                      $q3->where('users.id', $userId);
-                                  })
-                                  ->orWhereHas('tasks.assignees', function ($q3) use ($userId) {
-                                      $q3->where('users.id', $userId);
-                                  })
-                                  ->orWhereHas('tasks', function ($q3) use ($userId) {
-                                      $q3->where('assigned_to', $userId);
-                                  });
-                          })->orderBy('position');
-                      },
+                      'lists' => fn($q) => $q->accessibleBy($userId)->orderBy('position'),
                   ])
                   ->get();
             @endphp
@@ -85,10 +61,10 @@
 
               @foreach ($sidebarSpaces as $sidebarSpace)
                 @php
-                  $isSpaceActive = request()->is('project-management/spaces/' . $sidebarSpace->id . '*');
+                  $spacePath = 'project-management/spaces/' . $sidebarSpace->id;
                 @endphp
 
-                <flux:sidebar.group expandable :expanded="$isSpaceActive" class="grid">
+                <flux:sidebar.group expandable :expanded="request()->is($spacePath . '*')" class="grid">
                   <x-slot:heading>
                     <a href="{{ route('project-management.spaces.show', $sidebarSpace->id) }}" wire:navigate
                       class="block w-full font-semibold text-zinc-900 dark:text-white hover:underline">
@@ -98,8 +74,7 @@
 
                   @foreach ($sidebarSpace->lists as $sidebarList)
                     <flux:sidebar.item :href="route('project-management.lists.show', [$sidebarSpace, $sidebarList])"
-                      :current="request()->is('project-management/spaces/' . $sidebarSpace->id . '/lists/' . $sidebarList->id . '*')"
-                      wire:navigate>
+                      :current="request()->is($spacePath . '/lists/' . $sidebarList->id . '*')" wire:navigate>
                       {{ $sidebarList->name }}
                     </flux:sidebar.item>
                   @endforeach

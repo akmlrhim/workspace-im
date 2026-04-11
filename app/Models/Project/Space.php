@@ -3,6 +3,7 @@
 namespace App\Models\Project;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -50,5 +51,21 @@ class Space extends Model
     public function isMember(int $userId): bool
     {
         return $this->members()->where('user_id', $userId)->exists();
+    }
+
+    /**
+     * Scope spaces that are accessible by the given user.
+     *
+     * A space is accessible when the user owns the workspace,
+     * is a member of any list in the space, or is assigned to any task.
+     */
+    public function scopeAccessibleBy(Builder $query, int $userId): Builder
+    {
+        return $query->where(function (Builder $q) use ($userId) {
+            $q->whereHas('workspace', fn (Builder $q2) => $q2->where('owner_id', $userId))
+                ->orWhereHas('lists.members', fn (Builder $q2) => $q2->where('users.id', $userId))
+                ->orWhereHas('lists.tasks.assignees', fn (Builder $q2) => $q2->where('users.id', $userId))
+                ->orWhereHas('lists.tasks', fn (Builder $q2) => $q2->where('assigned_to', $userId));
+        });
     }
 }
