@@ -1,4 +1,4 @@
-name: Deploy to Hostinger
+name: Deploy ERP to Hostinger
 
 on:
   push:
@@ -17,19 +17,21 @@ jobs:
           password: ${{ secrets.HOSTINGER_PASSWORD }}
           port: ${{ secrets.HOSTINGER_PORT }}
           script: |
-            cd domains/impostmedia.com/public_html/workspace
+            cd /home/u465920647/domains/impostmedia.com/public_html/workspace || exit
 
             git pull origin main
 
+            if [ ! -f "composer.json" ]; then
+                echo "Error: File tidak ditemukan. Cek koneksi Git!"
+                exit 1
+            fi
+
             composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
-            # Bersihkan dan buat ulang cache konfigurasi
             php artisan optimize:clear
             php artisan config:cache
-            php artisan event:cache
             php artisan route:cache
             php artisan view:cache
-
             php artisan migrate --force
 
-            # php artisan queue:restart
+            chmod -R 775 storage bootstrap/cache
