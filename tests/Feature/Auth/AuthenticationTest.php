@@ -56,6 +56,38 @@ test('users with two factor enabled are redirected to two factor challenge', fun
     $this->assertGuest();
 });
 
+test('users are redirected to last visited url after login', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->withSession(['last_visited_url' => url('/project-management/spaces')])
+        ->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect('/project-management/spaces');
+
+    $this->assertAuthenticated();
+});
+
+test('users are redirected to dashboard when no last visited url', function () {
+    $user = User::factory()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('dashboard', absolute: false));
+
+    $this->assertAuthenticated();
+});
+
 test('users can logout', function () {
     $user = User::factory()->create();
 

@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -18,7 +20,33 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->instance(LoginResponseContract::class, new class implements LoginResponseContract
+        {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json(['two_factor' => false]);
+                }
+
+                $lastUrl = session()->pull('last_visited_url');
+
+                return redirect()->intended($lastUrl ?: config('fortify.home'));
+            }
+        });
+
+        $this->app->instance(TwoFactorLoginResponseContract::class, new class implements TwoFactorLoginResponseContract
+        {
+            public function toResponse($request)
+            {
+                if ($request->wantsJson()) {
+                    return response()->json(['two_factor' => false]);
+                }
+
+                $lastUrl = session()->pull('last_visited_url');
+
+                return redirect()->intended($lastUrl ?: config('fortify.home'));
+            }
+        });
     }
 
     /**

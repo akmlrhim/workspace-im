@@ -37,7 +37,12 @@
         <div>
           <flux:heading size="lg" class="leading-tight">{{ auth()->user()->name }}</flux:heading>
           <flux:text class="text-sm text-zinc-500 dark:text-zinc-400">{{ auth()->user()->email }}</flux:text>
-          @if ($this->isGoogleLinked)
+          @if ($this->isGoogleOnly)
+            <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              <flux:icon name="check-circle" class="size-3" />
+              {{ __('Masuk via Google') }}
+            </span>
+          @elseif ($this->isGoogleLinked)
             <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
               <flux:icon name="check-circle" class="size-3" />
               {{ __('Google terhubung') }}
@@ -55,23 +60,30 @@
           <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 
           <div>
-            <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+            @if ($this->isGoogleOnly)
+              <flux:input :label="__('Email')" type="email" :value="auth()->user()->email" disabled />
+              <flux:text class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                {{ __('Email dikelola oleh Google. Untuk mengubah email, set password terlebih dahulu lalu putuskan koneksi Google.') }}
+              </flux:text>
+            @else
+              <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
 
-            @if ($this->hasUnverifiedEmail)
-              <div>
-                <flux:text class="mt-4">
-                  {{ __('Your email address is unverified.') }}
-                  <flux:link class="cursor-pointer text-sm" wire:click.prevent="resendVerificationNotification">
-                    {{ __('Click here to re-send the verification email.') }}
-                  </flux:link>
-                </flux:text>
-
-                @if (session('status') === 'verification-link-sent')
-                  <flux:text class="mt-2 font-medium !text-green-600 dark:!text-green-400">
-                    {{ __('A new verification link has been sent to your email address.') }}
+              @if ($this->hasUnverifiedEmail)
+                <div>
+                  <flux:text class="mt-4">
+                    {{ __('Your email address is unverified.') }}
+                    <flux:link class="cursor-pointer text-sm" wire:click.prevent="resendVerificationNotification">
+                      {{ __('Click here to re-send the verification email.') }}
+                    </flux:link>
                   </flux:text>
-                @endif
-              </div>
+
+                  @if (session('status') === 'verification-link-sent')
+                    <flux:text class="mt-2 font-medium !text-green-600 dark:!text-green-400">
+                      {{ __('A new verification link has been sent to your email address.') }}
+                    </flux:text>
+                  @endif
+                </div>
+              @endif
             @endif
           </div>
 
@@ -113,18 +125,38 @@
             </div>
 
             @if ($this->isGoogleLinked)
-              <form method="POST" action="{{ route('auth.google.unlink') }}">
-                @csrf
-                <flux:button type="submit" variant="ghost" size="sm" class="text-red-600 hover:text-red-700 dark:text-red-400">
-                  {{ __('Putuskan') }}
-                </flux:button>
-              </form>
+              @if ($this->isGoogleOnly)
+                <flux:tooltip content="{{ __('Set password terlebih dahulu di halaman Security') }}">
+                  <div>
+                    <flux:button variant="ghost" size="sm" disabled class="text-zinc-400">
+                      {{ __('Putuskan') }}
+                    </flux:button>
+                  </div>
+                </flux:tooltip>
+              @else
+                <form method="POST" action="{{ route('auth.google.unlink') }}">
+                  @csrf
+                  <flux:button type="submit" variant="ghost" size="sm" class="text-red-600 hover:text-red-700 dark:text-red-400">
+                    {{ __('Putuskan') }}
+                  </flux:button>
+                </form>
+              @endif
             @else
               <flux:button tag="a" :href="route('auth.google.link')" variant="outline" size="sm" icon="link">
                 {{ __('Hubungkan') }}
               </flux:button>
             @endif
           </div>
+
+          @if ($this->isGoogleOnly)
+            <flux:callout variant="warning" icon="exclamation-triangle" class="mt-3">
+              <flux:callout.text>
+                {{ __('Google adalah satu-satunya cara login Anda. Set password di halaman') }}
+                <flux:callout.link :href="route('security.edit')" wire:navigate>{{ __('Security') }}</flux:callout.link>
+                {{ __('sebelum memutuskan koneksi Google.') }}
+              </flux:callout.text>
+            </flux:callout>
+          @endif
         </div>
       </div>
 

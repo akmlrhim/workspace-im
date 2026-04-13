@@ -57,4 +57,27 @@ class UserFactory extends Factory
             'two_factor_confirmed_at' => now(),
         ]);
     }
+
+    /**
+     * Indicate that the user registered via Google (no password).
+     */
+    public function googleOnly(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'google_id' => fake()->numerify('####################'),
+            'avatar' => 'https://lh3.googleusercontent.com/a/default',
+            'password' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has a linked Google account (with password).
+     */
+    public function withGoogle(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'google_id' => fake()->numerify('####################'),
+            'avatar' => 'https://lh3.googleusercontent.com/a/default',
+        ]);
+    }
 }

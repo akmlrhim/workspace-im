@@ -51,12 +51,21 @@ class GoogleAuthController extends Controller
 
         Auth::login($user, remember: true);
 
-        return redirect()->intended(route('dashboard'));
+        $lastUrl = session()->pull('last_visited_url');
+
+        return redirect()->intended($lastUrl ?: route('dashboard'));
     }
 
     public function unlink()
     {
-        auth()->user()->update([
+        $user = auth()->user();
+
+        if (is_null($user->password)) {
+            return redirect()->route('profile.edit')
+                ->withErrors(['google' => __('Anda harus set password terlebih dahulu sebelum memutuskan koneksi Google.')]);
+        }
+
+        $user->update([
             'google_id' => null,
             'avatar' => null,
         ]);

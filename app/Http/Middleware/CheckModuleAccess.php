@@ -8,36 +8,35 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckModuleAccess
 {
-	/**
-	 * Handle an incoming request.
-	 *
-	 * @param  Closure(Request): (Response)  $next
-	 */
-	public function handle(Request $request, Closure $next, string $moduleKey): Response
-	{
-		$user = $request->user();
+    /**
+     * Handle an incoming request.
+     *
+     * @param  Closure(Request): (Response)  $next
+     */
+    public function handle(Request $request, Closure $next, string $moduleKey): Response
+    {
+        $user = $request->user();
 
-		if (! $user) {
-			abort(403);
-		}
+        if (! $user) {
+            abort(403);
+        }
 
-		$module = config("erp.modules.{$moduleKey}");
+        $module = config("erp.modules.{$moduleKey}");
 
-		if (! $module) {
-			abort(404);
-		}
+        if (! $module) {
+            abort(404);
+        }
 
-		$allowedRoles = $module['allowed_roles'] ?? [];
-		$allowedPositions = $module['allowed_positions'] ?? [];
+        $allowedPositions = $module['allowed_positions'] ?? [];
 
-		if (empty($allowedRoles) && empty($allowedPositions)) {
-			return $next($request);
-		}
+        if (empty($allowedPositions)) {
+            return $next($request);
+        }
 
-		if (in_array($user->role, $allowedRoles) || in_array($user->position, $allowedPositions)) {
-			return $next($request);
-		}
+        if (in_array($user->position, $allowedPositions)) {
+            return $next($request);
+        }
 
-		abort(403, 'Anda tidak memiliki akses ke modul ini.');
-	}
+        abort(403, 'Anda tidak memiliki akses ke modul ini.');
+    }
 }

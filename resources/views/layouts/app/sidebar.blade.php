@@ -98,11 +98,9 @@
 
       @foreach ($modules as $key => $module)
         @php
-          $allowedRoles = $module['allowed_roles'] ?? [];
           $allowedPositions = $module['allowed_positions'] ?? [];
           $hasModuleAccess =
-              (empty($allowedRoles) && empty($allowedPositions)) ||
-              in_array(auth()->user()->role, $allowedRoles) ||
+              empty($allowedPositions) ||
               in_array(auth()->user()->position, $allowedPositions);
         @endphp
         @if ($hasModuleAccess)
