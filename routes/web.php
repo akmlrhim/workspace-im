@@ -7,7 +7,6 @@ Route::get('storage/{path}', function (string $path) {
 	$storageBase = realpath(storage_path('app/public'));
 	$fullPath = realpath(storage_path('app/public/' . ltrim($path, '/\\')));
 
-	// Block path traversal: resolved path must stay inside storage/app/public
 	abort_unless($fullPath && $storageBase && str_starts_with($fullPath, $storageBase . DIRECTORY_SEPARATOR), 403);
 	abort_unless(is_file($fullPath), 404);
 

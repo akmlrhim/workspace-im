@@ -73,7 +73,7 @@
                   </x-slot:heading>
 
                   @foreach ($sidebarSpace->lists as $sidebarList)
-                    <flux:sidebar.item :href="route('project-management.lists.show', [$sidebarSpace, $sidebarList])"
+                    <flux:sidebar.item :href="route('project-management.lists.board', [$sidebarSpace, $sidebarList])"
                       :current="request()->is($spacePath . '/lists/' . $sidebarList->uuid . '*')" wire:navigate>
                       {{ $sidebarList->name }}
                     </flux:sidebar.item>
@@ -97,10 +97,20 @@
       <flux:sidebar.toggle class="lg:hidden mr-2" icon="bars-2" inset="left" />
 
       @foreach ($modules as $key => $module)
-        <flux:navbar.item :icon="$module['icon']" :href="url($module['url'])" :current="$currentModuleKey === $key"
-          wire:navigate>
-          <span class="hidden sm:inline">{{ $module['name'] }}</span>
-        </flux:navbar.item>
+        @php
+          $allowedRoles = $module['allowed_roles'] ?? [];
+          $allowedPositions = $module['allowed_positions'] ?? [];
+          $hasModuleAccess =
+              (empty($allowedRoles) && empty($allowedPositions)) ||
+              in_array(auth()->user()->role, $allowedRoles) ||
+              in_array(auth()->user()->position, $allowedPositions);
+        @endphp
+        @if ($hasModuleAccess)
+          <flux:navbar.item :icon="$module['icon']" :href="url($module['url'])" :current="$currentModuleKey === $key"
+            wire:navigate>
+            <span class="hidden sm:inline">{{ $module['name'] }}</span>
+          </flux:navbar.item>
+        @endif
       @endforeach
     </flux:navbar>
   </flux:header>

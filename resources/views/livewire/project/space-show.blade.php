@@ -63,14 +63,6 @@
 
   @if ($listsWithoutFolder->isNotEmpty())
     <div class="mb-6">
-      <div class="mb-3 flex items-center gap-2">
-        <flux:icon name="queue-list" class="size-4 text-zinc-400" />
-        <h3 class="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Lists</h3>
-        <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
-          {{ $listsWithoutFolder->count() }}
-        </span>
-      </div>
-
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         @foreach ($listsWithoutFolder as $list)
           @include('livewire.project.partials.list-card', ['list' => $list])

@@ -13,6 +13,7 @@ use App\Models\Project\TimeTracking;
 use App\Models\User;
 use Flux\Flux;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -98,6 +99,24 @@ class TaskDetail extends Component
             ->whereNull('stopped_at')
             ->first();
         $this->activeTimerId = $activeTimer?->id;
+    }
+
+    private function validateWithToast(array $rules, array $messages = []): bool
+    {
+        $data = [];
+        foreach ($rules as $field => $rule) {
+            $data[$field] = data_get($this, $field);
+        }
+
+        $validator = Validator::make($data, $rules, $messages);
+
+        if ($validator->fails()) {
+            Flux::toast($validator->errors()->first(), variant: 'danger');
+
+            return false;
+        }
+
+        return true;
     }
 
     private function authorizeManageTask(): bool
@@ -231,7 +250,9 @@ class TaskDetail extends Component
             return;
         }
 
-        $this->validate(['newLabelName' => 'required|min:1|max:100']);
+        if (! $this->validateWithToast(['newLabelName' => 'required|min:1|max:100'])) {
+            return;
+        }
 
         $task = Task::with('taskList.space.workspace')->findOrFail($this->taskId);
         $workspaceId = $task->taskList->space->workspace->id;
@@ -255,7 +276,9 @@ class TaskDetail extends Component
 
     public function addComment(): void
     {
-        $this->validate(['newComment' => 'required|min:1']);
+        if (! $this->validateWithToast(['newComment' => 'required|min:1'])) {
+            return;
+        }
 
         TaskComment::create([
             'task_id' => $this->taskId,
@@ -280,7 +303,9 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $this->validate(['newSubtaskTitle' => 'required|min:1|max:500']);
+        if (! $this->validateWithToast(['newSubtaskTitle' => 'required|min:1|max:500'])) {
+            return;
+        }
 
         $parentTask = Task::findOrFail($this->taskId);
         $maxPosition = Task::where('parent_id', $this->taskId)->max('position') ?? -1;
@@ -357,7 +382,11 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $this->validate(['uploadFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip']);
+        if (! $this->validateWithToast(['uploadFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'])) {
+            $this->reset('uploadFiles');
+
+            return;
+        }
 
         foreach ($this->uploadFiles as $file) {
             $path = $file->store('task-attachments', 'public');
@@ -392,7 +421,9 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $this->validate(['newChecklistName' => 'required|min:1|max:200']);
+        if (! $this->validateWithToast(['newChecklistName' => 'required|min:1|max:200'])) {
+            return;
+        }
 
         $maxPosition = TaskChecklist::where('task_id', $this->taskId)->max('position') ?? -1;
 
@@ -440,7 +471,9 @@ class TaskDetail extends Component
         if (! $this->authorizeManageTask()) {
             return;
         }
-        $this->validate(['newChecklistItemTitle' => 'required|min:1|max:500']);
+        if (! $this->validateWithToast(['newChecklistItemTitle' => 'required|min:1|max:500'])) {
+            return;
+        }
 
         $checklist = TaskChecklist::where('task_id', $this->taskId)->findOrFail($this->addingItemToChecklistId);
         $maxPosition = $checklist->items()->max('position') ?? -1;
@@ -564,7 +597,11 @@ class TaskDetail extends Component
             return;
         }
 
-        $this->validate(['activeItemFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip']);
+        if (! $this->validateWithToast(['activeItemFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'])) {
+            $this->activeItemFiles = [];
+
+            return;
+        }
 
         $item = TaskChecklistItem::with('checklist')->findOrFail($this->activeChecklistItemId);
 

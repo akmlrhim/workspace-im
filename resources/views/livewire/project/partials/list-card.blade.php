@@ -1,7 +1,7 @@
 <div
   class="group relative flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 transition-all hover:border-zinc-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600">
 
-  <a href="{{ route('project-management.lists.show', [$list->space, $list]) }}" wire:navigate
+  <a href="{{ route('project-management.lists.board', [$list->space, $list]) }}" wire:navigate
     class="absolute inset-0 z-0 rounded-lg"></a>
 
   <div class="relative z-10 flex items-center gap-3 pointer-events-none">

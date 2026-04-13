@@ -2,42 +2,57 @@
 
 namespace Database\Seeders;
 
-use App\Models\Project\Workspace;
-use App\Models\Project\WorkspaceMember;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $this->command->info('Creating 50 dummy users...');
+        // Admin user
+        // User::factory()->create([
+        // 	'name' => 'Admin',
+        // 	'email' => 'admin@example.com',
+        // 	'role' => 'super_user',
+        // 	'position' => 'CEO',
+        // ]);
 
-        // Generate 50 users
-        $users = User::factory(50)->create();
+        // Manager
+        // User::factory()->create([
+        // 	'name' => 'Budi Santoso',
+        // 	'email' => 'budi@example.com',
+        // 	'role' => 'manager',
+        // 	'position' => 'Admin',
+        // ]);
 
-        // Assign them to the first workspace if it exists
-        $workspace = Workspace::first();
+        // Regular members
+        // $members = [
+        // 	['name' => 'Siti Rahayu', 'email' => 'siti@example.com', 'position' => 'Kreatif'],
+        // 	['name' => 'Ahmad Pratama', 'email' => 'ahmad@example.com', 'position' => 'Admin'],
+        // 	['name' => 'Dewi Lestari', 'email' => 'dewi@example.com', 'position' => 'Finance'],
+        // 	['name' => 'Rizky Hidayat', 'email' => 'rizky@example.com', 'position' => 'Kreatif'],
+        // 	['name' => 'Putri Wulandari', 'email' => 'putri@example.com', 'position' => 'HR'],
+        // 	['name' => 'Fajar Nugroho', 'email' => 'fajar@example.com', 'position' => 'Admin'],
+        // 	['name' => 'Indah Permata', 'email' => 'indah@example.com', 'position' => 'Kreatif'],
+        // 	['name' => 'Dian Saputra', 'email' => 'dian@example.com', 'position' => 'Finance'],
+        // ];
 
-        if ($workspace) {
-            $this->command->info("Assigning users to workspace: {$workspace->name}");
+        // foreach ($members as $member) {
+        // 	User::factory()->create(array_merge($member, ['role' => 'member']));
+        // }
 
-            $membersData = $users->map(function ($user) use ($workspace) {
-                return [
-                    'workspace_id' => $workspace->id,
-                    'user_id' => $user->id,
-                    'role' => 'member',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            })->toArray();
+        // $this->command->info('10 users created (1 super_user, 1 manager, 8 members).');
 
-            WorkspaceMember::insert($membersData);
-        }
-
-        $this->command->info('50 users created successfully!');
+        User::create([
+            'name' => 'Ahmad Fauzi',
+            'email' => 'ahmadalfarizi@example.com',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'remember_token' => Str::uuid(),
+            'role' => 'member',
+            'position' => 'CEO',
+        ]);
     }
 }

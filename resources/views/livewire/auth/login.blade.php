@@ -1,6 +1,6 @@
 <x-layouts::auth :title="__('Log in')">
   <div class="flex flex-col gap-6">
-    <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
+    <x-auth-header :title="__('Masuk ke akun Anda.')" :description="__('Masukkan email dan password Anda di bawah ini untuk masuk')" />
 
     <x-auth-session-status class="text-center" :status="session('status')" />
 
@@ -36,7 +36,8 @@
       <div class="grow border-t border-zinc-200 dark:border-zinc-800"></div>
     </div>
 
-    <flux:button variant="outline" tag="a" :href="route('auth.google')" class="w-full cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900">
+    <flux:button variant="outline" tag="a" :href="route('auth.google')"
+      class="w-full cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900">
       <svg class="mr-2 size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path fill="#4285F4"
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

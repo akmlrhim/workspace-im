@@ -52,10 +52,25 @@ class TaskBoard extends Component
         $this->taskList = $taskList;
     }
 
+    private function canManageBoard(): bool
+    {
+        $user = auth()->user();
+
+        return $user->canManageAllProjects()
+            || $this->taskList->tasks()->whereHas('assignees', fn ($q) => $q->where('users.id', $user->id))->exists()
+            || $this->taskList->tasks()->where('assigned_to', $user->id)->exists();
+    }
+
     // ─── Column CRUD ───────────────────────────────────────────────
 
     public function addColumn(): void
     {
+        if (! $this->canManageBoard()) {
+            Flux::toast(__('messages.no_permission_modify_task'), variant: 'danger');
+
+            return;
+        }
+
         if (empty(trim($this->newColumnName))) {
             return;
         }
@@ -79,6 +94,9 @@ class TaskBoard extends Component
 
     public function startRenamingColumn(int $columnId): void
     {
+        if (! $this->canManageBoard()) {
+            return;
+        }
         $column = TaskStatus::findOrFail($columnId);
         $this->renamingColumnId = $columnId;
         $this->renamingColumnName = $column->name;
@@ -86,6 +104,9 @@ class TaskBoard extends Component
 
     public function saveColumnRename(): void
     {
+        if (! $this->canManageBoard()) {
+            return;
+        }
         if (empty(trim($this->renamingColumnName)) || ! $this->renamingColumnId) {
             return;
         }
@@ -105,13 +126,16 @@ class TaskBoard extends Component
 
     public function confirmDeleteColumn(int $columnId): void
     {
+        if (! $this->canManageBoard()) {
+            return;
+        }
         $this->deletingColumnId = $columnId;
         $this->showDeleteColumnConfirm = true;
     }
 
     public function deleteColumn(): void
     {
-        if (! $this->deletingColumnId) {
+        if (! $this->canManageBoard() || ! $this->deletingColumnId) {
             return;
         }
 
@@ -159,6 +183,11 @@ class TaskBoard extends Component
 
     public function createTaskInStatus(int $statusId): void
     {
+        if (! $this->canManageBoard()) {
+            Flux::toast(__('messages.no_permission_modify_task'), variant: 'danger');
+
+            return;
+        }
         if (empty($this->newTaskTitle)) {
             return;
         }
@@ -197,7 +226,13 @@ class TaskBoard extends Component
 
     public function moveTask(int $taskId, int $newStatusId, array $orderedIds): void
     {
-        $task = Task::findOrFail($taskId);
+        $task = Task::with('assignees')->findOrFail($taskId);
+
+        if (! $task->canBeManagedBy(auth()->user())) {
+            Flux::toast(__('messages.no_permission_modify_task'), variant: 'danger');
+
+            return;
+        }
         $oldStatusName = $task->status->name;
         $oldStatusId = $task->task_status_id;
 
@@ -274,6 +309,7 @@ class TaskBoard extends Component
 
         return view('livewire.project.task-board', [
             'statuses' => $statuses,
+            'canManage' => $this->canManageBoard(),
         ]);
     }
 }
