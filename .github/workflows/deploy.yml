@@ -12,8 +12,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,7 +41,7 @@ jobs:
           script: |
             cd /home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
             git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
-            composer install --no-interaction --prefer-dist --optimize-autoloader
+            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
