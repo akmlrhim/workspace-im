@@ -1,4 +1,4 @@
-name: Deploy ERP to Hostinger
+name: Deploy to Hostinger
 
 on:
   push:
@@ -6,32 +6,42 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Execute Deployment Scripts via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Mengekstrak Kode Terbaru
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          host: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USER }}
-          password: ${{ secrets.HOSTINGER_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          script: |
-            cd /home/u465920647/domains/impostmedia.com/public_html/workspace || exit
+          php-version: "8.3"
 
-            git pull origin main
+      - name: Install Package Laravel & Livewire
+        run: composer install --optimize-autoloader --no-dev --no-progress --no-interaction
 
-            if [ ! -f "composer.json" ]; then
-                echo "Error: File tidak ditemukan. Cek koneksi Git!"
-                exit 1
-            fi
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "25.9.0"
 
-            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+      - name: Compile Aset Vite & Tailwind
+        run: |
+          npm install
+          npm run build
 
-            php artisan optimize:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan migrate --force
-
-            chmod -R 775 storage bootstrap/cache
+      - name: Kirim File ke Hostinger via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .env.example
+            README.md
+            tests/**
