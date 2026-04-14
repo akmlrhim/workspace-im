@@ -1,4 +1,4 @@
-name: Deploy ERP Enterprise Edition (SSH)
+name: Deploy to workspace.impostmedia.com
 
 on:
   push:
@@ -6,30 +6,38 @@ on:
       - main
 
 jobs:
-  deploy-via-ssh:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚀 Eksekusi Perintah di Server Hostinger via SSH
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script_stop: true
           script: |
-            cd domains/impostmedia.com/public_html/workspace
+            cd /home/u465920647/public_html/workspace.impostmedia.com
 
-            git pull origin main
+            # Pull code terbaru
+            git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
 
-            composer install --optimize-autoloader --no-dev --no-progress --no-interaction
+            # Install PHP dependencies
+            composer install --no-interaction --prefer-dist --optimize-autoloader
 
+            # Install & build frontend (Tailwind + Livewire)
             npm install
             npm run build
 
+            # Laravel setup
             php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan storage:link
 
-            php artisan optimize:clear
-            php artisan view:clear
-            php artisan livewire:discover
+            echo "✅ Deploy sukses: $(date)"
