@@ -1,4 +1,4 @@
-name: Deploy to Hostinger
+name: Deploy ERP Enterprise Edition (SSH)
 
 on:
   push:
@@ -6,44 +6,30 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy-via-ssh:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Mengekstrak Kode Terbaru
-        uses: actions/checkout@v3
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: 🚀 Eksekusi Perintah di Server Hostinger via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          php-version: "8.3"
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script_stop: true
+          script: |
+            cd domains/impostmedia.com/public_html/workspace
 
-      - name: Install Package Laravel & Livewire
-        run: composer install --optimize-autoloader --no-dev --no-progress --no-interaction
+            git pull origin main
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "25.9.0"
+            composer install --optimize-autoloader --no-dev --no-progress --no-interaction
 
-      - name: Compile Aset Vite & Tailwind
-        run: |
-          npm install
-          npm run build
+            npm install
+            npm run build
 
-      - name: Kirim File ke Hostinger via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          server-dir: /
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            .env.example
-            README.md
-            tests/**
+            php artisan migrate --force
+
+            php artisan optimize:clear
+            php artisan view:clear
+            php artisan livewire:discover
