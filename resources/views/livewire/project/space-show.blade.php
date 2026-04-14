@@ -30,7 +30,7 @@
   </div>
 
   @foreach ($folders as $folder)
-    <div class="mb-6">
+    <div wire:key="folder-{{ $folder->id }}" class="mb-6">
       <div class="mb-3 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
           <flux:icon name="folder" class="size-4 text-zinc-400" />
@@ -115,7 +115,7 @@
       <form wire:submit="createFolder" class="space-y-4">
         <flux:field>
           <flux:label>Nama Folder</flux:label>
-          <flux:input wire:model="folderName" placeholder="e.g. Q2 2026, Product..." autofocus />
+          <flux:input wire:model="folderName" placeholder="Masukkan nama folder" autofocus />
           <flux:error name="folderName" />
         </flux:field>
         <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
@@ -189,7 +189,7 @@
 
       <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
         @foreach ($allUsers as $user)
-          <label
+          <label wire:key="user-{{ $user->id }}"
             class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
             <flux:checkbox wire:model="listMemberIds" :value="$user->id" />
             <flux:avatar :name="$user->name" :initials="$user->initials()" :src="$user->avatar" size="sm" />

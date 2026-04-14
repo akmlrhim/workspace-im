@@ -22,6 +22,14 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
+        ], [
+            'name.required' => 'Nama wajib diisi.',
+            'name.max' => 'Nama maksimal 255 karakter.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah digunakan.',
+            'password.required' => 'Password wajib diisi.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ])->validate();
 
         return User::create([

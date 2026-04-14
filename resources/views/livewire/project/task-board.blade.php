@@ -12,7 +12,7 @@
   <div class="flex gap-4 overflow-x-auto pb-4" x-data="kanbanBoard()" x-init="init()" @mousedown="startDrag"
     @mouseleave="stopDrag" @mouseup="stopDrag" @mousemove="doDrag" @wheel.passive="handleWheel">
     @foreach ($statuses as $status)
-      <div
+      <div wire:key="status-{{ $status->id }}"
         class="kanban-col-wrapper flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 cursor-grab border-t-4"
         style="border-top-color: {{ $status->color }}" wire:key="status-col-{{ $status->id }}"
         data-column-id="{{ $status->id }}">
@@ -75,7 +75,7 @@
 
         <div class="kanban-column flex min-h-[100px] flex-col gap-2 px-2 pb-2" data-status-id="{{ $status->id }}">
           @foreach ($status->tasks as $task)
-            <div
+            <div wire:key="task-{{ $task->id }}"
               class="task-card group/card relative cursor-pointer rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition-all hover:shadow-md active:cursor-grabbing active:shadow-lg active:ring-2 active:ring-indigo-400/30 dark:border-zinc-700 dark:bg-zinc-800"
               data-task-id="{{ $task->id }}" wire:key="board-task-{{ $task->id }}"
               @click="if (!_isDraggingTask) $wire.openTaskDetail({{ $task->id }})">

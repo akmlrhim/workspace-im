@@ -13,41 +13,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-
-      - name: Install Composer Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
 
-      - name: Install NPM & Build Tailwind
+      - name: Install NPM & Build Tailwind/Vite
         run: |
           npm install
           npm run build
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            cd /home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
-            git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
-            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            chmod -R 775 storage bootstrap/cache
-            echo "Deploy sukses: $(date)"
 
       - name: Copy build ke server via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -59,3 +33,24 @@ jobs:
           source: "public/build"
           target: "/home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com/public"
           strip_components: 1
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
+            php artisan down || true
+            git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
+            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+            php artisan migrate --force
+            php artisan storage:link || true
+            php artisan optimize:clear
+            php artisan optimize
+            php artisan livewire:discover
+            chmod -R 775 storage bootstrap/cache
+            php artisan up
+            echo "Deploy sukses: $(date)"

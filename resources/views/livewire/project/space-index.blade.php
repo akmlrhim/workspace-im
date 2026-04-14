@@ -16,7 +16,7 @@
   </div>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     @forelse ($spaces as $space)
-      <div
+      <div wire:key="space-{{ $space->id }}"
         class="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white transition-all hover:shadow-lg hover:shadow-zinc-200/50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:shadow-zinc-900/50">
         <div class="h-1.5" style="background-color: {{ $space->color }}"></div>
 

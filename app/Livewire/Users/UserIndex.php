@@ -122,6 +122,19 @@ class UserIndex extends Component
             'createPosition' => 'nullable|string|max:255',
             'createPassword' => 'required|string|min:8|confirmed',
             'createPassword_confirmation' => 'required',
+        ], [
+            'createName.required' => 'Nama lengkap wajib diisi.',
+            'createName.max' => 'Nama lengkap maksimal 255 karakter.',
+            'createEmail.required' => 'Email wajib diisi.',
+            'createEmail.email' => 'Format email tidak valid.',
+            'createEmail.unique' => 'Email sudah digunakan.',
+            'createRole.required' => 'Role wajib dipilih.',
+            'createRole.in' => 'Role yang dipilih tidak valid.',
+            'createPosition.max' => 'Jabatan maksimal 255 karakter.',
+            'createPassword.required' => 'Password wajib diisi.',
+            'createPassword.min' => 'Password minimal 8 karakter.',
+            'createPassword.confirmed' => 'Konfirmasi password tidak cocok.',
+            'createPassword_confirmation.required' => 'Konfirmasi password wajib diisi.',
         ]);
 
         // Only super_user can assign super_user or administrator roles
@@ -177,12 +190,27 @@ class UserIndex extends Component
             'editPosition' => 'nullable|string|max:255',
         ];
 
+        $messages = [
+            'editName.required' => 'Nama lengkap wajib diisi.',
+            'editName.max' => 'Nama lengkap maksimal 255 karakter.',
+            'editEmail.required' => 'Email wajib diisi.',
+            'editEmail.email' => 'Format email tidak valid.',
+            'editEmail.unique' => 'Email sudah digunakan.',
+            'editRole.required' => 'Role wajib dipilih.',
+            'editRole.in' => 'Role yang dipilih tidak valid.',
+            'editPosition.max' => 'Jabatan maksimal 255 karakter.',
+        ];
+
         if (filled($this->editPassword)) {
             $rules['editPassword'] = 'required|string|min:8|confirmed';
             $rules['editPassword_confirmation'] = 'required';
+            $messages['editPassword.required'] = 'Password wajib diisi.';
+            $messages['editPassword.min'] = 'Password minimal 8 karakter.';
+            $messages['editPassword.confirmed'] = 'Konfirmasi password tidak cocok.';
+            $messages['editPassword_confirmation.required'] = 'Konfirmasi password wajib diisi.';
         }
 
-        $validated = $this->validate($rules);
+        $validated = $this->validate($rules, $messages);
 
         $data = [
             'name' => $validated['editName'],
