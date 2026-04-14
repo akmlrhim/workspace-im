@@ -6,6 +6,8 @@ return [
             'name' => 'Project',
             'icon' => 'clipboard-document-list',
             'url' => '/project-management',
+            'color' => 'indigo',
+            'description' => 'Kelola space, task list, dan tugas tim Anda.',
             'allowed_positions' => [],
             'sidebar' => [
                 ['name' => 'Dashboard', 'icon' => 'squares-2x2', 'url' => '/dashboard?module=project', 'active' => 'dashboard', 'badge' => null],
@@ -19,6 +21,8 @@ return [
             'name' => 'HR',
             'icon' => 'users',
             'url' => '/hr',
+            'color' => 'emerald',
+            'description' => 'Manajemen karyawan, absensi, payroll, dan cuti.',
             'allowed_positions' => ['CEO', 'HR'],
             'sidebar' => [
                 ['name' => 'Dashboard', 'icon' => 'layout-grid', 'url' => '/dashboard?module=hr', 'active' => 'dashboard', 'badge' => null],
@@ -33,6 +37,8 @@ return [
             'name' => 'Finance',
             'icon' => 'banknotes',
             'url' => '/finance',
+            'color' => 'amber',
+            'description' => 'Pantau invoice, pengeluaran, dan laporan keuangan.',
             'allowed_positions' => ['CEO', 'Finance'],
             'sidebar' => [
                 ['name' => 'Dashboard', 'icon' => 'layout-grid', 'url' => '/dashboard?module=finance', 'active' => 'dashboard', 'badge' => null],
@@ -47,6 +53,8 @@ return [
             'name' => 'Users',
             'icon' => 'users',
             'url' => '/users',
+            'color' => 'sky',
+            'description' => 'Kelola data admin dan permission sistem.',
             'allowed_positions' => ['CEO'],
             'sidebar' => [
                 ['name' => 'Dashboard', 'icon' => 'layout-grid', 'url' => '/dashboard?module=users', 'active' => 'dashboard', 'badge' => null],
