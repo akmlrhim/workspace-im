@@ -7,6 +7,7 @@ use App\Models\Project\Workspace;
 use App\Models\Project\WorkspaceMember;
 use App\Models\User;
 use Flux\Flux;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -165,19 +166,21 @@ class SpaceIndex extends Component
 		return $this->colors;
 	}
 
-	public function render()
+	#[Computed]
+	public function spaces()
 	{
 		/** @var User $user */
 		$user = auth()->user();
 
-		$spaces = Space::accessibleBy($user->id)
+		return Space::accessibleBy($user->id)
 			->withCount(['lists', 'folders'])
 			->with('workspace')
 			->orderBy('position')
 			->get();
+	}
 
-		return view('livewire.project.space-index', [
-			'spaces' => $spaces,
-		]);
+	public function render()
+	{
+		return view('livewire.project.space-index');
 	}
 }

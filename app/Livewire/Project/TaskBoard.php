@@ -8,6 +8,7 @@ use App\Models\Project\TaskActivity;
 use App\Models\Project\TaskList;
 use App\Models\Project\TaskStatus;
 use Flux\Flux;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -295,9 +296,10 @@ class TaskBoard extends Component
 		$this->selectedTaskId = null;
 	}
 
-	public function render()
+	#[Computed]
+	public function statuses()
 	{
-		$statuses = $this->taskList->statuses()
+		return $this->taskList->statuses()
 			->with(['tasks' => function ($q) {
 				$q->whereNull('parent_id')
 					->with(['assignees', 'assignee', 'labels', 'subtasks'])
@@ -306,9 +308,11 @@ class TaskBoard extends Component
 			}])
 			->orderBy('position')
 			->get();
+	}
 
+	public function render()
+	{
 		return view('livewire.project.task-board', [
-			'statuses' => $statuses,
 			'canManage' => $this->canManageBoard(),
 		]);
 	}

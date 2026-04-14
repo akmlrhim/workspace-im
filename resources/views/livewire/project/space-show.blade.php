@@ -29,7 +29,7 @@
     </div>
   </div>
 
-  @foreach ($folders as $folder)
+  @foreach ($this->folders as $folder)
     <div wire:key="folder-{{ $folder->id }}" class="mb-6">
       <div class="mb-3 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
@@ -61,17 +61,17 @@
     </div>
   @endforeach
 
-  @if ($listsWithoutFolder->isNotEmpty())
+  @if ($this->listsWithoutFolder->isNotEmpty())
     <div class="mb-6">
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        @foreach ($listsWithoutFolder as $list)
+        @foreach ($this->listsWithoutFolder as $list)
           @include('livewire.project.partials.list-card', ['list' => $list])
         @endforeach
       </div>
     </div>
   @endif
 
-  @if ($folders->isEmpty() && $listsWithoutFolder->isEmpty())
+  @if ($this->folders->isEmpty() && $this->listsWithoutFolder->isEmpty())
     <div
       class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 p-8 py-16 text-center dark:border-zinc-700 dark:bg-zinc-800/50">
       <flux:icon name="queue-list" class="mb-3 size-12 text-zinc-400" />
@@ -188,7 +188,7 @@
       </div>
 
       <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
-        @foreach ($allUsers as $user)
+        @foreach ($this->allUsers as $user)
           <label wire:key="user-{{ $user->id }}"
             class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
             <flux:checkbox wire:model="listMemberIds" :value="$user->id" />

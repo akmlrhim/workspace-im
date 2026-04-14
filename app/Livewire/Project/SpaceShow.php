@@ -7,6 +7,7 @@ use App\Models\Project\Space;
 use App\Models\Project\TaskList;
 use App\Models\User;
 use Flux\Flux;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -224,20 +225,28 @@ class SpaceShow extends Component
 		Flux::toast('Anggota list berhasil diperbarui.', variant: 'success');
 	}
 
-	public function render()
+	#[Computed]
+	public function folders()
 	{
-		$folders = $this->space->folders()->with(['lists' => function ($q) {
+		return $this->space->folders()->with(['lists' => function ($q) {
 			$q->withCount('tasks')->with('members');
 		}])->get();
+	}
 
-		$listsWithoutFolder = $this->space->listsWithoutFolder()->withCount('tasks')->with('members')->get();
+	#[Computed]
+	public function listsWithoutFolder()
+	{
+		return $this->space->listsWithoutFolder()->withCount('tasks')->with('members')->get();
+	}
 
-		$allUsers = User::orderBy('name')->get();
+	#[Computed]
+	public function allUsers()
+	{
+		return User::orderBy('name')->get();
+	}
 
-		return view('livewire.project.space-show', [
-			'folders' => $folders,
-			'listsWithoutFolder' => $listsWithoutFolder,
-			'allUsers' => $allUsers,
-		]);
+	public function render()
+	{
+		return view('livewire.project.space-show');
 	}
 }

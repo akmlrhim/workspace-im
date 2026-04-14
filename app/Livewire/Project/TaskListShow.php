@@ -7,6 +7,7 @@ use App\Models\Project\Task;
 use App\Models\Project\TaskActivity;
 use App\Models\Project\TaskList;
 use Flux\Flux;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -94,7 +95,8 @@ class TaskListShow extends Component
 		$this->selectedTaskId = null;
 	}
 
-	public function render()
+	#[Computed]
+	public function tasks()
 	{
 		$query = $this->taskList->tasks()
 			->with(['status', 'assignee', 'assignees', 'labels', 'subtasks'])
@@ -112,12 +114,17 @@ class TaskListShow extends Component
 			$query->where('title', 'like', '%' . $this->searchQuery . '%');
 		}
 
-		$tasks = $query->orderBy('position')->get();
-		$statuses = $this->taskList->statuses()->orderBy('position')->get();
+		return $query->orderBy('position')->get();
+	}
 
-		return view('livewire.project.task-list-show', [
-			'tasks' => $tasks,
-			'statuses' => $statuses,
-		]);
+	#[Computed]
+	public function statuses()
+	{
+		return $this->taskList->statuses()->orderBy('position')->get();
+	}
+
+	public function render()
+	{
+		return view('livewire.project.task-list-show');
 	}
 }

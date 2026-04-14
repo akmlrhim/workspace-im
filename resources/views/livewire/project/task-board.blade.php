@@ -11,7 +11,7 @@
 
   <div class="flex gap-4 overflow-x-auto pb-4" x-data="kanbanBoard()" x-init="init()" @mousedown="startDrag"
     @mouseleave="stopDrag" @mouseup="stopDrag" @mousemove="doDrag" @wheel.passive="handleWheel">
-    @foreach ($statuses as $status)
+    @foreach ($this->statuses as $status)
       <div wire:key="status-{{ $status->id }}"
         class="kanban-col-wrapper flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 cursor-grab border-t-4"
         style="border-top-color: {{ $status->color }}" wire:key="status-col-{{ $status->id }}"

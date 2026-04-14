@@ -34,7 +34,7 @@
 
       <flux:select wire:model.live="filterStatus" size="sm" class="flex-1 sm:w-36">
         <option value="">All Statuses</option>
-        @foreach ($statuses as $status)
+        @foreach ($this->statuses as $status)
           <option value="{{ $status->id }}">{{ $status->name }}</option>
         @endforeach
       </flux:select>
@@ -42,9 +42,9 @@
   </div>
 
   <div class="space-y-6">
-    @forelse ($statuses as $status)
+    @forelse ($this->statuses as $status)
       @php
-        $statusTasks = $tasks->where('task_status_id', $status->id);
+        $statusTasks = collect($this->tasks)->where('task_status_id', $status->id);
       @endphp
 
       @if ($statusTasks->isNotEmpty() || empty($filterStatus))
