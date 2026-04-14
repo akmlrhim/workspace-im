@@ -21,23 +21,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /home/u465920647/public_html/workspace.impostmedia.com
-
-            # Pull code terbaru
+            cd /home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
             git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
-
-            # Install PHP dependencies
             composer install --no-interaction --prefer-dist --optimize-autoloader
-
-            # Install & build frontend (Tailwind + Livewire)
             npm install
             npm run build
-
-            # Laravel setup
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-            php artisan storage:link
-
+            chmod -R 775 storage bootstrap/cache
             echo "✅ Deploy sukses: $(date)"
