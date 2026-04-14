@@ -35,7 +35,7 @@ class UserIndex extends Component
 
     public string $createPassword = '';
 
-    public string $createPasswordConfirmation = '';
+    public string $createPassword_confirmation = '';
 
     // Edit form
     public bool $showEditModal = false;
@@ -54,7 +54,7 @@ class UserIndex extends Component
 
     public string $editPassword = '';
 
-    public string $editPasswordConfirmation = '';
+    public string $editPassword_confirmation = '';
 
     // Delete
     public bool $showDeleteConfirm = false;
@@ -121,7 +121,7 @@ class UserIndex extends Component
             'createRole' => 'required|in:super_user,administrator,member',
             'createPosition' => 'nullable|string|max:255',
             'createPassword' => 'required|string|min:8|confirmed',
-            'createPasswordConfirmation' => 'required',
+            'createPassword_confirmation' => 'required',
         ]);
 
         // Only super_user can assign super_user or administrator roles
@@ -160,7 +160,7 @@ class UserIndex extends Component
         $this->editPosition = $user->position ?? '';
         $this->editPositionCustom = filled($user->position) && ! in_array($user->position, User::positions());
         $this->editPassword = '';
-        $this->editPasswordConfirmation = '';
+        $this->editPassword_confirmation = '';
         $this->showEditModal = true;
     }
 
@@ -179,7 +179,7 @@ class UserIndex extends Component
 
         if (filled($this->editPassword)) {
             $rules['editPassword'] = 'required|string|min:8|confirmed';
-            $rules['editPasswordConfirmation'] = 'required';
+            $rules['editPassword_confirmation'] = 'required';
         }
 
         $validated = $this->validate($rules);
@@ -238,7 +238,7 @@ class UserIndex extends Component
 
     private function resetCreateForm(): void
     {
-        $this->reset('createName', 'createEmail', 'createPassword', 'createPasswordConfirmation', 'createPosition');
+        $this->reset('createName', 'createEmail', 'createPassword', 'createPassword_confirmation', 'createPosition');
         $this->createRole = 'member';
         $this->createPositionCustom = false;
         $this->resetErrorBag();

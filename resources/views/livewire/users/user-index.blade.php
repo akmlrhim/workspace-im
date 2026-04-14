@@ -196,8 +196,8 @@
 
         <flux:field>
           <flux:label>Konfirmasi Password</flux:label>
-          <flux:input wire:model="createPasswordConfirmation" type="password" viewable />
-          <flux:error name="createPasswordConfirmation" />
+          <flux:input wire:model="createPassword_confirmation" type="password" viewable />
+          <flux:error name="createPassword_confirmation" />
         </flux:field>
 
         <div class="flex justify-end gap-2 pt-2">
@@ -274,8 +274,8 @@
             </flux:field>
             <flux:field>
               <flux:label>Konfirmasi Password Baru</flux:label>
-              <flux:input wire:model="editPasswordConfirmation" type="password" viewable />
-              <flux:error name="editPasswordConfirmation" />
+              <flux:input wire:model="editPassword_confirmation" type="password" viewable />
+              <flux:error name="editPassword_confirmation" />
             </flux:field>
           </div>
         </div>
