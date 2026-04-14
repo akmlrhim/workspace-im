@@ -64,7 +64,8 @@
                   $spacePath = 'project-management/spaces/' . $sidebarSpace->uuid;
                 @endphp
 
-                <flux:sidebar.group expandable :expanded="request()->is($spacePath . '*')" class="grid">
+                <flux:sidebar.group expandable :expanded="request()->is($spacePath . '*')" class="grid"
+                  wire:key="sidebar-space-{{ $sidebarSpace->id }}">
                   <x-slot:heading>
                     <a href="{{ route('project-management.spaces.show', $sidebarSpace) }}" wire:navigate
                       class="block w-full font-semibold text-zinc-900 dark:text-white hover:underline">
@@ -74,7 +75,8 @@
 
                   @foreach ($sidebarSpace->lists as $sidebarList)
                     <flux:sidebar.item :href="route('project-management.lists.board', [$sidebarSpace, $sidebarList])"
-                      :current="request()->is($spacePath . '/lists/' . $sidebarList->uuid . '*')" wire:navigate>
+                      :current="request()->is($spacePath . '/lists/' . $sidebarList->uuid . '*')" wire:navigate
+                      wire:key="sidebar-list-{{ $sidebarList->id }}">
                       {{ $sidebarList->name }}
                     </flux:sidebar.item>
                   @endforeach
@@ -99,9 +101,7 @@
       @foreach ($modules as $key => $module)
         @php
           $allowedPositions = $module['allowed_positions'] ?? [];
-          $hasModuleAccess =
-              empty($allowedPositions) ||
-              in_array(auth()->user()->position, $allowedPositions);
+          $hasModuleAccess = empty($allowedPositions) || in_array(auth()->user()->position, $allowedPositions);
         @endphp
         @if ($hasModuleAccess)
           <flux:navbar.item :icon="$module['icon']" :href="url($module['url'])" :current="$currentModuleKey === $key"

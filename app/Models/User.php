@@ -17,58 +17,58 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+	use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+	protected function casts(): array
+	{
+		return [
+			'email_verified_at' => 'datetime',
+			'password' => 'hashed',
+		];
+	}
 
-    public function taskLists(): BelongsToMany
-    {
-        return $this->belongsToMany(TaskList::class, 'task_list_user')->withTimestamps();
-    }
+	public function taskLists(): BelongsToMany
+	{
+		return $this->belongsToMany(TaskList::class, 'task_list_user')->withTimestamps();
+	}
 
-    public function isAdmin(): bool
-    {
-        return in_array($this->role, ['super_user', 'administrator']) || $this->id === self::min('id');
-    }
+	public function isAdmin(): bool
+	{
+		return in_array($this->role, ['super_user', 'administrator']) || (int) $this->id === (int) self::min('id');
+	}
 
-    public function isSuperUser(): bool
-    {
-        return $this->role === 'super_user' || $this->id === self::min('id');
-    }
+	public function isSuperUser(): bool
+	{
+		return $this->role === 'super_user' || (int) $this->id === (int) self::min('id');
+	}
 
-    public function canManageAllProjects(): bool
-    {
-        return in_array($this->role, ['super_user', 'administrator', 'manager'])
-            || $this->id === self::min('id');
-    }
+	public function canManageAllProjects(): bool
+	{
+		return in_array($this->role, ['super_user', 'administrator', 'manager'])
+			|| (int) $this->id === (int) self::min('id');
+	}
 
-    public static function roles(): array
-    {
-        return [
-            'super_user' => 'Super User',
-            'administrator' => 'Administrator',
-            'manager' => 'Manager',
-            'member' => 'Member',
-        ];
-    }
+	public static function roles(): array
+	{
+		return [
+			'super_user' => 'Super User',
+			'administrator' => 'Administrator',
+			'manager' => 'Manager',
+			'member' => 'Member',
+		];
+	}
 
-    public static function positions(): array
-    {
-        return ['CEO', 'Finance', 'HR', 'Admin', 'Kreatif'];
-    }
+	public static function positions(): array
+	{
+		return ['CEO', 'Finance', 'HR', 'Admin', 'Kreatif'];
+	}
 
-    public function initials(): string
-    {
-        return Str::of($this->name)
-            ->explode(' ')
-            ->take(2)
-            ->map(fn ($word) => Str::substr($word, 0, 1))
-            ->implode('');
-    }
+	public function initials(): string
+	{
+		return Str::of($this->name)
+			->explode(' ')
+			->take(2)
+			->map(fn($word) => Str::substr($word, 0, 1))
+			->implode('');
+	}
 }
