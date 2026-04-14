@@ -1,6 +1,6 @@
-<x-layouts::auth :title="__('Reset password')">
+<x-layouts::auth :title="__('Atur Ulang Password')">
   <div class="flex flex-col gap-6">
-    <x-auth-header :title="__('Reset password')" :description="__('Please enter your new password below')" />
+    <x-auth-header :title="__('Atur Ulang Password')" :description="__('Masukkan password baru Anda di bawah ini')" />
     <x-auth-session-status class="text-center" :status="session('status')" />
 
     <form method="POST" action="{{ route('password.update') }}" class="flex flex-col gap-6">
@@ -13,20 +13,20 @@
           :placeholder="__('Password')" viewable />
         @if (app()->isProduction())
           <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
-            {{ __('Minimum 12 characters with uppercase, lowercase, numbers, and symbols.') }}
+            {{ __('Minimal 12 karakter yang terdiri dari huruf besar, huruf kecil, angka, dan simbol.') }}
           </flux:text>
         @else
           <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
-            {{ __('Minimum 8 characters.') }}
+            {{ __('Minimal 8 karakter.') }}
           </flux:text>
         @endif
       </div>
-      <flux:input name="password_confirmation" :label="__('Confirm password')" type="password" required
-        autocomplete="new-password" :placeholder="__('Confirm password')" viewable />
+      <flux:input name="password_confirmation" :label="__('Konfirmasi Password')" type="password" required
+        autocomplete="new-password" :placeholder="__('Konfirmasi password')" viewable />
 
       <div class="flex items-center justify-end">
         <flux:button type="submit" variant="primary" class="w-full" data-test="reset-password-button">
-          {{ __('Reset password') }}
+          {{ __('Atur Ulang Password') }}
         </flux:button>
       </div>
     </form>

@@ -39,15 +39,26 @@ class GoogleAuthController extends Controller
             return redirect()->route('profile.edit')->with('status', 'google-linked');
         }
 
-        $user = User::updateOrCreate(
-            ['google_id' => $googleUser->getId()],
-            [
-                'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
+        $user = User::where('google_id', $googleUser->getId())
+            ->orWhere('email', $googleUser->getEmail())
+            ->first();
+
+        if (! $user) {
+            return redirect()->route('login')->withErrors([
+                'email' => __('Akun Anda belum terdaftar. Silakan hubungi administrator.'),
+            ]);
+        }
+
+        if (is_null($user->google_id)) {
+            $user->update([
+                'google_id' => $googleUser->getId(),
                 'avatar' => $googleUser->getAvatar(),
-                'email_verified_at' => now(),
-            ]
-        );
+            ]);
+        }
+
+        if (is_null($user->email_verified_at)) {
+            $user->update(['email_verified_at' => now()]);
+        }
 
         Auth::login($user, remember: true);
 

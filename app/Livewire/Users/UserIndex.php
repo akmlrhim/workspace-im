@@ -129,14 +129,17 @@ class UserIndex extends Component
             $validated['createRole'] = 'member';
         }
 
-        User::create([
+        $user = User::create([
             'name' => $validated['createName'],
             'email' => $validated['createEmail'],
-            'role' => $validated['createRole'],
-            'position' => $validated['createPosition'] ?: null,
             'password' => $validated['createPassword'],
             'email_verified_at' => now(),
         ]);
+
+        $user->forceFill([
+            'role' => $validated['createRole'],
+            'position' => $validated['createPosition'] ?: null,
+        ])->save();
 
         $this->resetCreateForm();
         $this->showCreateModal = false;
@@ -184,20 +187,24 @@ class UserIndex extends Component
         $data = [
             'name' => $validated['editName'],
             'email' => $validated['editEmail'],
-            'role' => $validated['editRole'],
-            'position' => $validated['editPosition'] ?: null,
         ];
 
         if (filled($this->editPassword)) {
             $data['password'] = Hash::make($this->editPassword);
         }
 
+        $user->update($data);
+
         // Prevent removing super_user role from the primary account
-        if ($user->id === User::min('id') && $validated['editRole'] !== 'super_user') {
-            $data['role'] = 'super_user';
+        $role = $validated['editRole'];
+        if ($user->id === User::min('id') && $role !== 'super_user') {
+            $role = 'super_user';
         }
 
-        $user->update($data);
+        $user->forceFill([
+            'role' => $role,
+            'position' => $validated['editPosition'] ?: null,
+        ])->save();
 
         $this->showEditModal = false;
         $this->editingUserId = null;
