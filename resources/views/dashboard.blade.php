@@ -12,7 +12,7 @@
       @foreach (config('erp.modules', []) as $key => $module)
         @php
           $allowedPositions = $module['allowed_positions'] ?? [];
-          $hasModuleAccess = empty($allowedPositions) || auth()->user()->isAdmin() || in_array(auth()->user()->position, $allowedPositions);
+          $hasModuleAccess = !auth()->user()->isGuest() && (empty($allowedPositions) || auth()->user()->isAdmin() || in_array(auth()->user()->position, $allowedPositions));
           $color = $module['color'] ?? 'indigo';
           
           $colorClasses = [
@@ -60,5 +60,14 @@
         @endif
       @endforeach
     </div>
+    
+    @if (auth()->user()->isGuest())
+      <flux:callout variant="warning" icon="clock" class="mt-8">
+        <flux:callout.heading>Menunggu Persetujuan Akun</flux:callout.heading>
+        <flux:callout.text>
+          Akun Anda telah berhasil dibuat via Google, namun belum memiliki hak akses (Role/Position). Silakan hubungi Administrator untuk mendaftarkan posisi Anda agar dapat mengakses modul sistem.
+        </flux:callout.text>
+      </flux:callout>
+    @endif
   </div>
 </x-layouts::app>

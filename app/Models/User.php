@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'password', 'google_id', 'avatar', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'google_id', 'avatar', 'email_verified_at', 'role', 'position'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -48,6 +48,11 @@ class User extends Authenticatable implements MustVerifyEmail
 			|| (int) $this->id === (int) self::min('id');
 	}
 
+	public function isGuest(): bool
+	{
+		return $this->role === 'guest' || $this->position === null;
+	}
+
 	public static function roles(): array
 	{
 		return [
@@ -55,6 +60,7 @@ class User extends Authenticatable implements MustVerifyEmail
 			'administrator' => 'Administrator',
 			'manager' => 'Manager',
 			'member' => 'Member',
+			'guest' => 'Guest (Pending)',
 		];
 	}
 

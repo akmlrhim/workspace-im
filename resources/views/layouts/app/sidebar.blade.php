@@ -101,7 +101,7 @@
       @foreach ($modules as $key => $module)
         @php
           $allowedPositions = $module['allowed_positions'] ?? [];
-          $hasModuleAccess = empty($allowedPositions) || in_array(auth()->user()->position, $allowedPositions);
+          $hasModuleAccess = !auth()->user()->isGuest() && (empty($allowedPositions) || auth()->user()->isAdmin() || in_array(auth()->user()->position, $allowedPositions));
         @endphp
         @if ($hasModuleAccess)
           <flux:navbar.item :icon="$module['icon']" :href="url($module['url'])" :current="$currentModuleKey === $key"

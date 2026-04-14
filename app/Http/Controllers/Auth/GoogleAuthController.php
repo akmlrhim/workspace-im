@@ -44,8 +44,14 @@ class GoogleAuthController extends Controller
             ->first();
 
         if (! $user) {
-            return redirect()->route('login')->withErrors([
-                'email' => __('Akun Anda belum terdaftar. Silakan hubungi administrator.'),
+            $user = User::create([
+                'name' => $googleUser->getName() ?? 'Google User',
+                'email' => $googleUser->getEmail(),
+                'google_id' => $googleUser->getId(),
+                'avatar' => $googleUser->getAvatar(),
+                'role' => 'guest',
+                'position' => null,
+                'email_verified_at' => now(),
             ]);
         }
 
