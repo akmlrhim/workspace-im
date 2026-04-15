@@ -116,3 +116,43 @@ body.is-dragging .task-card {
 body.is-dragging-column .kanban-col-wrapper {
     @apply transition-transform;
 }
+
+.kanban-board {
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    will-change: scroll-position;
+}
+
+.kanban-board::-webkit-scrollbar {
+    height: 8px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-zinc-300 dark:bg-zinc-600;
+}
+
+.kanban-board .kanban-col-wrapper {
+    scroll-snap-align: start;
+}
+
+body.is-dragging .kanban-board,
+body.is-dragging-column .kanban-board {
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+}
+
+@media (max-width: 640px) {
+    .kanban-board {
+        scroll-padding-left: 0.75rem;
+        scroll-padding-right: 0.75rem;
+    }
+
+    .kanban-board .kanban-col-wrapper {
+        width: calc(85vw - 1rem);
+        min-width: 16rem;
+    }
+}

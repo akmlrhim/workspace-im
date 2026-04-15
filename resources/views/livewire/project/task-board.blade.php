@@ -9,8 +9,9 @@
     </div>
   </div>
 
-  <div class="flex gap-4 overflow-x-auto pb-4" x-data="kanbanBoard()" x-init="init()" @mousedown="startDrag"
-    @mouseleave="stopDrag" @mouseup="stopDrag" @mousemove="doDrag" @wheel.passive="handleWheel">
+  <div class="kanban-board flex gap-4 overflow-x-auto overflow-y-hidden pb-4 -mx-3 px-3 sm:mx-0 sm:px-0"
+    x-data="kanbanBoard()" x-init="init()" @pointerdown="startDrag" @pointerleave="stopDrag" @pointerup="stopDrag"
+    @pointercancel="stopDrag" @pointermove="doDrag" @wheel.passive="handleWheel">
     @foreach ($this->statuses as $status)
       <div wire:key="status-{{ $status->id }}"
         class="kanban-col-wrapper flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 cursor-grab border-t-4"
@@ -309,9 +310,9 @@
           chosenClass: 'kanban-col-chosen',
           dragClass: 'kanban-col-drag',
           direction: 'horizontal',
-          delay: 50,
+          delay: 250,
           delayOnTouchOnly: true,
-          touchStartThreshold: 8,
+          touchStartThreshold: 10,
           filter: 'input, select, textarea, button, a, .task-card',
           preventOnFilter: false,
           swapThreshold: 0.5,
@@ -340,9 +341,9 @@
             draggable: '.task-card',
             fallbackOnBody: true,
             swapThreshold: 0.65,
-            delay: 80, // <-- was 120, slightly faster
+            delay: 250,
             delayOnTouchOnly: true,
-            touchStartThreshold: 5,
+            touchStartThreshold: 10,
             filter: 'button, a, input, select, textarea',
             preventOnFilter: false,
             forceFallback: false, // <-- was true, caused ghost card glitch
@@ -372,7 +373,8 @@
       },
 
       startDrag(e) {
-        if (e.button !== 0) return;
+        // Only mouse drag-to-pan — touch uses native momentum scroll.
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
         if (e.target.closest('.task-card') || e.target.closest('button') || e.target.closest('input')) return;
         this.isDown = true;
         this.startX = e.pageX - this.$el.offsetLeft;
@@ -392,6 +394,7 @@
 
       doDrag(e) {
         if (!this.isDown) return;
+        if (e.pointerType && e.pointerType !== 'mouse') return;
 
         // Stop custom panning if Sortable is active or no mouse buttons are pressed (stuck drag check)
         if (e.buttons === 0 || document.body.classList.contains('is-dragging') || document.body.classList.contains(

@@ -564,9 +564,9 @@
             wire:key="comment-{{ $comment->id }}">
             <div class="mb-2 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <flux:avatar :name="$comment->user->name" :initials="$comment->user->initials()"
-                  :src="$comment->user->avatar" size="xs" />
-                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $comment->user->name }}</span>
+                <flux:avatar :name="$comment->user?->name ?? 'Unknown'" :initials="$comment->user?->initials() ?? '?'"
+                  :src="$comment->user?->avatar" size="xs" />
+                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $comment->user?->name ?? 'Unknown' }}</span>
                 <span class="text-xs text-zinc-400">{{ $comment->created_at->diffForHumans() }}</span>
               </div>
               @if ($comment->user_id === auth()->id())
@@ -581,10 +581,10 @@
                 @foreach ($comment->replies as $reply)
                   <div wire:key="reply-{{ $reply->id }}">
                     <div class="flex items-center gap-2 mb-1">
-                      <flux:avatar :name="$reply->user->name" :initials="$reply->user->initials()"
-                        :src="$reply->user->avatar" size="xs" />
+                      <flux:avatar :name="$reply->user?->name ?? 'Unknown'" :initials="$reply->user?->initials() ?? '?'"
+                        :src="$reply->user?->avatar" size="xs" />
                       <span
-                        class="text-xs font-medium text-zinc-600 dark:text-zinc-400">{{ $reply->user->name }}</span>
+                        class="text-xs font-medium text-zinc-600 dark:text-zinc-400">{{ $reply->user?->name ?? 'Unknown' }}</span>
                       <span class="text-[10px] text-zinc-400">{{ $reply->created_at->diffForHumans() }}</span>
                     </div>
                     <p class="text-xs text-zinc-500 dark:text-zinc-400 whitespace-pre-wrap">{{ $reply->body }}</p>
@@ -604,10 +604,10 @@
       <div class="space-y-2">
         @foreach ($activities as $activity)
           <div class="flex items-start gap-2 text-xs" wire:key="activity-{{ $activity->id }}">
-            <flux:avatar :name="$activity->user->name" :initials="$activity->user->initials()"
-              :src="$activity->user->avatar" size="xs" class="mt-0.5" />
+            <flux:avatar :name="$activity->user?->name ?? 'Unknown'" :initials="$activity->user?->initials() ?? '?'"
+              :src="$activity->user?->avatar" size="xs" class="mt-0.5" />
             <div>
-              <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ $activity->user->name }}</span>
+              <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ $activity->user?->name ?? 'Unknown' }}</span>
               <span class="text-zinc-500 dark:text-zinc-400">
                 @switch($activity->type)
                   @case('created')
