@@ -13,7 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. Setup PHP & Composer (Dibutuhkan agar Vite bisa membaca aset Flux UI di folder vendor)
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:

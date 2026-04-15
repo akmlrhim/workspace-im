@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Mail\BrevoApiTransport;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -27,6 +29,15 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureGates();
+        $this->configureMail();
+    }
+
+    /**
+     * Register Brevo HTTP API transport for outbound mail.
+     */
+    protected function configureMail(): void
+    {
+        Mail::extend('brevo', fn () => new BrevoApiTransport((string) config('services.brevo.key')));
     }
 
     /**

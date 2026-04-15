@@ -4,7 +4,8 @@
       "Bash(where php:*)",
       "Bash(\"E:/laragon/bin/php/php-8.3.9-nts-Win32-vs16-x64/php.exe\" artisan:*)",
       "Bash(E:/laragon/bin/php/php-8.3.9-nts-Win32-vs16-x64/php.exe artisan:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(powershell -Command \"Test-NetConnection -ComputerName smtp-relay.brevo.com -Port 587 -InformationLevel Quiet; Test-NetConnection -ComputerName smtp-relay.brevo.com -Port 2525 -InformationLevel Quiet; Test-NetConnection -ComputerName smtp-relay.brevo.com -Port 465 -InformationLevel Quiet\")"
     ]
   }
 }

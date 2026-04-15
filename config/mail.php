@@ -39,6 +39,7 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
+            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'scheme' => env('MAIL_SCHEME'),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
@@ -63,6 +64,10 @@ return [
 
         'resend' => [
             'transport' => 'resend',
+        ],
+
+        'brevo' => [
+            'transport' => 'brevo',
         ],
 
         'sendmail' => [
