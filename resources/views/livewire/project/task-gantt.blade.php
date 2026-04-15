@@ -3,7 +3,9 @@
     @include('livewire.project.partials.breadcrumb')
 
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{{ $taskList->name }}</h1>
+      <h1 class="hidden lg:block text-2xl font-bold text-zinc-900 dark:text-white">
+        {{ $taskList->name }}
+      </h1>
       <div class="flex items-center gap-2">
         @include('livewire.project.partials.view-toggle', ['active' => 'gantt'])
       </div>

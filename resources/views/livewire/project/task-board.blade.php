@@ -2,7 +2,9 @@
   <div class="mb-6">
     @include('livewire.project.partials.breadcrumb')
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{{ $taskList->name }}</h1>
+      <h1 class="hidden lg:block text-2xl font-bold text-zinc-900 dark:text-white">
+        {{ $taskList->name }}
+      </h1>
       <div class="flex items-center gap-2">
         @include('livewire.project.partials.view-toggle', ['active' => 'board'])
       </div>
@@ -56,10 +58,9 @@
               </button>
 
               <div x-show="open" x-cloak @click.away="open = false"
-                x-transition:enter="transition ease-out duration-100"
-                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95"
+                x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                 class="absolute right-0 top-8 z-30 w-44 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
                 <button @click="open = false; $wire.startRenamingColumn({{ $status->id }})"
                   class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700">

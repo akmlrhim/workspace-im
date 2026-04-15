@@ -2,10 +2,9 @@
   <div class="mb-8">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-md lg:text-2xl font-bold text-zinc-900 dark:text-white">Spaces</h1>
+        <h1 class="text-md lg:text-2xl  font-bold text-zinc-900 dark:text-white">Spaces</h1>
         <p class="mt-1 text-xs lg:text-sm text-zinc-500 dark:text-zinc-400">Kelola tugas dan proyek Anda dalam
-          ruang-ruang yang
-          terorganisir</p>
+          ruang-ruang yang terorganisir</p>
       </div>
       <div class="flex items-center gap-2">
         <flux:button icon="plus" variant="primary" @click="$wire.set('showCreateSpace', true)">
