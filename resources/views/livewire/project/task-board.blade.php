@@ -17,7 +17,7 @@
     @foreach ($this->statuses as $status)
       <div wire:key="status-{{ $status->id }}"
         class="kanban-col-wrapper flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 cursor-grab border-t-4"
-        style="border-top-color: {{ $status->color }}" wire:key="status-col-{{ $status->id }}"
+        style="border-top-color: {{ $status->color }}" 
         data-column-id="{{ $status->id }}">
         <div class="flex items-center justify-between px-3 py-3">
           <div class="flex items-center gap-2 min-w-0 flex-1">
@@ -75,11 +75,11 @@
           @endif
         </div>
 
-        <div class="kanban-column flex min-h-[100px] flex-col gap-2 px-2 pb-2" data-status-id="{{ $status->id }}">
+        <div class="kanban-column flex min-h-[100px] flex-col gap-2 px-2 pb-2" data-status-id="{{ $status->id }}" wire:key="col-status-{{ $status->id }}">
           @foreach ($status->tasks as $task)
             <div wire:key="task-{{ $task->id }}"
               class="task-card group/card relative cursor-pointer rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition-all hover:shadow-md active:cursor-grabbing active:shadow-lg active:ring-2 active:ring-indigo-400/30 dark:border-zinc-700 dark:bg-zinc-800"
-              data-task-id="{{ $task->id }}" wire:key="board-task-{{ $task->id }}"
+              data-task-id="{{ $task->id }}" 
               @click="if (!_isDraggingTask) $wire.openTaskDetail({{ $task->id }})">
               @if ($task->labels->isNotEmpty())
                 <div class="mb-2 flex flex-wrap gap-1">

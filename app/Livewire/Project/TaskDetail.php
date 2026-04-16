@@ -137,7 +137,7 @@ class TaskDetail extends Component
 
     private function authorizeManageTask(): ?Task
     {
-        $task = Task::with('assignees', 'taskList')->findOrFail($this->taskId);
+        $task = Task::with(['assignees', 'taskList'])->findOrFail($this->taskId);
         if (! $task->canBeManagedBy(auth()->user())) {
             Flux::toast('Anda tidak memiliki izin untuk mengubah tugas ini.', variant: 'danger');
 
@@ -173,6 +173,7 @@ class TaskDetail extends Component
     public function updateStatus(int $statusId): void
     {
         $task = $this->authorizeManageTask();
+
         if (! $task) {
             return;
         }
