@@ -21,7 +21,8 @@
       {{ \Carbon\Carbon::parse($startDate)->format('M d') }} — {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
     </span>
   </div>
-  <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
+  {{-- Desktop: Full Gantt chart --}}
+  <div class="hidden sm:block overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
     <div class="min-w-[900px]">
       <div class="flex border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60">
         <div
@@ -110,6 +111,57 @@
         </div>
       @endforelse
     </div>
+  </div>
+
+  {{-- Mobile: Timeline list --}}
+  <div class="sm:hidden space-y-2">
+    @forelse ($tasks as $task)
+      @php
+        $isOverdue = $task->due_date->isPast();
+        $daysLeft = now()->startOfDay()->diffInDays($task->due_date->startOfDay(), false);
+      @endphp
+      <button wire:click="openTaskDetail({{ $task->id }})"
+        class="flex w-full items-center gap-3 rounded-xl border bg-white p-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800
+        {{ $isOverdue ? 'border-red-200 dark:border-red-800/40' : 'border-zinc-200 dark:border-zinc-700' }}"
+        wire:key="gantt-m-{{ $task->id }}">
+        <div class="h-8 w-1 shrink-0 rounded-full" style="background-color: {{ $task->status->color ?? '#6366f1' }}"></div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <div class="h-2 w-2 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}"></div>
+            <span class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $task->title }}</span>
+          </div>
+          <div class="mt-1 flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
+            <span class="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+              style="background-color: {{ $task->status->color ?? '#6b7280' }}20; color: {{ $task->status->color ?? '#6b7280' }}">
+              {{ $task->status->name ?? '' }}
+            </span>
+            @if ($task->assignee)
+              <span>{{ $task->assignee->name }}</span>
+            @endif
+          </div>
+        </div>
+        <div class="shrink-0 text-right">
+          <div class="text-xs font-medium {{ $isOverdue ? 'text-red-500' : 'text-zinc-600 dark:text-zinc-400' }}">
+            {{ $task->due_date->format('M d') }}
+          </div>
+          <div class="text-[10px] {{ $isOverdue ? 'text-red-400' : 'text-zinc-400 dark:text-zinc-500' }}">
+            @if ($isOverdue)
+              {{ abs($daysLeft) }}h lalu
+            @elseif ($daysLeft == 0)
+              Hari ini
+            @else
+              {{ $daysLeft }}h lagi
+            @endif
+          </div>
+        </div>
+      </button>
+    @empty
+      <div class="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white py-12 dark:border-zinc-700 dark:bg-zinc-900">
+        <flux:icon name="chart-bar" class="mb-3 size-10 text-zinc-300 dark:text-zinc-600" />
+        <p class="text-sm text-zinc-500 dark:text-zinc-400">No tasks with due dates to display</p>
+        <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Add due dates to your tasks to see them on the Gantt chart</p>
+      </div>
+    @endforelse
   </div>
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')

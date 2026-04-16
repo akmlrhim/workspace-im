@@ -65,6 +65,7 @@ class TaskGantt extends Component
         $this->showTaskDetail = true;
     }
 
+    #[On('close-task-detail')]
     public function closeTaskDetail(): void
     {
         $this->showTaskDetail = false;
@@ -79,15 +80,23 @@ class TaskGantt extends Component
 
     public function render()
     {
+        $start = Carbon::parse($this->startDate);
+        $end = Carbon::parse($this->endDate);
+
         $tasks = $this->taskList->tasks()
             ->with(['status', 'assignee'])
             ->whereNull('parent_id')
             ->whereNotNull('due_date')
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('due_date', [$start, $end])
+                    ->orWhereBetween('created_at', [$start, $end])
+                    ->orWhere(function ($sub) use ($start, $end) {
+                        $sub->where('created_at', '<=', $start)
+                            ->where('due_date', '>=', $end);
+                    });
+            })
             ->orderBy('due_date')
             ->get();
-
-        $start = Carbon::parse($this->startDate);
-        $end = Carbon::parse($this->endDate);
         $days = collect(CarbonPeriod::create($start, $end));
         $totalDays = $start->diffInDays($end) + 1;
 

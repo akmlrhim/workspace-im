@@ -24,8 +24,8 @@
         @endif
       </div>
 
-      <div class="flex flex-wrap gap-3">
-        <div class="w-auto min-w-[140px]">
+      <div class="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
+        <div class="w-full sm:w-auto sm:min-w-[140px]">
           <flux:select wire:model.live="taskStatusId" wire:change="updateStatus($event.target.value)"
             :disabled="$ro">
             @foreach ($statuses as $status)
@@ -34,7 +34,7 @@
           </flux:select>
         </div>
 
-        <div class="w-auto min-w-[140px]">
+        <div class="w-full sm:w-auto sm:min-w-[140px]">
           <flux:select wire:model.live="taskPriority" wire:change="updatePriority($event.target.value)"
             :disabled="$ro">
             <flux:select.option value="urgent">🔴 Urgent</flux:select.option>
@@ -44,7 +44,7 @@
           </flux:select>
         </div>
 
-        <div class="w-auto min-w-[150px]">
+        <div class="w-full sm:w-auto sm:min-w-[150px]">
           <flux:input type="date" wire:model="taskDueDate" wire:change="updateDueDate" :readonly="$ro" />
         </div>
       </div>
@@ -197,11 +197,11 @@
         @endphp
 
         <div class="mb-5" wire:key="cl-{{ $checklist->id }}">
-          <div class="mb-1 flex items-center gap-2" x-data="{ editing: false, name: '{{ addslashes($checklist->name) }}' }">
+          <div class="mb-1 flex items-center gap-2" x-data="{ editing: false, name: {{ Js::from($checklist->name) }} }">
             <flux:icon name="check-circle" class="size-4 shrink-0 text-indigo-500" />
 
             <span x-show="!editing"
-              @if ($canManage) x-on:dblclick="editing = true; $nextTick(() => $refs['cl_name_{{ $checklist->id }}'].focus())" @endif
+              @if ($canManage) @dblclick="editing = true; $nextTick(() => $refs['cl_name_{{ $checklist->id }}'].focus())" @endif
               class="flex-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300 {{ $canManage ? 'cursor-text' : '' }}">
               {{ $checklist->name }}
             </span>
@@ -246,7 +246,7 @@
                   </button>
 
                   <span x-show="editingItemId !== {{ $item->id }}"
-                    @if ($canManage) x-on:dblclick="editingItemId = {{ $item->id }}; editTitle = '{{ addslashes($item->title) }}'; $nextTick(() => $refs['edit_cli_{{ $item->id }}'].focus())" @endif
+                    @if ($canManage) @dblclick="editingItemId = {{ $item->id }}; editTitle = {{ Js::from($item->title) }}; $nextTick(() => $refs['edit_cli_{{ $item->id }}'].focus())" @endif
                     class="flex-1 text-sm {{ $item->is_completed ? 'line-through text-zinc-400 dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-300' }} {{ $canManage ? 'cursor-text' : '' }}">
                     {{ $item->title }}
                   </span>

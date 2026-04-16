@@ -7,8 +7,9 @@
           ruang-ruang yang terorganisir</p>
       </div>
       <div class="flex items-center gap-2">
-        <flux:button icon="plus" variant="primary" @click="$wire.set('showCreateSpace', true)">
-          Buat space baru
+        <flux:button icon="plus" variant="primary" size="sm" class="max-sm:!px-2.5" @click="$wire.set('showCreateSpace', true)">
+          <span class="hidden sm:inline">Buat space baru</span>
+          <span class="sm:hidden">Baru</span>
         </flux:button>
       </div>
     </div>
@@ -40,7 +41,7 @@
 
             <flux:dropdown position="bottom" align="end">
               <flux:button icon="ellipsis-horizontal" size="sm" variant="ghost"
-                class="opacity-0 transition-opacity group-hover:opacity-100" />
+                class="sm:opacity-0 transition-opacity group-hover:opacity-100" />
               <flux:menu>
                 <flux:menu.item icon="pencil-square" wire:click="editSpace({{ $space->id }})">Edit</flux:menu.item>
                 <flux:menu.separator />
@@ -64,7 +65,7 @@
       </div>
     @endforelse
   </div>
-  <flux:modal wire:model="showCreateSpace" class="w-full max-w-lg">
+  <flux:modal wire:model="showCreateSpace" class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
     <div class="space-y-6">
       <flux:heading size="lg">Create New Space</flux:heading>
 
@@ -94,7 +95,7 @@
       </form>
     </div>
   </flux:modal>
-  <flux:modal wire:model="showEditSpace" class="w-full max-w-lg">
+  <flux:modal wire:model="showEditSpace" class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
     <div class="space-y-6">
       <flux:heading size="lg">Edit Space</flux:heading>
 
@@ -135,9 +136,9 @@
         Apakah Anda yakin ingin menghapus space ini? Semua proyek, tugas, dan data terkait dalam space ini akan
         dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
       </p>
-      <div class="flex justify-center gap-2 pt-2">
-        <flux:button variant="ghost" @click="$wire.set('showDeleteConfirm', false)">Cancel</flux:button>
-        <flux:button variant="danger" wire:click="deleteSpace">Delete Space</flux:button>
+      <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-center">
+        <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteConfirm', false)">Cancel</flux:button>
+        <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteSpace">Delete Space</flux:button>
       </div>
     </div>
   </flux:modal>

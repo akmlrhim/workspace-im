@@ -3,7 +3,7 @@
     @include('livewire.project.partials.breadcrumb')
 
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{{ $taskList->name }}</h1>
+      <h1 class="hidden lg:block text-2xl font-bold text-zinc-900 dark:text-white">{{ $taskList->name }}</h1>
       <div class="flex items-center gap-2">
         @include('livewire.project.partials.view-toggle', ['active' => 'calendar'])
       </div>
@@ -15,9 +15,11 @@
       <flux:button size="sm" variant="ghost" wire:click="goToToday">Hari Ini</flux:button>
       <flux:button icon="chevron-right" size="sm" variant="ghost" wire:click="nextMonth" />
     </div>
-    <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ $monthLabel }}</h2>
+    <h2 class="text-sm sm:text-lg font-semibold text-zinc-900 dark:text-white">{{ $monthLabel }}</h2>
   </div>
-  <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+
+  {{-- Desktop: Grid calendar --}}
+  <div class="hidden sm:block overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
     <div class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60">
       @foreach (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $dayName)
         <div
@@ -55,7 +57,6 @@
                       style="background-color: {{ $task->priority_color }}"></div>
                     <span class="truncate">{{ $task->title }}</span>
                   </button>
-
                 </div>
               @endforeach
 
@@ -68,6 +69,55 @@
           </div>
         @endforeach
       </div>
+    @endforeach
+  </div>
+
+  {{-- Mobile: List-style calendar --}}
+  <div class="sm:hidden space-y-1">
+    @foreach ($weeks as $week)
+      @foreach ($week as $day)
+        @if ($day['isCurrentMonth'])
+          @php $hasTasks = $day['tasks']->isNotEmpty(); @endphp
+          <div
+            class="rounded-lg border px-3 py-2 transition-colors
+            {{ $day['isToday'] ? 'border-indigo-300 bg-indigo-50/50 dark:border-indigo-700 dark:bg-indigo-900/10' : 'border-zinc-100 dark:border-zinc-800' }}
+            {{ !$hasTasks ? 'opacity-60' : '' }}"
+            wire:key="cal-m-{{ $day['date']->format('Y-m-d') }}">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span
+                  class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold
+                  {{ $day['isToday'] ? 'bg-indigo-600 text-white' : 'text-zinc-700 dark:text-zinc-300' }}">
+                  {{ $day['date']->day }}
+                </span>
+                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  {{ $day['date']->format('D') }}
+                </span>
+              </div>
+              @if ($hasTasks)
+                <span class="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                  {{ $day['tasks']->count() }}
+                </span>
+              @endif
+            </div>
+            @if ($hasTasks)
+              <div class="mt-2 space-y-1 pl-9">
+                @foreach ($day['tasks'] as $task)
+                  <button wire:click="openTaskDetail({{ $task->id }})"
+                    class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                    style="color: {{ $task->status->color ?? '#6366f1' }};">
+                    <div class="h-2 w-2 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}"></div>
+                    <span class="truncate">{{ $task->title }}</span>
+                    @if ($task->assignee)
+                      <flux:avatar :name="$task->assignee->name" :initials="$task->assignee->initials()" :src="$task->assignee->avatar" size="xs" class="ml-auto shrink-0" />
+                    @endif
+                  </button>
+                @endforeach
+              </div>
+            @endif
+          </div>
+        @endif
+      @endforeach
     @endforeach
   </div>
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])

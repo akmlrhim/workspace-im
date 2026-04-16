@@ -1,5 +1,6 @@
 <div>
-  <flux:modal wire:model="showTaskForm" class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+  <flux:modal wire:model="showTaskForm"
+    class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
     <div class="space-y-6 max-sm:overflow-y-auto max-sm:pb-8">
       <flux:heading size="lg">{{ $editingTaskId ? 'Edit Task' : 'Create Task' }}</flux:heading>
 

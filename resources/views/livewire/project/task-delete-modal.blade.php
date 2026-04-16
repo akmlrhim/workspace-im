@@ -9,9 +9,9 @@
         Apakah Anda yakin ingin menghapus tugas ini? Semua sub-tugas akan juga dihapus secara permanen. Tindakan ini
         tidak dapat dibatalkan.
       </p>
-      <div class="flex justify-center gap-2 pt-2">
-        <flux:button variant="ghost" @click="$wire.set('showDeleteConfirm', false)">Batal</flux:button>
-        <flux:button variant="danger" wire:click="deleteTask">Hapus</flux:button>
+      <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-center">
+        <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteConfirm', false)">Batal</flux:button>
+        <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteTask">Hapus</flux:button>
       </div>
     </div>
   </flux:modal>
