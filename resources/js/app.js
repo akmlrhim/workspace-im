@@ -1,4 +1,4 @@
 import Sortable from "sortablejs";
-import './echo';
+import "./echo";
 
 window.Sortable = Sortable;

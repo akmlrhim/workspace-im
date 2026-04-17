@@ -17,8 +17,7 @@
     @foreach ($this->statuses as $status)
       <div wire:key="status-{{ $status->id }}"
         class="kanban-col-wrapper flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 cursor-grab border-t-4"
-        style="border-top-color: {{ $status->color }}" 
-        data-column-id="{{ $status->id }}">
+        style="border-top-color: {{ $status->color }}" data-column-id="{{ $status->id }}">
         <div class="flex items-center justify-between px-3 py-3">
           <div class="flex items-center gap-2 min-w-0 flex-1">
             <div class="h-2.5 w-2.5 shrink-0 rounded-full" style="background-color: {{ $status->color }}"></div>
@@ -75,11 +74,12 @@
           @endif
         </div>
 
-        <div class="kanban-column flex min-h-[100px] flex-col gap-2 px-2 pb-2" data-status-id="{{ $status->id }}" wire:key="col-status-{{ $status->id }}">
+        <div class="kanban-column flex min-h-[100px] flex-col gap-2 px-2 pb-2" data-status-id="{{ $status->id }}"
+          wire:key="col-status-{{ $status->id }}">
           @foreach ($status->tasks as $task)
             <div wire:key="task-{{ $task->id }}"
               class="task-card group/card relative cursor-pointer rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition-all hover:shadow-md active:cursor-grabbing active:shadow-lg active:ring-2 active:ring-indigo-400/30 dark:border-zinc-700 dark:bg-zinc-800"
-              data-task-id="{{ $task->id }}" 
+              data-task-id="{{ $task->id }}"
               @click="if (!_isDraggingTask) $wire.openTaskDetail({{ $task->id }})">
               @if ($task->labels->isNotEmpty())
                 <div class="mb-2 flex flex-wrap gap-1">
@@ -293,6 +293,10 @@
       },
 
       _initAll() {
+        if (typeof window.Sortable === 'undefined') {
+          setTimeout(() => this._initAll(), 50);
+          return;
+        }
         this._destroyAll();
         this._initTaskSortables();
         this._initColumnSortable();
@@ -302,7 +306,7 @@
         const board = this.$el;
         if (!board) return;
 
-        this._columnSortable = new Sortable(board, {
+        this._columnSortable = new window.Sortable(board, {
           animation: 200,
           easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
           draggable: '.kanban-col-wrapper',
@@ -332,7 +336,7 @@
 
       _initTaskSortables() {
         document.querySelectorAll('.kanban-column').forEach(column => {
-          const instance = new Sortable(column, {
+          const instance = new window.Sortable(column, {
             group: 'kanban-tasks',
             animation: 200,
             easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
