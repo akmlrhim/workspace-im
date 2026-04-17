@@ -33,16 +33,7 @@
         </div>
         <div>
           <flux:heading size="lg" class="leading-tight">{{ auth()->user()->name }}</flux:heading>
-          <flux:text class="text-sm text-zinc-500 dark:text-zinc-400 mb-2">{{ auth()->user()->email }}</flux:text>
-          
-          <div class="flex items-center gap-2 mt-1">
-            <span class="inline-flex items-center rounded bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-700/50 dark:text-zinc-300">
-              Peran: {{ \App\Models\User::roles()[auth()->user()->role] ?? 'Custom' }}
-            </span>
-            <span class="inline-flex items-center rounded bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-700/50 dark:text-zinc-300">
-              Posisi: {{ auth()->user()->position ?? 'Belum Ditugaskan' }}
-            </span>
-          </div>
+          <flux:text class="text-sm text-zinc-500 dark:text-zinc-400">{{ auth()->user()->email }}</flux:text>
 
           @if ($this->isGoogleOnly)
             <span

@@ -12,34 +12,38 @@
       @foreach (config('erp.modules', []) as $key => $module)
         @php
           $allowedPositions = $module['allowed_positions'] ?? [];
-          $hasModuleAccess = !auth()->user()->isGuest() && (empty($allowedPositions) || auth()->user()->isAdmin() || in_array(auth()->user()->position, $allowedPositions));
+          $hasModuleAccess =
+              !auth()->user()->isGuest() &&
+              (empty($allowedPositions) ||
+                  auth()->user()->isAdmin() ||
+                  in_array(auth()->user()->position, $allowedPositions));
           $color = $module['color'] ?? 'indigo';
-          
+
           $colorClasses = [
               'indigo' => [
                   'bg' => 'bg-indigo-50 dark:bg-indigo-500/10',
                   'hoverBg' => 'group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20',
                   'text' => 'text-indigo-500',
-                  'hugeText' => 'text-indigo-600'
+                  'hugeText' => 'text-indigo-600',
               ],
               'emerald' => [
                   'bg' => 'bg-emerald-50 dark:bg-emerald-500/10',
                   'hoverBg' => 'group-hover:bg-emerald-100 dark:group-hover:bg-emerald-500/20',
                   'text' => 'text-emerald-500',
-                  'hugeText' => 'text-emerald-600'
+                  'hugeText' => 'text-emerald-600',
               ],
               'amber' => [
                   'bg' => 'bg-amber-50 dark:bg-amber-500/10',
                   'hoverBg' => 'group-hover:bg-amber-100 dark:group-hover:bg-amber-500/20',
                   'text' => 'text-amber-500',
-                  'hugeText' => 'text-amber-600'
+                  'hugeText' => 'text-amber-600',
               ],
               'sky' => [
                   'bg' => 'bg-sky-50 dark:bg-sky-500/10',
                   'hoverBg' => 'group-hover:bg-sky-100 dark:group-hover:bg-sky-500/20',
                   'text' => 'text-sky-500',
-                  'hugeText' => 'text-sky-600'
-              ]
+                  'hugeText' => 'text-sky-600',
+              ],
           ];
           $c = $colorClasses[$color] ?? $colorClasses['indigo'];
         @endphp
@@ -60,12 +64,13 @@
         @endif
       @endforeach
     </div>
-    
+
     @if (auth()->user()->isGuest())
       <flux:callout variant="warning" icon="clock" class="mt-8">
         <flux:callout.heading>Menunggu Persetujuan Akun</flux:callout.heading>
         <flux:callout.text>
-          Akun Anda telah berhasil dibuat via Google, namun belum memiliki hak akses (Role/Position). Silakan hubungi Administrator untuk mendaftarkan posisi Anda agar dapat mengakses modul sistem.
+          Akun Anda telah berhasil dibuat via Google, namun belum memiliki hak akses (Role/Position). Silakan hubungi
+          Administrator untuk mendaftarkan posisi Anda agar dapat mengakses modul sistem.
         </flux:callout.text>
       </flux:callout>
     @endif

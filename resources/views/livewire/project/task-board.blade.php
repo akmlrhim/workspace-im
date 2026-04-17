@@ -360,6 +360,10 @@
               const newStatusId = parseInt(evt.to.dataset.statusId);
               const orderedIds = Array.from(evt.to.querySelectorAll('.task-card'))
                 .map(el => parseInt(el.dataset.taskId));
+
+              // Update column count badges immediately (optimistic UI)
+              this._updateColumnCounts(evt.from, evt.to);
+
               this.$wire.moveTask(taskId, newStatusId, orderedIds);
               // Reset after click event has fired to prevent opening detail after drag
               setTimeout(() => {
@@ -370,6 +374,19 @@
 
           column._sortableInstance = instance;
           this._sortableInstances.push(instance);
+        });
+      },
+
+      _updateColumnCounts(fromCol, toCol) {
+        // Update the task count badge in column headers after drag
+        [fromCol, toCol].forEach(col => {
+          if (!col) return;
+          const wrapper = col.closest('.kanban-col-wrapper');
+          if (!wrapper) return;
+          const badge = wrapper.querySelector('.rounded-full.bg-zinc-200, .rounded-full.dark\\:bg-zinc-700');
+          if (badge) {
+            badge.textContent = col.querySelectorAll('.task-card').length;
+          }
         });
       },
 

@@ -7,7 +7,8 @@
           ruang-ruang yang terorganisir</p>
       </div>
       <div class="flex items-center gap-2">
-        <flux:button icon="plus" variant="primary" size="sm" class="max-sm:!px-2.5" @click="$wire.set('showCreateSpace', true)">
+        <flux:button icon="plus" variant="primary" size="sm" class="max-sm:!px-2.5"
+          @click="$wire.set('showCreateSpace', true)">
           <span class="hidden sm:inline">Buat space baru</span>
           <span class="sm:hidden">Baru</span>
         </flux:button>
@@ -65,7 +66,8 @@
       </div>
     @endforelse
   </div>
-  <flux:modal wire:model="showCreateSpace" class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+  <flux:modal wire:model="showCreateSpace"
+    class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
     <div class="space-y-6">
       <flux:heading size="lg">Create New Space</flux:heading>
 
@@ -95,7 +97,8 @@
       </form>
     </div>
   </flux:modal>
-  <flux:modal wire:model="showEditSpace" class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+  <flux:modal wire:model="showEditSpace"
+    class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
     <div class="space-y-6">
       <flux:heading size="lg">Edit Space</flux:heading>
 
@@ -137,7 +140,8 @@
         dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
       </p>
       <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-center">
-        <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteConfirm', false)">Cancel</flux:button>
+        <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showDeleteConfirm', false)">Cancel
+        </flux:button>
         <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteSpace">Delete Space</flux:button>
       </div>
     </div>
