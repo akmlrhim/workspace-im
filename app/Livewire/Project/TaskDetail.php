@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Project;
 
+use App\Events\TaskListUpdated;
+use App\Events\TaskUpdatedGlobal;
 use App\Models\Project\Task;
 use App\Models\Project\TaskActivity;
 use App\Models\Project\TaskAttachment;
@@ -9,6 +11,7 @@ use App\Models\Project\TaskChecklist;
 use App\Models\Project\TaskChecklistItem;
 use App\Models\Project\TaskComment;
 use App\Models\Project\TaskLabel;
+use App\Models\Project\TaskList;
 use App\Models\Project\TimeTracking;
 use App\Models\User;
 use Flux\Flux;
@@ -23,6 +26,8 @@ class TaskDetail extends Component
     use WithFileUploads;
 
     public ?int $taskId = null;
+
+    public ?int $taskListId = null;
 
     public string $taskTitle = '';
 
@@ -87,6 +92,7 @@ class TaskDetail extends Component
     {
         $task = Task::with(['status', 'assignees', 'taskList.statuses', 'labels'])->findOrFail($taskId);
         $this->taskId = $task->id;
+        $this->taskListId = $task->task_list_id;
         $this->taskTitle = $task->title;
         $this->taskDescription = $task->description ?? '';
         $this->taskPriority = $task->priority;
@@ -135,6 +141,20 @@ class TaskDetail extends Component
         return true;
     }
 
+    private function broadcastChange(): void
+    {
+        if ($this->taskListId) {
+            TaskListUpdated::dispatch($this->taskListId, auth()->id());
+
+            $workspaceId = TaskList::with('space.workspace')
+                ->find($this->taskListId)?->space?->workspace_id;
+
+            if ($workspaceId) {
+                TaskUpdatedGlobal::dispatch($workspaceId, auth()->id());
+            }
+        }
+    }
+
     private function authorizeManageTask(): ?Task
     {
         $task = Task::with(['assignees', 'taskList'])->findOrFail($this->taskId);
@@ -158,6 +178,7 @@ class TaskDetail extends Component
         }
         $task->update(['title' => $this->taskTitle]);
         $this->dispatch('task-updated');
+        $this->broadcastChange();
     }
 
     public function saveDescription(): void
@@ -167,6 +188,8 @@ class TaskDetail extends Component
             return;
         }
         $task->update(['description' => $this->taskDescription]);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Deskripsi disimpan.', variant: 'success');
     }
 
@@ -200,6 +223,7 @@ class TaskDetail extends Component
         ]);
 
         $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Status diperbarui.', variant: 'success');
     }
 
@@ -228,6 +252,7 @@ class TaskDetail extends Component
         ]);
 
         $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Prioritas diperbarui.', variant: 'success');
     }
 
@@ -239,6 +264,7 @@ class TaskDetail extends Component
         }
         $task->update(['due_date' => $this->taskDueDate ?: null]);
         $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Tanggal jatuh tempo diperbarui.', variant: 'success');
     }
 
@@ -271,6 +297,7 @@ class TaskDetail extends Component
         ]);
 
         $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Penugasan berhasil diperbarui.', variant: 'success');
     }
 
@@ -282,6 +309,7 @@ class TaskDetail extends Component
         }
         $task->labels()->toggle($labelId);
         $this->dispatch('task-updated');
+        $this->broadcastChange();
     }
 
     public function createLabel(): void
@@ -313,6 +341,7 @@ class TaskDetail extends Component
         $this->newLabelColor = '#6366f1';
 
         $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Label dibuat dan ditambahkan.', variant: 'success');
     }
 
@@ -337,12 +366,16 @@ class TaskDetail extends Component
         ]);
 
         $this->reset('newComment');
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Komentar berhasil ditambahkan.', variant: 'success');
     }
 
     public function deleteComment(int $commentId): void
     {
         TaskComment::where('id', $commentId)->where('user_id', auth()->id())->delete();
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Komentar berhasil dihapus.', variant: 'danger');
     }
 
@@ -375,6 +408,8 @@ class TaskDetail extends Component
         ]);
 
         $this->reset(['newSubtaskTitle', 'showSubtaskForm']);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Subtask berhasil ditambahkan.', variant: 'success');
     }
 
@@ -459,6 +494,8 @@ class TaskDetail extends Component
         }
 
         $this->reset('uploadFiles');
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('File berhasil diunggah.', variant: 'success');
     }
 
@@ -471,6 +508,8 @@ class TaskDetail extends Component
         $attachment = TaskAttachment::where('id', $attachmentId)->where('user_id', auth()->id())->firstOrFail();
         Storage::disk('public')->delete($attachment->path);
         $attachment->delete();
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Lampiran berhasil dihapus.', variant: 'danger');
     }
 

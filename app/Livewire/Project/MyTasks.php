@@ -4,8 +4,8 @@ namespace App\Livewire\Project;
 
 use App\Models\Project\Task;
 use App\Models\Project\TaskStatus;
+use App\Models\Project\Workspace;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -19,20 +19,49 @@ class MyTasks extends Component
 
     public bool $showTaskDetail = false;
 
+    public ?int $workspaceId = null;
+
+    public function mount(): void
+    {
+        $this->workspaceId = Workspace::where('owner_id', auth()->id())->value('id');
+    }
+
+    /** @return array<string, string> */
+    public function getListeners(): array
+    {
+        $listeners = [
+            'close-task-detail' => 'closeTaskDetail',
+            'task-updated' => 'onTaskUpdated',
+        ];
+
+        if ($this->workspaceId) {
+            $listeners["echo:workspace.{$this->workspaceId},TaskUpdatedGlobal"] = 'onBroadcastUpdate';
+        }
+
+        return $listeners;
+    }
+
+    public function onBroadcastUpdate(array $event): void
+    {
+        if (($event['triggeredBy'] ?? null) == auth()->id()) {
+            $this->skipRender();
+
+            return;
+        }
+    }
+
     public function openTaskDetail(int $taskId): void
     {
         $this->selectedTaskId = $taskId;
         $this->showTaskDetail = true;
     }
 
-    #[On('close-task-detail')]
     public function closeTaskDetail(): void
     {
         $this->showTaskDetail = false;
         $this->selectedTaskId = null;
     }
 
-    #[On('task-updated')]
     public function onTaskUpdated(): void
     {
         // Re-render

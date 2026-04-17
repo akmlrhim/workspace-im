@@ -2,15 +2,17 @@
 
 namespace App\Livewire\Project;
 
+use App\Events\TaskListUpdated;
+use App\Events\TaskUpdatedGlobal;
 use App\Models\Project\Space;
 use App\Models\Project\Task;
 use App\Models\Project\TaskActivity;
 use App\Models\Project\TaskList;
 use App\Models\Project\TaskStatus;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -53,6 +55,33 @@ class TaskBoard extends Component
         $this->taskList = $taskList;
     }
 
+    /** @return array<string, string> */
+    public function getListeners(): array
+    {
+        return [
+            "echo:task-list.{$this->taskList->id},TaskListUpdated" => 'onBroadcastUpdate',
+            'task-updated' => 'onTaskUpdated',
+            'close-task-detail' => 'closeTaskDetail',
+        ];
+    }
+
+    public function onBroadcastUpdate(array $event): void
+    {
+        if (($event['triggeredBy'] ?? null) == auth()->id()) {
+            $this->skipRender();
+
+            return;
+        }
+
+        unset($this->statuses);
+    }
+
+    private function broadcastChange(): void
+    {
+        TaskListUpdated::dispatch($this->taskList->id, auth()->id());
+        TaskUpdatedGlobal::dispatch($this->taskList->space->workspace_id, auth()->id());
+    }
+
     private function canManageBoard(): bool
     {
         $user = auth()->user();
@@ -90,6 +119,7 @@ class TaskBoard extends Component
         $this->reset(['newColumnName', 'newColumnColor', 'showNewColumnInput']);
         $this->newColumnColor = '#6b7280';
 
+        $this->broadcastChange();
         Flux::toast('Kolom baru berhasil ditambahkan.', variant: 'success');
     }
 
@@ -117,6 +147,7 @@ class TaskBoard extends Component
         ]);
 
         $this->reset(['renamingColumnId', 'renamingColumnName']);
+        $this->broadcastChange();
         Flux::toast('Nama kolom berhasil diubah.', variant: 'success');
     }
 
@@ -168,16 +199,35 @@ class TaskBoard extends Component
         $column->delete();
 
         $this->reset(['showDeleteColumnConfirm', 'deletingColumnId']);
+        $this->broadcastChange();
         Flux::toast('Kolom berhasil dihapus.', variant: 'success');
     }
 
     public function updateColumnOrder(array $orderedIds): void
     {
-        foreach ($orderedIds as $index => $columnId) {
-            TaskStatus::where('id', $columnId)
-                ->where('task_list_id', $this->taskList->id)
-                ->update(['position' => $index]);
+        if (empty($orderedIds)) {
+            return;
         }
+
+        $cases = [];
+        $bindings = [];
+
+        foreach ($orderedIds as $position => $columnId) {
+            $cases[] = 'WHEN id = ? THEN ?';
+            $bindings[] = $columnId;
+            $bindings[] = $position;
+        }
+
+        $bindings[] = $this->taskList->id;
+        $bindings = array_merge($bindings, $orderedIds);
+        $placeholders = implode(',', array_fill(0, count($orderedIds), '?'));
+
+        DB::update(
+            'UPDATE task_statuses SET position = CASE '.implode(' ', $cases).' END WHERE task_list_id = ? AND id IN ('.$placeholders.')',
+            $bindings
+        );
+
+        $this->broadcastChange();
     }
 
     // ─── Task CRUD ─────────────────────────────────────────────────
@@ -222,6 +272,7 @@ class TaskBoard extends Component
 
         $this->dispatch('task-created-on-board', taskId: $task->id, statusId: $statusId);
 
+        $this->broadcastChange();
         Flux::toast('Tugas berhasil dibuat.', variant: 'success');
     }
 
@@ -238,31 +289,28 @@ class TaskBoard extends Component
         $oldStatusId = $task->task_status_id;
         $oldStatusName = $task->status->name;
 
-        // Update the moved task's status
-        $task->update([
-            'task_status_id' => $newStatusId,
-        ]);
+        // Batch update: moved task status + all target column positions in one transaction
+        DB::transaction(function () use ($task, $newStatusId, $oldStatusId, $orderedIds) {
+            $task->update(['task_status_id' => $newStatusId]);
 
-        // Re-index all tasks in the target column based on the new order
-        foreach ($orderedIds as $index => $id) {
-            Task::where('id', $id)->update(['position' => $index]);
-        }
+            // Batch position update for target column
+            $this->batchUpdatePositions($orderedIds);
 
-        // If the task moved to a different column, also re-index the source column
-        if ($oldStatusId !== $newStatusId) {
-            $sourceTasks = Task::where('task_list_id', $this->taskList->id)
-                ->where('task_status_id', $oldStatusId)
-                ->whereNull('parent_id')
-                ->orderBy('position')
-                ->pluck('id');
+            // Re-index source column if cross-column move
+            if ($oldStatusId !== $newStatusId) {
+                $sourceIds = Task::where('task_list_id', $this->taskList->id)
+                    ->where('task_status_id', $oldStatusId)
+                    ->whereNull('parent_id')
+                    ->orderBy('position')
+                    ->pluck('id')
+                    ->all();
 
-            foreach ($sourceTasks as $index => $id) {
-                Task::where('id', $id)->update(['position' => $index]);
+                $this->batchUpdatePositions($sourceIds);
             }
+        });
 
-            // Log status change activity
-            $newStatus = TaskStatus::find($newStatusId);
-            $newStatusName = $newStatus?->name ?? '';
+        if ($oldStatusId !== $newStatusId) {
+            $newStatusName = TaskStatus::where('id', $newStatusId)->value('name') ?? '';
 
             TaskActivity::create([
                 'task_id' => $task->id,
@@ -275,9 +323,37 @@ class TaskBoard extends Component
             Flux::toast('Dipindah ke '.$newStatusName, variant: 'success');
         }
 
-        // Skip re-render: SortableJS already moved the card in the DOM.
-        // This prevents the visual "bounce-back" delay caused by Livewire morph.
+        $this->broadcastChange();
         $this->skipRender();
+    }
+
+    /**
+     * Batch update positions using a single CASE query instead of N individual updates.
+     *
+     * @param  array<int, int>  $orderedIds
+     */
+    private function batchUpdatePositions(array $orderedIds): void
+    {
+        if (empty($orderedIds)) {
+            return;
+        }
+
+        $cases = [];
+        $bindings = [];
+
+        foreach ($orderedIds as $position => $id) {
+            $cases[] = 'WHEN id = ? THEN ?';
+            $bindings[] = $id;
+            $bindings[] = $position;
+        }
+
+        $bindings = array_merge($bindings, $orderedIds);
+        $placeholders = implode(',', array_fill(0, count($orderedIds), '?'));
+
+        DB::update(
+            'UPDATE tasks SET position = CASE '.implode(' ', $cases).' END WHERE id IN ('.$placeholders.')',
+            $bindings
+        );
     }
 
     // ─── Task Detail ───────────────────────────────────────────────
@@ -288,13 +364,12 @@ class TaskBoard extends Component
         $this->showTaskDetail = true;
     }
 
-    #[On('task-updated')]
     public function onTaskUpdated(): void
     {
-        // Force full re-render to reflect changes
+        unset($this->statuses);
+        $this->broadcastChange();
     }
 
-    #[On('close-task-detail')]
     public function closeTaskDetail(): void
     {
         $this->showTaskDetail = false;
@@ -307,7 +382,7 @@ class TaskBoard extends Component
         return $this->taskList->statuses()
             ->with(['tasks' => function ($q) {
                 $q->whereNull('parent_id')
-                    ->with(['assignees', 'assignee', 'labels', 'subtasks'])
+                    ->with(['assignees', 'labels', 'subtasks'])
                     ->withCount(['comments', 'attachments'])
                     ->orderBy('position');
             }])

@@ -7,7 +7,6 @@ use App\Models\Project\TaskList;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -34,6 +33,25 @@ class TaskGantt extends Component
         // Default: show 4 weeks from today
         $this->startDate = now()->startOfWeek()->format('Y-m-d');
         $this->endDate = now()->startOfWeek()->addWeeks(4)->format('Y-m-d');
+    }
+
+    /** @return array<string, string> */
+    public function getListeners(): array
+    {
+        return [
+            "echo:task-list.{$this->taskList->id},TaskListUpdated" => 'onBroadcastUpdate',
+            'close-task-detail' => 'closeTaskDetail',
+            'task-updated' => 'onTaskUpdated',
+        ];
+    }
+
+    public function onBroadcastUpdate(array $event): void
+    {
+        if (($event['triggeredBy'] ?? null) == auth()->id()) {
+            $this->skipRender();
+
+            return;
+        }
     }
 
     public function getTitle(): string
@@ -65,14 +83,12 @@ class TaskGantt extends Component
         $this->showTaskDetail = true;
     }
 
-    #[On('close-task-detail')]
     public function closeTaskDetail(): void
     {
         $this->showTaskDetail = false;
         $this->selectedTaskId = null;
     }
 
-    #[On('task-updated')]
     public function onTaskUpdated(): void
     {
         // Re-render

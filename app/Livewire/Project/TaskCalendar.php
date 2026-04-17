@@ -6,7 +6,6 @@ use App\Models\Project\Space;
 use App\Models\Project\TaskList;
 use Carbon\Carbon;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -30,6 +29,25 @@ class TaskCalendar extends Component
         $this->taskList = $taskList;
         $this->currentYear = now()->year;
         $this->currentMonth = now()->month;
+    }
+
+    /** @return array<string, string> */
+    public function getListeners(): array
+    {
+        return [
+            "echo:task-list.{$this->taskList->id},TaskListUpdated" => 'onBroadcastUpdate',
+            'close-task-detail' => 'closeTaskDetail',
+            'task-updated' => 'onTaskUpdated',
+        ];
+    }
+
+    public function onBroadcastUpdate(array $event): void
+    {
+        if (($event['triggeredBy'] ?? null) == auth()->id()) {
+            $this->skipRender();
+
+            return;
+        }
     }
 
     public function getTitle(): string
@@ -63,14 +81,12 @@ class TaskCalendar extends Component
         $this->showTaskDetail = true;
     }
 
-    #[On('close-task-detail')]
     public function closeTaskDetail(): void
     {
         $this->showTaskDetail = false;
         $this->selectedTaskId = null;
     }
 
-    #[On('task-updated')]
     public function onTaskUpdated(): void
     {
         // Re-render automatically
