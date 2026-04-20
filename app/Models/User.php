@@ -44,8 +44,13 @@ class User extends Authenticatable implements MustVerifyEmail
 
 	public function canManageAllProjects(): bool
 	{
-		return in_array($this->role, ['super_user', 'administrator', 'manager'])
+		return in_array($this->role, ['super_user', 'administrator'])
 			|| (int) $this->id === (int) self::min('id');
+	}
+
+	public function isManager(): bool
+	{
+		return $this->role === 'manager';
 	}
 
 	public function isGuest(): bool

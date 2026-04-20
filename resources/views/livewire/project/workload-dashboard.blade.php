@@ -273,7 +273,7 @@
                 <td class="px-6 py-4">
                   @if ($project['lead'])
                     <div class="flex items-center gap-2">
-                      <flux:avatar size="xs" name="{{ $project['lead']->name }}" />
+                      <flux:avatar circle size="xs" :name="$project['lead']->name" :initials="$project['lead']->initials()" :src="$project['lead']->avatar" />
                       <span class="text-zinc-700 dark:text-zinc-300">{{ $project['lead']->name }}</span>
                     </div>
                   @else
@@ -450,7 +450,7 @@
                 wire:key="member-{{ $member['user']->id }}">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
-                    <flux:avatar size="sm" name="{{ $member['user']->name }}" />
+                    <flux:avatar circle size="sm" :name="$member['user']->name" :initials="$member['user']->initials()" :src="$member['user']->avatar" />
                     <div>
                       <div class="font-medium text-zinc-800 dark:text-zinc-100">{{ $member['user']->name }}</div>
                       <div class="text-xs text-zinc-400">{{ $member['user']->email }}</div>
@@ -676,7 +676,7 @@
                   @if ($task['assignees']->isNotEmpty())
                     <div class="flex items-center gap-1">
                       @foreach ($task['assignees']->take(3) as $assignee)
-                        <flux:avatar size="xs" name="{{ $assignee->name }}" />
+                        <flux:avatar circle size="xs" :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar" />
                       @endforeach
                       @if ($task['assignees']->count() > 3)
                         <span class="text-xs text-zinc-400">+{{ $task['assignees']->count() - 3 }}</span>

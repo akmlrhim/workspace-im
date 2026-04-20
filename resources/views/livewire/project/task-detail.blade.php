@@ -58,7 +58,7 @@
           @forelse ($task->assignees as $assignee)
             <span
               class="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
-              <flux:avatar :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar"
+              <flux:avatar circle :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar"
                 size="xs" />
               {{ $assignee->name }}
             </span>
@@ -81,7 +81,7 @@
                 class="flex items-center gap-2 rounded-md px-2 py-1 text-sm {{ $canManage ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer' : 'cursor-not-allowed' }}">
                 <flux:checkbox wire:model="taskAssigneeIds" :value="$member->id" wire:change="updateAssignees"
                   :disabled="$ro" />
-                <flux:avatar :name="$member->name" :initials="$member->initials()" :src="$member->avatar"
+                <flux:avatar circle :name="$member->name" :initials="$member->initials()" :src="$member->avatar"
                   size="xs" />
                 <span class="text-zinc-700 dark:text-zinc-300">{{ $member->name }}</span>
               </label>
@@ -268,7 +268,7 @@
                     @if ($item->assignees->isNotEmpty())
                       <div class="flex -space-x-1">
                         @foreach ($item->assignees->take(3) as $a)
-                          <flux:avatar :name="$a->name" :initials="$a->initials()" :src="$a->avatar"
+                          <flux:avatar circle :name="$a->name" :initials="$a->initials()" :src="$a->avatar"
                             size="xs" class="ring-1 ring-white dark:ring-zinc-800" />
                         @endforeach
                       </div>
@@ -323,7 +323,7 @@
                               {{ $checked ? 'border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 dark:border-zinc-600 dark:text-zinc-400' }}">
                               <input type="checkbox" wire:model="activeItemAssigneeIds" value="{{ $member->id }}"
                                 wire:change="updateChecklistItemAssignees" class="hidden" />
-                              <flux:avatar :name="$member->name" :initials="$member->initials()"
+                              <flux:avatar circle :name="$member->name" :initials="$member->initials()"
                                 :src="$member->avatar" size="xs" />
                               {{ $member->name }}
                             </label>
@@ -564,7 +564,7 @@
             wire:key="comment-{{ $comment->id }}">
             <div class="mb-2 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <flux:avatar :name="$comment->user?->name ?? 'Unknown'" :initials="$comment->user?->initials() ?? '?'"
+                <flux:avatar circle :name="$comment->user?->name ?? 'Unknown'" :initials="$comment->user?->initials() ?? '?'"
                   :src="$comment->user?->avatar" size="xs" />
                 <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $comment->user?->name ?? 'Unknown' }}</span>
                 <span class="text-xs text-zinc-400">{{ $comment->created_at->diffForHumans() }}</span>
@@ -581,7 +581,7 @@
                 @foreach ($comment->replies as $reply)
                   <div wire:key="reply-{{ $reply->id }}">
                     <div class="flex items-center gap-2 mb-1">
-                      <flux:avatar :name="$reply->user?->name ?? 'Unknown'" :initials="$reply->user?->initials() ?? '?'"
+                      <flux:avatar circle :name="$reply->user?->name ?? 'Unknown'" :initials="$reply->user?->initials() ?? '?'"
                         :src="$reply->user?->avatar" size="xs" />
                       <span
                         class="text-xs font-medium text-zinc-600 dark:text-zinc-400">{{ $reply->user?->name ?? 'Unknown' }}</span>
@@ -604,7 +604,7 @@
       <div class="space-y-2">
         @foreach ($activities as $activity)
           <div class="flex items-start gap-2 text-xs" wire:key="activity-{{ $activity->id }}">
-            <flux:avatar :name="$activity->user?->name ?? 'Unknown'" :initials="$activity->user?->initials() ?? '?'"
+            <flux:avatar circle :name="$activity->user?->name ?? 'Unknown'" :initials="$activity->user?->initials() ?? '?'"
               :src="$activity->user?->avatar" size="xs" class="mt-0.5" />
             <div>
               <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ $activity->user?->name ?? 'Unknown' }}</span>

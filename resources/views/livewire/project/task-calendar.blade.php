@@ -109,7 +109,7 @@
                     <div class="h-2 w-2 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}"></div>
                     <span class="truncate">{{ $task->title }}</span>
                     @if ($task->assignee)
-                      <flux:avatar :name="$task->assignee->name" :initials="$task->assignee->initials()" :src="$task->assignee->avatar" size="xs" class="ml-auto shrink-0" />
+                      <flux:avatar circle :name="$task->assignee->name" :initials="$task->assignee->initials()" :src="$task->assignee->avatar" size="xs" class="ml-auto shrink-0" />
                     @endif
                   </button>
                 @endforeach

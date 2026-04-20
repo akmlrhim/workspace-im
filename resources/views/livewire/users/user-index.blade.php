@@ -42,7 +42,7 @@
           {{-- Name + Email --}}
           <flux:table.cell>
             <div class="flex items-center gap-3">
-              <flux:avatar :name="$user->name" :initials="$user->initials()" :src="$user->avatar" size="sm" />
+              <flux:avatar circle :name="$user->name" :initials="$user->initials()" :src="$user->avatar" size="sm" />
               <div class="min-w-0">
                 <div class="flex items-center gap-1.5">
                   <p class="truncate text-sm font-medium text-zinc-900 dark:text-white">{{ $user->name }}</p>

@@ -111,8 +111,17 @@ class Task extends Model
 
     public function canBeManagedBy(User $user): bool
     {
-        // Elevated roles (super user / administrator / manager) manage everything
+        // Elevated roles (super user / administrator) manage everything
         if ($user->canManageAllProjects()) {
+            return true;
+        }
+        // Workspace Owner
+        $workspace = $this->taskList?->space?->workspace;
+        if ($workspace && $workspace->owner_id === $user->id) {
+            return true;
+        }
+        // Managers manage every task inside a list they are involved in
+        if ($user->isManager() && $this->taskList && $this->taskList->isAccessibleBy($user)) {
             return true;
         }
         // Creator
@@ -125,11 +134,6 @@ class Task extends Model
         }
         // Member of the task via multiple assignees
         if ($this->assignees->contains('id', $user->id)) {
-            return true;
-        }
-        // Workspace Owner
-        $workspace = $this->taskList?->space?->workspace;
-        if ($workspace && $workspace->owner_id === $user->id) {
             return true;
         }
 

@@ -140,7 +140,7 @@
                 @if ($task->assignees->isNotEmpty())
                   <div class="flex -space-x-1.5">
                     @foreach ($task->assignees->take(3) as $assignee)
-                      <flux:avatar :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar"
+                      <flux:avatar circle :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar"
                         size="xs" class="ring-2 ring-white dark:ring-zinc-800" />
                     @endforeach
                     @if ($task->assignees->count() > 3)

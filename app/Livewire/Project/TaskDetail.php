@@ -3,6 +3,7 @@
 namespace App\Livewire\Project;
 
 use App\Events\TaskListUpdated;
+use App\Events\TaskUpdated as TaskUpdatedEvent;
 use App\Events\TaskUpdatedGlobal;
 use App\Models\Project\Task;
 use App\Models\Project\TaskActivity;
@@ -88,6 +89,39 @@ class TaskDetail extends Component
         }
     }
 
+    /** @return array<string, string> */
+    public function getListeners(): array
+    {
+        $listeners = [];
+
+        if ($this->taskId) {
+            $listeners["echo:task.{$this->taskId},TaskUpdated"] = 'onBroadcastUpdate';
+        }
+
+        return $listeners;
+    }
+
+    public function onBroadcastUpdate(array $event): void
+    {
+        if (($event['triggeredBy'] ?? null) == auth()->id()) {
+            $this->skipRender();
+
+            return;
+        }
+
+        if (! $this->taskId) {
+            return;
+        }
+
+        if (! Task::whereKey($this->taskId)->exists()) {
+            $this->close();
+
+            return;
+        }
+
+        $this->loadTask($this->taskId);
+    }
+
     public function loadTask(int $taskId): void
     {
         $task = Task::with(['status', 'assignees', 'taskList.statuses', 'labels'])->findOrFail($taskId);
@@ -143,6 +177,10 @@ class TaskDetail extends Component
 
     private function broadcastChange(): void
     {
+        if ($this->taskId) {
+            TaskUpdatedEvent::dispatch($this->taskId, auth()->id());
+        }
+
         if ($this->taskListId) {
             TaskListUpdated::dispatch($this->taskListId, auth()->id());
 
@@ -433,6 +471,9 @@ class TaskDetail extends Component
                 $subtask->update(['task_status_id' => $todoStatus->id]);
             }
         }
+
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
     }
 
     public function editSubtaskTitle(int $subtaskId, string $newTitle): void
@@ -448,6 +489,8 @@ class TaskDetail extends Component
         }
 
         Task::where('parent_id', $this->taskId)->findOrFail($subtaskId)->update(['title' => $newTitle]);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Subtask berhasil diperbarui.', variant: 'success');
     }
 
@@ -457,6 +500,8 @@ class TaskDetail extends Component
             return;
         }
         Task::where('parent_id', $this->taskId)->findOrFail($subtaskId)->delete();
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Subtask berhasil dihapus.', variant: 'success');
     }
 
@@ -535,6 +580,8 @@ class TaskDetail extends Component
         ]);
 
         $this->reset(['newChecklistName', 'showChecklistForm']);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Checklist berhasil dibuat.', variant: 'success');
     }
 
@@ -544,6 +591,8 @@ class TaskDetail extends Component
             return;
         }
         TaskChecklist::where('task_id', $this->taskId)->findOrFail($checklistId)->delete();
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Checklist berhasil dihapus.', variant: 'danger');
     }
 
@@ -557,6 +606,8 @@ class TaskDetail extends Component
             return;
         }
         TaskChecklist::where('task_id', $this->taskId)->findOrFail($checklistId)->update(['name' => $name]);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
     }
 
     // ─── Checklist Items ───────────────────────────────────────────
@@ -590,6 +641,8 @@ class TaskDetail extends Component
         ]);
 
         $this->reset(['newChecklistItemTitle', 'addingItemToChecklistId']);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Item checklist berhasil ditambahkan.', variant: 'success');
     }
 
@@ -603,6 +656,8 @@ class TaskDetail extends Component
             return;
         }
         $item->update(['is_completed' => ! $item->is_completed]);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
     }
 
     public function editChecklistItemTitle(int $itemId, string $title): void
@@ -619,6 +674,8 @@ class TaskDetail extends Component
             return;
         }
         $item->update(['title' => $title]);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Item checklist berhasil diperbarui.', variant: 'success');
     }
 
@@ -637,6 +694,8 @@ class TaskDetail extends Component
             $this->closeChecklistItemPanel();
         }
 
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Item checklist berhasil dihapus.', variant: 'danger');
     }
 
@@ -672,6 +731,8 @@ class TaskDetail extends Component
         }
         TaskChecklistItem::findOrFail($this->activeChecklistItemId)
             ->update(['due_date' => $this->activeItemDueDate ?: null]);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Tanggal jatuh tempo checklist item berhasil diperbarui.', variant: 'success');
     }
 
@@ -683,6 +744,8 @@ class TaskDetail extends Component
         $this->activeItemDueDate = '';
         TaskChecklistItem::findOrFail($this->activeChecklistItemId)
             ->update(['due_date' => null]);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Tanggal jatuh tempo checklist item berhasil dihapus.', variant: 'success');
     }
 
@@ -698,6 +761,8 @@ class TaskDetail extends Component
         $this->activeItemAssigneeIds = $validIds;
 
         TaskChecklistItem::findOrFail($this->activeChecklistItemId)->assignees()->sync($validIds);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Assignees checklist item berhasil diperbarui.', variant: 'success');
     }
 
@@ -738,6 +803,8 @@ class TaskDetail extends Component
         }
 
         $this->activeItemFiles = [];
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('File berhasil diunggah.', variant: 'success');
     }
 
@@ -753,6 +820,8 @@ class TaskDetail extends Component
             ->firstOrFail();
         Storage::disk('public')->delete($attachment->path);
         $attachment->delete();
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
         Flux::toast('Lampiran berhasil dihapus.', variant: 'danger');
     }
 

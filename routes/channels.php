@@ -7,3 +7,4 @@ use Illuminate\Support\Facades\Broadcast;
 // Used by: SpaceUpdated, TaskUpdatedGlobal
 Broadcast::channel('task-list.{taskListId}', fn () => true);
 Broadcast::channel('workspace.{workspaceId}', fn () => true);
+Broadcast::channel('task.{taskId}', fn () => true);

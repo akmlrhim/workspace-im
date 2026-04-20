@@ -15,11 +15,11 @@
         <div class="mt-1 flex items-center">
           <flux:avatar.group>
             @foreach ($list->members->take(4) as $member)
-              <flux:avatar :name="$member->name" :initials="$member->initials()" :src="$member->avatar" size="xs"
+              <flux:avatar circle :name="$member->name" :initials="$member->initials()" :src="$member->avatar" size="xs"
                 class="ring-1 ring-white dark:ring-zinc-800" />
             @endforeach
             @if ($list->members->count() > 4)
-              <flux:avatar size="xs" class="ring-1 ring-white dark:ring-zinc-800">
+              <flux:avatar circle size="xs" class="ring-1 ring-white dark:ring-zinc-800">
                 +{{ $list->members->count() - 4 }}
               </flux:avatar>
             @endif

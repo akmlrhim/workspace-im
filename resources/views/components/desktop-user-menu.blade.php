@@ -4,7 +4,7 @@
 
   <flux:menu>
     <div class="flex items-center gap-2 px-2 py-1.5 text-start text-sm">
-      <flux:avatar size="sm" :name="auth()->user()->name" :initials="auth()->user()->initials()"
+      <flux:avatar circle size="sm" :name="auth()->user()->name" :initials="auth()->user()->initials()"
         :src="auth()->user()->avatar" />
       <div class="grid flex-1 text-start text-sm leading-tight">
         <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>

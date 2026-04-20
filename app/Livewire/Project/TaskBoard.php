@@ -86,8 +86,15 @@ class TaskBoard extends Component
     {
         $user = auth()->user();
 
-        return $user->canManageAllProjects()
-            || $this->taskList->tasks()->whereHas('assignees', fn ($q) => $q->where('users.id', $user->id))->exists()
+        if ($user->canManageAllProjects()) {
+            return true;
+        }
+
+        if ($user->isManager() && $this->taskList->isAccessibleBy($user)) {
+            return true;
+        }
+
+        return $this->taskList->tasks()->whereHas('assignees', fn ($q) => $q->where('users.id', $user->id))->exists()
             || $this->taskList->tasks()->where('assigned_to', $user->id)->exists();
     }
 

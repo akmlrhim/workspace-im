@@ -22,7 +22,7 @@
       <div
         class="flex items-center gap-5 rounded-xl border border-zinc-200 bg-zinc-50 px-6 py-5 dark:border-zinc-700 dark:bg-zinc-800/50">
         <div class="relative shrink-0">
-          <flux:avatar :name="auth()->user()->name" :initials="auth()->user()->initials()" :src="auth()->user()->avatar"
+          <flux:avatar circle :name="auth()->user()->name" :initials="auth()->user()->initials()" :src="auth()->user()->avatar"
             size="lg" class="size-16 text-lg" />
           @if ($this->isGoogleLinked)
             <span

@@ -32,7 +32,7 @@
         <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
           @foreach ([['name' => 'Ahmad Fauzi', 'role' => 'Software Engineer', 'dept' => 'IT', 'status' => 'Aktif'], ['name' => 'Siti Rahayu', 'role' => 'Finance Manager', 'dept' => 'Finance', 'status' => 'Aktif'], ['name' => 'Budi Santoso', 'role' => 'Marketing Lead', 'dept' => 'Marketing', 'status' => 'Cuti'], ['name' => 'Dewi Lestari', 'role' => 'HR Specialist', 'dept' => 'HR', 'status' => 'Aktif'], ['name' => 'Eko Prasetyo', 'role' => 'Project Manager', 'dept' => 'IT', 'status' => 'Aktif']] as $emp)
             <div class="flex items-center gap-3 px-5 py-3">
-              <flux:avatar :name="$emp['name']"
+              <flux:avatar circle :name="$emp['name']"
                 :initials="collect(explode(' ', $emp['name']))->map(fn($w) => strtoupper($w[0]))->take(2)->join('')"
                 size="sm" class="shrink-0" />
               <div class="flex-1 min-w-0">
@@ -68,7 +68,7 @@
           <div class="space-y-2.5">
             @foreach ([['name' => 'Budi Santoso', 'dates' => '5–8 Apr', 'type' => 'Tahunan'], ['name' => 'Rina Hardianti', 'dates' => '12 Apr', 'type' => 'Sakit'], ['name' => 'Yoga Pratama', 'dates' => '15–16 Apr', 'type' => 'Izin']] as $leave)
               <div class="flex items-center gap-2">
-                <flux:avatar :name="$leave['name']"
+                <flux:avatar circle :name="$leave['name']"
                   :initials="collect(explode(' ', $leave['name']))->map(fn($w) => strtoupper($w[0]))->take(2)->join('')"
                   size="xs" class="shrink-0" />
                 <div class="flex-1 min-w-0">

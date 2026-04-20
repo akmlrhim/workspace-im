@@ -129,7 +129,7 @@
                       @if ($task->assignees->isNotEmpty())
                         <div class="flex -space-x-1.5">
                           @foreach ($task->assignees->take(3) as $assignee)
-                            <flux:avatar :name="$assignee->name" :initials="$assignee->initials()"
+                            <flux:avatar circle :name="$assignee->name" :initials="$assignee->initials()"
                               :src="$assignee->avatar" size="xs" class="ring-2 ring-white dark:ring-zinc-900"
                               title="{{ $assignee->name }}" />
                           @endforeach
@@ -142,7 +142,7 @@
                         </div>
                       @elseif ($task->assignee)
                         <div class="flex items-center gap-2">
-                          <flux:avatar :name="$task->assignee->name" :initials="$task->assignee->initials()"
+                          <flux:avatar circle :name="$task->assignee->name" :initials="$task->assignee->initials()"
                             :src="$task->assignee->avatar" size="xs" />
                           <span class="hidden truncate text-xs text-zinc-600 dark:text-zinc-400 sm:inline-block">
                             {{ $task->assignee->name }}

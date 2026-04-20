@@ -60,7 +60,9 @@ class Space extends Model
      * Scope spaces that are accessible by the given user.
      *
      * A space is accessible when the user owns the workspace,
-     * is a member of any list in the space, or is assigned to any task.
+     * is a member of the space, is a member of any list in the space,
+     * or is assigned to any task. Elevated roles (super user / administrator)
+     * see every space; managers must be involved in the space.
      */
     public function scopeAccessibleBy(Builder $query, int $userId): Builder
     {
@@ -72,6 +74,7 @@ class Space extends Model
 
         return $query->where(function (Builder $q) use ($userId) {
             $q->whereHas('workspace', fn (Builder $q2) => $q2->where('owner_id', $userId))
+                ->orWhereHas('members', fn (Builder $q2) => $q2->where('users.id', $userId))
                 ->orWhereHas('lists.members', fn (Builder $q2) => $q2->where('users.id', $userId))
                 ->orWhereHas('lists.tasks.assignees', fn (Builder $q2) => $q2->where('users.id', $userId))
                 ->orWhereHas('lists.tasks', fn (Builder $q2) => $q2->where('assigned_to', $userId));

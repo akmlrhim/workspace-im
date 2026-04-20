@@ -62,7 +62,10 @@ class TaskList extends Model
      * Scope lists that are accessible by the given user.
      *
      * A list is accessible when the user owns the workspace,
-     * is a member of the list, or is assigned to any task in it.
+     * is a member of the parent space, is a member of the list,
+     * or is assigned to any task in it. Elevated roles
+     * (super user / administrator) see every list; managers must
+     * be involved in the parent space.
      */
     public function scopeAccessibleBy(Builder $query, int $userId): Builder
     {
@@ -74,9 +77,18 @@ class TaskList extends Model
 
         return $query->where(function (Builder $q) use ($userId) {
             $q->whereHas('space.workspace', fn (Builder $q2) => $q2->where('owner_id', $userId))
+                ->orWhereHas('space.members', fn (Builder $q2) => $q2->where('users.id', $userId))
                 ->orWhereHas('members', fn (Builder $q2) => $q2->where('users.id', $userId))
                 ->orWhereHas('tasks.assignees', fn (Builder $q2) => $q2->where('users.id', $userId))
                 ->orWhereHas('tasks', fn (Builder $q2) => $q2->where('assigned_to', $userId));
         });
+    }
+
+    /**
+     * Determine whether the given user has visibility on this list.
+     */
+    public function isAccessibleBy(User $user): bool
+    {
+        return static::accessibleBy($user->id)->whereKey($this->id)->exists();
     }
 }
