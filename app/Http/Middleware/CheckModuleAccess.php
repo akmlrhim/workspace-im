@@ -9,39 +9,45 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckModuleAccess
 {
-	/**
-	 * Handle an incoming request.
-	 *
-	 * @param  Closure(Request): (Response)  $next
-	 */
-	public function handle(Request $request, Closure $next, string $moduleKey): Response
-	{
-		$user = $request->user();
+    /**
+     * Handle an incoming request.
+     *
+     * @param  Closure(Request): (Response)  $next
+     */
+    public function handle(Request $request, Closure $next, string $moduleKey): Response
+    {
+        $user = $request->user();
 
-		if (! $user) {
-			abort(403);
-		}
+        if (! $user) {
+            abort(403);
+        }
 
-		$module = config("erp.modules.{$moduleKey}");
+        $module = config("erp.modules.{$moduleKey}");
 
-		if (! $module) {
-			abort(404);
-		}
+        if (! $module) {
+            abort(404);
+        }
 
-		$allowedPositions = $module['allowed_positions'] ?? [];
+        $allowedPositions = $module['allowed_positions'] ?? [];
 
-		$hasModuleAccess = ! $user->isGuest() && (
-			empty($allowedPositions) ||
-			$user->isAdmin() ||
-			in_array($user->position, $allowedPositions)
-		);
+        $hasModuleAccess = ! $user->isGuest() && (
+            empty($allowedPositions) ||
+            $user->isAdmin() ||
+            in_array($user->position, $allowedPositions)
+        );
 
-		if ($hasModuleAccess) {
-			return $next($request);
-		}
+        if ($hasModuleAccess) {
+            return $next($request);
+        }
 
-		Flux::toast('Anda tidak memiliki izin untuk mengakses modul ' . $module['name'] . '.', variant: 'danger');
+        $message = 'Anda tidak memiliki izin untuk mengakses modul '.$module['name'].'.';
 
-		return redirect()->route('dashboard');
-	}
+        try {
+            Flux::toast($message, variant: 'danger');
+        } catch (\Throwable) {
+            session()->flash('toast', ['message' => $message, 'variant' => 'danger']);
+        }
+
+        return redirect()->route('dashboard');
+    }
 }

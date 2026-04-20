@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckModuleAccess;
 use App\Livewire\Project\GeneralTaskboard;
 use App\Livewire\Project\MyTasks;
 use App\Livewire\Project\SpaceIndex;
@@ -11,7 +12,7 @@ use App\Livewire\Project\TaskListShow;
 use App\Livewire\Project\WorkloadDashboard;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified'])->prefix('project-management')->name('project-management.')->group(function () {
+Route::middleware(['auth', 'verified', CheckModuleAccess::class.':project'])->prefix('project-management')->name('project-management.')->group(function () {
     Route::redirect('/', '/project-management/general-taskboard');
 
     Route::get('/spaces', SpaceIndex::class)->name('index');

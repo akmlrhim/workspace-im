@@ -29,7 +29,7 @@ test('project management models generate a uuid on creation', function () {
 });
 
 test('space route model binding resolves by uuid', function () {
-    $owner = User::factory()->create(['role' => 'member']);
+    $owner = User::factory()->create(['role' => 'member', 'position' => 'Kreatif']);
     $this->actingAs($owner);
 
     $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);

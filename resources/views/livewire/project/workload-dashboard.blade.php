@@ -2,10 +2,7 @@
   {{-- Header --}}
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <flux:heading size="xl">Dasbor Beban Kerja & Lalu Lintas</flux:heading>
-      <flux:text class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Memantau beban kerja proyek, lalu lintas tugas, dan kinerja tim.
-      </flux:text>
+      <flux:heading size="xl">Traffic and Workload</flux:heading>
     </div>
   </div>
 
@@ -46,7 +43,7 @@
       {{-- Card 1: Project Workload Overview --}}
       <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Ringkasan Beban Kerja Proyek</h3>
+          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Ringkasan Workload Proyek</h3>
           <flux:icon name="chart-pie" class="size-5 text-zinc-400" />
         </div>
         <div class="flex items-center gap-6">
@@ -83,7 +80,7 @@
       {{-- Card 2: Task Traffic Flow (Stacked Bar) --}}
       <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Alur Lalu Lintas Tugas</h3>
+          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Alur Traffic</h3>
           <flux:icon name="chart-bar" class="size-5 text-zinc-400" />
         </div>
         @if (count($trafficData) > 0)
@@ -273,7 +270,8 @@
                 <td class="px-6 py-4">
                   @if ($project['lead'])
                     <div class="flex items-center gap-2">
-                      <flux:avatar circle size="xs" :name="$project['lead']->name" :initials="$project['lead']->initials()" :src="$project['lead']->avatar" />
+                      <flux:avatar circle size="xs" :name="$project['lead']->name"
+                        :initials="$project['lead']->initials()" :src="$project['lead']->avatar" />
                       <span class="text-zinc-700 dark:text-zinc-300">{{ $project['lead']->name }}</span>
                     </div>
                   @else
@@ -429,7 +427,7 @@
     {{-- Member Table --}}
     <div class="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Beban Kerja Anggota</h3>
+        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Workload Anggota</h3>
       </div>
 
       <div class="overflow-x-auto">
@@ -450,7 +448,8 @@
                 wire:key="member-{{ $member['user']->id }}">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
-                    <flux:avatar circle size="sm" :name="$member['user']->name" :initials="$member['user']->initials()" :src="$member['user']->avatar" />
+                    <flux:avatar circle size="sm" :name="$member['user']->name"
+                      :initials="$member['user']->initials()" :src="$member['user']->avatar" />
                     <div>
                       <div class="font-medium text-zinc-800 dark:text-zinc-100">{{ $member['user']->name }}</div>
                       <div class="text-xs text-zinc-400">{{ $member['user']->email }}</div>
@@ -676,7 +675,8 @@
                   @if ($task['assignees']->isNotEmpty())
                     <div class="flex items-center gap-1">
                       @foreach ($task['assignees']->take(3) as $assignee)
-                        <flux:avatar circle size="xs" :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar" />
+                        <flux:avatar circle size="xs" :name="$assignee->name" :initials="$assignee->initials()"
+                          :src="$assignee->avatar" />
                       @endforeach
                       @if ($task['assignees']->count() > 3)
                         <span class="text-xs text-zinc-400">+{{ $task['assignees']->count() - 3 }}</span>

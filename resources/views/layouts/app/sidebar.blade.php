@@ -9,6 +9,7 @@
   @php
     $modules = config('erp.modules', []);
     $path = request()->path();
+    $isGuestUser = auth()->check() && auth()->user()->isGuest();
 
     $currentModuleKey = request()->query('module');
 
@@ -22,8 +23,8 @@
         }
     }
 
-    $currentModuleKey ??= 'project';
-    $currentModule = $modules[$currentModuleKey] ?? null;
+    $currentModuleKey ??= $isGuestUser ? null : 'project';
+    $currentModule = $currentModuleKey ? ($modules[$currentModuleKey] ?? null) : null;
   @endphp
 
   <flux:sidebar collapsible
@@ -37,7 +38,12 @@
     <div class="flex-1 min-h-0 overflow-y-auto">
       <flux:sidebar.nav>
 
-        @if ($currentModule)
+        @if ($isGuestUser)
+          <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->is('dashboard')"
+            wire:navigate>
+            {{ __('Dashboard') }}
+          </flux:sidebar.item>
+        @elseif ($currentModule)
           @foreach ($currentModule['sidebar'] as $item)
             <flux:sidebar.item :icon="$item['icon']" :href="url($item['url'])" :badge="$item['badge']"
               :current="request()->is($item['active'])" wire:navigate>

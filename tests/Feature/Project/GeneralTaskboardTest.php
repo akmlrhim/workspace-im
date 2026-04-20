@@ -12,7 +12,7 @@ test('taskboard page requires authentication', function () {
 });
 
 test('taskboard renders for authenticated user', function () {
-    $user = User::factory()->create(['role' => 'member']);
+    $user = User::factory()->create(['role' => 'member', 'position' => 'Kreatif']);
 
     $this->actingAs($user)
         ->get(route('project-management.general-taskboard'))
