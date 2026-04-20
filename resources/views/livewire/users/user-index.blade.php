@@ -42,22 +42,26 @@
           {{-- Name + Email --}}
           <flux:table.cell>
             <div class="flex items-center gap-3">
-              <flux:avatar circle :name="$user->name" :initials="$user->initials()" :src="$user->avatar" size="sm" />
-              <div class="min-w-0">
+              <flux:avatar circle :name="$user->name" :initials="$user->initials()" :src="$user->avatar"
+                size="sm" />
+              <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-1.5">
                   <p class="truncate text-sm font-medium text-zinc-900 dark:text-white">{{ $user->name }}</p>
                   @if ($user->id === auth()->id())
-                    <flux:badge size="sm" color="indigo">Anda</flux:badge>
+                    <flux:badge size="sm" color="indigo" inset="top bottom">Anda</flux:badge>
                   @endif
                 </div>
                 <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $user->email }}</p>
-                <div class="mt-1.5 sm:hidden">
+                <div class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
                   @if ($user->role === 'super_user')
                     <flux:badge color="rose" size="sm" icon="star">Super User</flux:badge>
                   @elseif ($user->role === 'administrator')
                     <flux:badge color="amber" size="sm" icon="shield-check">Administrator</flux:badge>
                   @else
                     <flux:badge color="zinc" size="sm" icon="user">Member</flux:badge>
+                  @endif
+                  @if ($user->position)
+                    <flux:text variant="subtle" class="text-xs">· {{ $user->position }}</flux:text>
                   @endif
                 </div>
               </div>
@@ -79,22 +83,21 @@
           </flux:table.cell>
 
           <flux:table.cell class="hidden md:table-cell">
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-wrap items-center gap-1.5">
               @if ($user->email_verified_at)
-                <flux:badge color="green" size="sm" icon="check-circle" inset="top bottom">Terverifikasi
-                </flux:badge>
+                <flux:badge color="green" size="sm" icon="check-circle">Terverifikasi</flux:badge>
               @else
-                <flux:badge color="red" size="sm" icon="x-circle" inset="top bottom">Belum verifikasi
-                </flux:badge>
+                <flux:badge color="red" size="sm" icon="x-circle">Belum verifikasi</flux:badge>
               @endif
               @if ($user->google_id)
-                <flux:badge color="blue" size="sm" inset="top bottom">Google</flux:badge>
+                <flux:badge color="blue" size="sm" icon="globe-alt">Google</flux:badge>
               @endif
             </div>
           </flux:table.cell>
 
           <flux:table.cell class="hidden lg:table-cell">
-            <flux:text variant="subtle" class="text-xs" title="{{ $user->created_at->format('d M Y H:i') }}">
+            <flux:text variant="subtle" class="whitespace-nowrap text-xs"
+              title="{{ $user->created_at->format('d M Y H:i') }}">
               {{ $user->created_at->format('d M Y') }}
             </flux:text>
           </flux:table.cell>
