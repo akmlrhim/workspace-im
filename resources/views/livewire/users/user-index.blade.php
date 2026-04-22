@@ -53,12 +53,15 @@
                 </div>
                 <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $user->email }}</p>
                 <div class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
-                  @if ($user->role === 'super_user')
+                  @php $role = strtolower(trim($user->role)); @endphp
+                  @if ($role === 'super_user')
                     <flux:badge color="rose" size="sm" icon="star">Super User</flux:badge>
-                  @elseif ($user->role === 'administrator')
+                  @elseif ($role === 'administrator')
                     <flux:badge color="amber" size="sm" icon="shield-check">Administrator</flux:badge>
-                  @elseif ($user->role === 'manager')
+                  @elseif ($role === 'manager')
                     <flux:badge color="blue" size="sm" icon="briefcase">Manager</flux:badge>
+                  @elseif ($role === 'guest')
+                    <flux:badge color="yellow" size="sm" icon="clock">Guest (Pending)</flux:badge>
                   @else
                     <flux:badge color="zinc" size="sm" icon="user">Member</flux:badge>
                   @endif
@@ -76,12 +79,17 @@
           </flux:table.cell>
 
           <flux:table.cell class="hidden sm:table-cell">
-            @if ($user->role === 'super_user')
+            @php $role = strtolower(trim($user->role)); @endphp
+            @if ($role === 'super_user')
               <flux:badge color="rose" size="sm" icon="star">Super User</flux:badge>
-            @elseif ($user->role === 'administrator')
+            @elseif ($role === 'administrator')
               <flux:badge color="amber" size="sm" icon="shield-check">Administrator</flux:badge>
+            @elseif ($role === 'manager')
+              <flux:badge color="blue" size="sm" icon="briefcase">Manager</flux:badge>
+            @elseif ($role === 'member')
+              <flux:badge color="yellow" size="sm" icon="clock">Member</flux:badge>
             @else
-              <flux:badge color="zinc" size="sm" icon="user">Member</flux:badge>
+              <flux:badge color="zinc" size="sm" icon="user">Guest/Pending</flux:badge>
             @endif
           </flux:table.cell>
 
