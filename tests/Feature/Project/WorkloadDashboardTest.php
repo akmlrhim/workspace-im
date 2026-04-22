@@ -7,40 +7,50 @@ use App\Models\Project\Workspace;
 use App\Models\User;
 use Livewire\Livewire;
 
-beforeEach(function () {
-    $this->owner = User::factory()->create(['role' => 'member']);
-    $this->actingAs($this->owner);
+function makeWorkloadContext(): array
+{
+    $owner = User::factory()->create(['role' => 'member']);
+    test()->actingAs($owner);
 
-    $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $this->owner->id]);
+    $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
     $space = $workspace->spaces()->create(['name' => 'Design', 'position' => 0]);
-    $this->list = $space->lists()->create(['name' => 'Backlog', 'position' => 0]);
-    $this->openStatus = TaskStatus::create(['task_list_id' => $this->list->id, 'name' => 'Todo', 'position' => 0, 'type' => 'open']);
-    $this->closedStatus = TaskStatus::create(['task_list_id' => $this->list->id, 'name' => 'Done', 'position' => 1, 'type' => 'closed']);
-});
+    $list = $space->lists()->create(['name' => 'Backlog', 'position' => 0]);
+    $openStatus = TaskStatus::create(['task_list_id' => $list->id, 'name' => 'Todo', 'position' => 0, 'type' => 'open']);
+    $closedStatus = TaskStatus::create(['task_list_id' => $list->id, 'name' => 'Done', 'position' => 1, 'type' => 'closed']);
 
-test('workload dashboard renders project view by default', function () {
+    return compact('owner', 'list', 'openStatus', 'closedStatus');
+}
+
+test('workload dashboard renders task view by default', function () {
+    makeWorkloadContext();
+
     Livewire::test(WorkloadDashboard::class)
-        ->assertSee('Lihat berdasarkan proyek')
         ->assertSee('Lihat berdasarkan anggota')
         ->assertSee('Lihat berdasarkan tugas')
-        ->assertSee('Ringkasan Beban Kerja Proyek');
+        ->assertDontSee('Lihat berdasarkan proyek')
+        ->assertSee('Distribusi Prioritas')
+        ->assertSee('Distribusi Status');
 });
 
 test('workload dashboard can switch to task view', function () {
+    makeWorkloadContext();
+
     Livewire::test(WorkloadDashboard::class)
         ->call('switchView', 'task')
         ->assertSee('Distribusi Prioritas')
         ->assertSee('Distribusi Status')
-        ->assertSee('Daftar Tugas');
+        ->assertSee('Daftar Tugas per Proyek');
 });
 
 test('task view shows task data with correct labels', function () {
+    $ctx = makeWorkloadContext();
+
     Task::create([
-        'task_list_id' => $this->list->id,
-        'task_status_id' => $this->openStatus->id,
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
         'title' => 'Tugas Contoh',
         'priority' => 'high',
-        'created_by' => $this->owner->id,
+        'created_by' => $ctx['owner']->id,
     ]);
 
     Livewire::test(WorkloadDashboard::class)
@@ -51,20 +61,22 @@ test('task view shows task data with correct labels', function () {
 });
 
 test('task view shows correct stats', function () {
+    $ctx = makeWorkloadContext();
+
     Task::create([
-        'task_list_id' => $this->list->id,
-        'task_status_id' => $this->openStatus->id,
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
         'title' => 'Open Task',
         'priority' => 'normal',
-        'created_by' => $this->owner->id,
+        'created_by' => $ctx['owner']->id,
     ]);
 
     Task::create([
-        'task_list_id' => $this->list->id,
-        'task_status_id' => $this->closedStatus->id,
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['closedStatus']->id,
         'title' => 'Closed Task',
         'priority' => 'normal',
-        'created_by' => $this->owner->id,
+        'created_by' => $ctx['owner']->id,
     ]);
 
     Livewire::test(WorkloadDashboard::class)
@@ -75,6 +87,8 @@ test('task view shows correct stats', function () {
 });
 
 test('member view labels are in Indonesian', function () {
+    makeWorkloadContext();
+
     Livewire::test(WorkloadDashboard::class)
         ->call('switchView', 'member')
         ->assertSee('Anggota Tim')
