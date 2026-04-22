@@ -60,10 +60,10 @@
                     <flux:badge color="amber" size="sm" icon="shield-check">Administrator</flux:badge>
                   @elseif ($role === 'manager')
                     <flux:badge color="blue" size="sm" icon="briefcase">Manager</flux:badge>
-                  @elseif ($role === 'guest')
-                    <flux:badge color="yellow" size="sm" icon="clock">Guest (Pending)</flux:badge>
+                  @elseif ($role === 'member')
+                    <flux:badge color="yellow" size="sm" icon="clock">Member</flux:badge>
                   @else
-                    <flux:badge color="zinc" size="sm" icon="user">Member</flux:badge>
+                    <flux:badge color="zinc" size="sm" icon="user">Guest/Pending</flux:badge>
                   @endif
 
                   @if ($user->position)
