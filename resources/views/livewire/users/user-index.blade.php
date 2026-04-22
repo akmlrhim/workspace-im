@@ -57,9 +57,12 @@
                     <flux:badge color="rose" size="sm" icon="star">Super User</flux:badge>
                   @elseif ($user->role === 'administrator')
                     <flux:badge color="amber" size="sm" icon="shield-check">Administrator</flux:badge>
+                  @elseif ($user->role === 'manager')
+                    <flux:badge color="blue" size="sm" icon="briefcase">Manager</flux:badge>
                   @else
                     <flux:badge color="zinc" size="sm" icon="user">Member</flux:badge>
                   @endif
+
                   @if ($user->position)
                     <flux:text variant="subtle" class="text-xs">· {{ $user->position }}</flux:text>
                   @endif
