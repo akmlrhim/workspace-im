@@ -86,44 +86,41 @@ test('task view shows correct stats', function () {
         ->assertSee('Tingkat Penyelesaian');
 });
 
-test('task view excludes tasks from lists named Note', function () {
+test('task view excludes tasks with status named Note', function () {
     $ctx = makeWorkloadContext();
 
-    $space = $ctx['list']->space;
-    $noteList = $space->lists()->create(['name' => 'Note', 'position' => 1]);
-    $lowerNoteList = $space->lists()->create(['name' => 'note', 'position' => 2]);
-    $noteOpenStatus = TaskStatus::create(['task_list_id' => $noteList->id, 'name' => 'Todo', 'position' => 0, 'type' => 'open']);
-    $lowerOpenStatus = TaskStatus::create(['task_list_id' => $lowerNoteList->id, 'name' => 'Todo', 'position' => 0, 'type' => 'open']);
+    $noteStatus = TaskStatus::create(['task_list_id' => $ctx['list']->id, 'name' => 'Note', 'position' => 2, 'type' => 'active']);
+    $lowerNoteStatus = TaskStatus::create(['task_list_id' => $ctx['list']->id, 'name' => 'note', 'position' => 3, 'type' => 'active']);
 
     Task::create([
         'task_list_id' => $ctx['list']->id,
         'task_status_id' => $ctx['openStatus']->id,
-        'title' => 'Tugas Utama',
+        'title' => 'Tugas Aktif',
         'priority' => 'normal',
         'created_by' => $ctx['owner']->id,
     ]);
 
     Task::create([
-        'task_list_id' => $noteList->id,
-        'task_status_id' => $noteOpenStatus->id,
-        'title' => 'Catatan Rahasia',
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $noteStatus->id,
+        'title' => 'Catatan Status',
         'priority' => 'normal',
         'created_by' => $ctx['owner']->id,
     ]);
 
     Task::create([
-        'task_list_id' => $lowerNoteList->id,
-        'task_status_id' => $lowerOpenStatus->id,
-        'title' => 'Catatan Kecil',
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $lowerNoteStatus->id,
+        'title' => 'Catatan Huruf Kecil',
         'priority' => 'normal',
         'created_by' => $ctx['owner']->id,
     ]);
 
     Livewire::test(WorkloadDashboard::class)
         ->call('switchView', 'task')
-        ->assertSee('Tugas Utama')
-        ->assertDontSee('Catatan Rahasia')
-        ->assertDontSee('Catatan Kecil');
+        ->assertSee('Tugas Aktif')
+        ->assertDontSee('Catatan Status')
+        ->assertDontSee('Catatan Huruf Kecil');
 });
 
 test('member view labels are in Indonesian', function () {

@@ -75,7 +75,8 @@ class WorkloadDashboard extends Component
 
     private function getMemberViewData(int $userId): array
     {
-        $tasks = Task::whereHas('taskList', fn ($q) => $q->accessibleBy($userId)->whereNotIn('name', ['Note', 'note']))
+        $tasks = Task::whereHas('taskList', fn ($q) => $q->accessibleBy($userId))
+            ->whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
             ->with(['assignees', 'status', 'taskList.space', 'timeTrackings'])
             ->get();
 
@@ -129,7 +130,8 @@ class WorkloadDashboard extends Component
 
     private function getTaskViewData(int $userId): array
     {
-        $tasks = Task::whereHas('taskList', fn ($q) => $q->accessibleBy($userId)->whereNotIn('name', ['Note', 'note']))
+        $tasks = Task::whereHas('taskList', fn ($q) => $q->accessibleBy($userId))
+            ->whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
             ->with(['assignees', 'status', 'taskList.space', 'timeTrackings'])
             ->get();
 
