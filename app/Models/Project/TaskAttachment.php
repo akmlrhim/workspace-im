@@ -11,7 +11,11 @@ class TaskAttachment extends Model
 {
     use GeneratesUuid;
 
-    protected $fillable = ['task_id', 'task_comment_id', 'task_checklist_item_id', 'user_id', 'filename', 'path', 'mime_type', 'size'];
+    protected $fillable = ['task_id', 'task_comment_id', 'task_checklist_item_id', 'user_id', 'filename', 'path', 'mime_type', 'size', 'is_link'];
+
+    protected $casts = [
+        'is_link' => 'boolean',
+    ];
 
     public function task(): BelongsTo
     {

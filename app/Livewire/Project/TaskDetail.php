@@ -54,6 +54,12 @@ class TaskDetail extends Component
     #[Rule(['uploadFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'], message: ['uploadFiles.*.max' => 'Ukuran file maksimal 5 MB.', 'uploadFiles.*.mimes' => 'Format file tidak didukung.'])]
     public array $uploadFiles = [];
 
+    public bool $showLinkForm = false;
+
+    public string $newLinkUrl = '';
+
+    public string $newLinkLabel = '';
+
     // Labels
     public bool $showLabelForm = false;
 
@@ -81,6 +87,12 @@ class TaskDetail extends Component
     // Checklist item attachments — 5 MB max
     #[Rule(['activeItemFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'], message: ['activeItemFiles.*.max' => 'Ukuran file maksimal 5 MB.', 'activeItemFiles.*.mimes' => 'Format file tidak didukung.'])]
     public array $activeItemFiles = [];
+
+    public bool $showItemLinkForm = false;
+
+    public string $newItemLinkUrl = '';
+
+    public string $newItemLinkLabel = '';
 
     public function mount(?int $taskId = null): void
     {
@@ -544,6 +556,44 @@ class TaskDetail extends Component
         Flux::toast('File berhasil diunggah.', variant: 'success');
     }
 
+    public function addLinkAttachment(): void
+    {
+        $task = $this->authorizeManageTask();
+        if (! $task) {
+            return;
+        }
+
+        if (! $this->validateWithToast(
+            ['newLinkUrl' => 'required|url|max:2048', 'newLinkLabel' => 'nullable|max:255'],
+            [
+                'newLinkUrl.required' => 'URL wajib diisi.',
+                'newLinkUrl.url' => 'URL tidak valid.',
+                'newLinkUrl.max' => 'URL maksimal 2048 karakter.',
+                'newLinkLabel.max' => 'Label maksimal 255 karakter.',
+            ]
+        )) {
+            return;
+        }
+
+        $url = trim($this->newLinkUrl);
+        $label = trim($this->newLinkLabel) ?: $url;
+
+        TaskAttachment::create([
+            'task_id' => $this->taskId,
+            'user_id' => auth()->id(),
+            'filename' => $label,
+            'path' => $url,
+            'mime_type' => 'link',
+            'size' => 0,
+            'is_link' => true,
+        ]);
+
+        $this->reset(['newLinkUrl', 'newLinkLabel', 'showLinkForm']);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
+        Flux::toast('Link berhasil ditambahkan.', variant: 'success');
+    }
+
     public function deleteAttachment(int $attachmentId): void
     {
         if (! $this->authorizeManageTask()) {
@@ -551,7 +601,9 @@ class TaskDetail extends Component
         }
         // Scoped to user_id below
         $attachment = TaskAttachment::where('id', $attachmentId)->where('user_id', auth()->id())->firstOrFail();
-        Storage::disk('public')->delete($attachment->path);
+        if (! $attachment->is_link) {
+            Storage::disk('public')->delete($attachment->path);
+        }
         $attachment->delete();
         $this->dispatch('task-updated');
         $this->broadcastChange();
@@ -722,6 +774,9 @@ class TaskDetail extends Component
         $this->activeItemDueDate = '';
         $this->activeItemAssigneeIds = [];
         $this->activeItemFiles = [];
+        $this->showItemLinkForm = false;
+        $this->newItemLinkUrl = '';
+        $this->newItemLinkLabel = '';
     }
 
     public function updateChecklistItemDueDate(): void
@@ -808,6 +863,46 @@ class TaskDetail extends Component
         Flux::toast('File berhasil diunggah.', variant: 'success');
     }
 
+    public function addChecklistItemLink(): void
+    {
+        if (! $this->authorizeManageTask() || ! $this->activeChecklistItemId) {
+            return;
+        }
+
+        if (! $this->validateWithToast(
+            ['newItemLinkUrl' => 'required|url|max:2048', 'newItemLinkLabel' => 'nullable|max:255'],
+            [
+                'newItemLinkUrl.required' => 'URL wajib diisi.',
+                'newItemLinkUrl.url' => 'URL tidak valid.',
+                'newItemLinkUrl.max' => 'URL maksimal 2048 karakter.',
+                'newItemLinkLabel.max' => 'Label maksimal 255 karakter.',
+            ]
+        )) {
+            return;
+        }
+
+        $item = TaskChecklistItem::with('checklist')->findOrFail($this->activeChecklistItemId);
+
+        $url = trim($this->newItemLinkUrl);
+        $label = trim($this->newItemLinkLabel) ?: $url;
+
+        TaskAttachment::create([
+            'task_id' => $item->checklist->task_id,
+            'task_checklist_item_id' => $item->id,
+            'user_id' => auth()->id(),
+            'filename' => $label,
+            'path' => $url,
+            'mime_type' => 'link',
+            'size' => 0,
+            'is_link' => true,
+        ]);
+
+        $this->reset(['newItemLinkUrl', 'newItemLinkLabel', 'showItemLinkForm']);
+        $this->dispatch('task-updated');
+        $this->broadcastChange();
+        Flux::toast('Link berhasil ditambahkan.', variant: 'success');
+    }
+
     public function deleteChecklistItemAttachment(int $attachmentId): void
     {
         if (! $this->authorizeManageTask()) {
@@ -818,7 +913,9 @@ class TaskDetail extends Component
             ->where('task_checklist_item_id', $this->activeChecklistItemId)
             ->where('user_id', auth()->id())
             ->firstOrFail();
-        Storage::disk('public')->delete($attachment->path);
+        if (! $attachment->is_link) {
+            Storage::disk('public')->delete($attachment->path);
+        }
         $attachment->delete();
         $this->dispatch('task-updated');
         $this->broadcastChange();

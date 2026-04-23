@@ -352,20 +352,40 @@
                         @endif
                       </p>
 
-                      <div wire:loading.class="opacity-50 pointer-events-none" wire:target="activeItemFiles">
+                      <div class="grid grid-cols-2 gap-1.5" wire:loading.class="opacity-50 pointer-events-none"
+                        wire:target="activeItemFiles">
                         <label
-                          class="mb-2 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-zinc-300 px-3 py-2 text-xs text-zinc-500 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600">
+                          class="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-zinc-300 px-3 py-2 text-xs text-zinc-500 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600">
                           <span wire:loading.remove wire:target="activeItemFiles">
                             <flux:icon name="cloud-arrow-up" class="size-4" />
                           </span>
                           <span wire:loading wire:target="activeItemFiles">
                             <flux:icon name="arrow-path" class="size-4 animate-spin" />
                           </span>
-                          <span wire:loading.remove wire:target="activeItemFiles">Pilih file (multi)</span>
+                          <span wire:loading.remove wire:target="activeItemFiles">Pilih file</span>
                           <span wire:loading wire:target="activeItemFiles" class="text-indigo-500">Uploading...</span>
                           <input type="file" wire:model="activeItemFiles" multiple class="hidden" />
                         </label>
+                        <button type="button" wire:click="$toggle('showItemLinkForm')"
+                          class="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-zinc-300 px-3 py-2 text-xs text-zinc-500 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600">
+                          <flux:icon name="link" class="size-4" />
+                          <span>Tambah link</span>
+                        </button>
                       </div>
+
+                      @if ($showItemLinkForm)
+                        <div class="mt-2 space-y-1.5 rounded-md border border-zinc-200 p-2 dark:border-zinc-700">
+                          <flux:input type="url" wire:model="newItemLinkUrl" placeholder="https://example.com"
+                            size="sm" />
+                          <flux:input wire:model="newItemLinkLabel" placeholder="Label (opsional)" size="sm" />
+                          <div class="flex justify-end gap-1">
+                            <flux:button size="xs" variant="ghost" wire:click="$set('showItemLinkForm', false)">Batal
+                            </flux:button>
+                            <flux:button size="xs" variant="primary" wire:click="addChecklistItemLink">Simpan
+                            </flux:button>
+                          </div>
+                        </div>
+                      @endif
 
                       @if ($activeItemAttachments->isNotEmpty())
                         <div class="mt-2 space-y-1">
@@ -373,25 +393,32 @@
                             <div
                               class="group flex items-center justify-between rounded-md px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                               wire:key="cli-att-{{ $att->id }}">
-                              <a href="{{ Storage::disk('public')->url($att->path) }}" target="_blank"
+                              <a href="{{ $att->is_link ? $att->path : Storage::disk('public')->url($att->path) }}"
+                                target="_blank" rel="noopener noreferrer"
                                 class="flex min-w-0 items-center gap-1.5 text-xs text-zinc-600 hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400 transition-colors">
-                                @if (str_starts_with($att->mime_type, 'image/'))
+                                @if ($att->is_link)
+                                  <flux:icon name="link" class="size-3.5 shrink-0 text-indigo-400" />
+                                @elseif (str_starts_with($att->mime_type, 'image/'))
                                   <flux:icon name="photo" class="size-3.5 shrink-0 text-indigo-400" />
                                 @else
                                   <flux:icon name="document" class="size-3.5 shrink-0 text-zinc-400" />
                                 @endif
                                 <span class="truncate">{{ $att->filename }}</span>
-                                <span class="shrink-0 text-zinc-400">{{ number_format($att->size / 1024, 1) }}
-                                  KB</span>
+                                @if (! $att->is_link)
+                                  <span class="shrink-0 text-zinc-400">{{ number_format($att->size / 1024, 1) }}
+                                    KB</span>
+                                @endif
                                 <flux:icon name="arrow-top-right-on-square"
                                   class="size-3 shrink-0 opacity-0 group-hover:opacity-100" />
                               </a>
                               <div class="flex shrink-0 items-center gap-1 ml-2">
-                                <a href="{{ Storage::disk('public')->url($att->path) }}"
-                                  download="{{ $att->filename }}"
-                                  class="text-zinc-400 hover:text-indigo-500 transition-colors" title="Download">
-                                  <flux:icon name="arrow-down-tray" class="size-3.5" />
-                                </a>
+                                @if (! $att->is_link)
+                                  <a href="{{ Storage::disk('public')->url($att->path) }}"
+                                    download="{{ $att->filename }}"
+                                    class="text-zinc-400 hover:text-indigo-500 transition-colors" title="Download">
+                                    <flux:icon name="arrow-down-tray" class="size-3.5" />
+                                  </a>
+                                @endif
                                 <button wire:click="deleteChecklistItemAttachment({{ $att->id }})"
                                   class="text-zinc-400 hover:text-red-500 transition-colors" title="Hapus">
                                   <flux:icon name="trash" class="size-3.5" />
@@ -494,7 +521,8 @@
       </h3>
 
       @if ($canManage)
-        <div class="mb-3" wire:loading.class="opacity-50 pointer-events-none" wire:target="uploadFiles">
+        <div class="mb-3 grid grid-cols-2 gap-2" wire:loading.class="opacity-50 pointer-events-none"
+          wire:target="uploadFiles">
           <label
             class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 px-4 py-3 text-sm text-zinc-500 transition-colors hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-600 dark:hover:border-zinc-500 dark:hover:text-zinc-300">
             <span wire:loading.remove wire:target="uploadFiles">
@@ -503,33 +531,56 @@
             <span wire:loading wire:target="uploadFiles">
               <flux:icon name="arrow-path" class="size-5 animate-spin" />
             </span>
-            <span wire:loading.remove wire:target="uploadFiles">Upload file (multi)</span>
+            <span wire:loading.remove wire:target="uploadFiles">Upload file</span>
             <span wire:loading wire:target="uploadFiles" class="text-indigo-500">Uploading...</span>
             <input type="file" wire:model="uploadFiles" multiple class="hidden" />
           </label>
+          <button type="button" wire:click="$toggle('showLinkForm')"
+            class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 px-4 py-3 text-sm text-zinc-500 transition-colors hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-600 dark:hover:border-zinc-500 dark:hover:text-zinc-300">
+            <flux:icon name="link" class="size-5" />
+            <span>Tambah link</span>
+          </button>
         </div>
+
+        @if ($showLinkForm)
+          <div class="mb-3 space-y-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+            <flux:input type="url" wire:model="newLinkUrl" placeholder="https://example.com" size="sm" />
+            <flux:input wire:model="newLinkLabel" placeholder="Label (opsional)" size="sm" />
+            <div class="flex justify-end gap-2">
+              <flux:button size="xs" variant="ghost" wire:click="$set('showLinkForm', false)">Batal</flux:button>
+              <flux:button size="xs" variant="primary" wire:click="addLinkAttachment">Simpan</flux:button>
+            </div>
+          </div>
+        @endif
       @endif
 
       @forelse ($attachments as $attachment)
         <div
           class="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800"
           wire:key="attach-{{ $attachment->id }}">
-          <a href="{{ Storage::disk('public')->url($attachment->path) }}" target="_blank"
+          <a href="{{ $attachment->is_link ? $attachment->path : Storage::disk('public')->url($attachment->path) }}"
+            target="_blank" rel="noopener noreferrer"
             class="flex min-w-0 items-center gap-2 text-zinc-700 hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400 transition-colors">
-            @if (str_starts_with($attachment->mime_type, 'image/'))
+            @if ($attachment->is_link)
+              <flux:icon name="link" class="size-4 shrink-0 text-indigo-400" />
+            @elseif (str_starts_with($attachment->mime_type, 'image/'))
               <flux:icon name="photo" class="size-4 shrink-0 text-indigo-400" />
             @else
               <flux:icon name="document" class="size-4 shrink-0 text-zinc-400" />
             @endif
             <span class="truncate text-sm">{{ $attachment->filename }}</span>
-            <span class="shrink-0 text-xs text-zinc-400">{{ number_format($attachment->size / 1024, 1) }} KB</span>
+            @if (! $attachment->is_link)
+              <span class="shrink-0 text-xs text-zinc-400">{{ number_format($attachment->size / 1024, 1) }} KB</span>
+            @endif
             <flux:icon name="arrow-top-right-on-square" class="size-3.5 shrink-0 text-zinc-400" />
           </a>
           <div class="flex shrink-0 items-center gap-1">
-            <a href="{{ Storage::disk('public')->url($attachment->path) }}" download="{{ $attachment->filename }}"
-              class="text-zinc-400 hover:text-indigo-500 transition-all" title="Download">
-              <flux:icon name="arrow-down-tray" class="size-4" />
-            </a>
+            @if (! $attachment->is_link)
+              <a href="{{ Storage::disk('public')->url($attachment->path) }}" download="{{ $attachment->filename }}"
+                class="text-zinc-400 hover:text-indigo-500 transition-all" title="Download">
+                <flux:icon name="arrow-down-tray" class="size-4" />
+              </a>
+            @endif
             @if ($canManage)
               <flux:button icon="trash" size="xs" variant="ghost"
                 wire:click="deleteAttachment({{ $attachment->id }})" class="text-red-500" />
