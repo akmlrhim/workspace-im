@@ -5,31 +5,30 @@ on:
     branches:
       - main
 
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
-
-permissions:
-  contents: read
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+
+      - name: Install Composer Dependencies (Runner)
+        run: composer install --no-interaction --prefer-dist --no-scripts
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"
 
-      - name: Install NPM & Build Assets
+      - name: Install NPM & Build Tailwind/Vite
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Copy build ke server via SCP
@@ -50,11 +49,9 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script_stop: true
           script: |
-            set -e
             cd /home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
-            php artisan down --retry=60 || true
+            php artisan down || true
             git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
             composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
             php artisan migrate --force
