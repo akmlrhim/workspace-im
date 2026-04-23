@@ -1,3 +1,10 @@
+name: Deploy to workspace.impostmedia.com
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -5,8 +12,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      # Setup PHP & Composer install Dihapus karena tidak dikirim ke server
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -39,28 +44,22 @@ jobs:
           script: |
             cd /home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
 
-            # Masuk maintenance mode
             php artisan down || true
 
-            # Fetch & Hard Reset agar terhindar dari error merge conflict di server
             git fetch https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
             git reset --hard FETCH_HEAD
 
-            # Install dependencies & jalankan optimasi
             composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
             php artisan migrate --force
             php artisan optimize:clear
             php artisan config:cache
             php artisan route:cache
             php artisan event:cache
-            php artisan view:cache # Diganti menjadi view:cache untuk production
+            php artisan view:cache
 
-            # Restart queue (Pastikan queue worker berjalan di background)
             php artisan queue:restart || true
 
-            # Fix permission
             chmod -R 775 storage bootstrap/cache
 
-            # Matikan maintenance mode
             php artisan up
             echo "Deploy sukses: $(date)"
