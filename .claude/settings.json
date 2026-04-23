@@ -10,7 +10,8 @@
       "Bash(php e:/laragon/www/erp_im/artisan --version)",
       "Bash(php -l app/Livewire/Project/TaskDetail.php)",
       "Bash(php -l app/Models/Project/TaskAttachment.php)",
-      "Bash(php -l database/migrations/2026_04_23_021748_add_is_link_to_task_attachments.php)"
+      "Bash(php -l database/migrations/2026_04_23_021748_add_is_link_to_task_attachments.php)",
+      "Bash(xargs basename *)"
     ]
   }
 }

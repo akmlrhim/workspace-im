@@ -51,11 +51,6 @@ class Space extends Model
         return $this->belongsToMany(User::class, 'space_members')->withPivot('role')->withTimestamps();
     }
 
-    public function isMember(int $userId): bool
-    {
-        return $this->members()->where('user_id', $userId)->exists();
-    }
-
     /**
      * Scope spaces that are accessible by the given user.
      *
