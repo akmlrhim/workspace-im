@@ -5,9 +5,17 @@ on:
     branches:
       - main
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -17,10 +25,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: "npm"
 
-      - name: Install NPM & Build Tailwind/Vite
+      - name: Install NPM & Build Assets
         run: |
-          npm install
+          npm ci
           npm run build
 
       - name: Copy build ke server via SCP
@@ -41,14 +50,12 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          script_stop: true
           script: |
+            set -e
             cd /home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
-
-            php artisan down || true
-
-            git fetch https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
-            git reset --hard FETCH_HEAD
-
+            php artisan down --retry=60 || true
+            git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
             composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
             php artisan migrate --force
             php artisan optimize:clear
@@ -56,10 +63,7 @@ jobs:
             php artisan route:cache
             php artisan event:cache
             php artisan view:cache
-
             php artisan queue:restart || true
-
             chmod -R 775 storage bootstrap/cache
-
             php artisan up
             echo "Deploy sukses: $(date)"
