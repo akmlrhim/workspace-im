@@ -79,4 +79,55 @@
       <flux:subheading class="mt-1">Tidak ada task list yang dapat diakses saat ini.</flux:subheading>
     </div>
   @endif
+
+  <flux:modal wire:model="showEditList" class="w-full max-w-md">
+    <div class="space-y-6">
+      <flux:heading size="lg">Edit List</flux:heading>
+      <form wire:submit="updateList" class="space-y-4">
+        <flux:field>
+          <flux:label>Nama List</flux:label>
+          <flux:input wire:model="editListName" placeholder="Masukkan nama list" autofocus />
+          <flux:error name="editListName" />
+        </flux:field>
+        <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+          <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showEditList', false)">Batal
+          </flux:button>
+          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Simpan</flux:button>
+        </div>
+      </form>
+    </div>
+  </flux:modal>
+
+  <flux:modal wire:model="showManageMembers" class="w-full max-w-md">
+    <div class="space-y-6">
+      <div>
+        <flux:heading size="lg">Kelola Anggota List</flux:heading>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Anggota yang terdaftar di sini dapat di-assign ke task
+          dalam list ini.</p>
+      </div>
+
+      <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
+        @foreach ($this->allUsers as $user)
+          <label wire:key="gtb-user-{{ $user->id }}"
+            class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
+            <flux:checkbox wire:model="listMemberIds" :value="$user->id" />
+            <flux:avatar circle :name="$user->name" :initials="$user->initials()" :src="$user->avatar"
+              size="sm" />
+            <div class="min-w-0 flex-1">
+              <span class="block font-medium text-zinc-800 dark:text-zinc-200">{{ $user->name }}</span>
+              <span class="block truncate text-xs text-zinc-400">{{ $user->email }}</span>
+            </div>
+          </label>
+        @endforeach
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="text-xs text-zinc-400">{{ count($listMemberIds) }} anggota dipilih</span>
+        <div class="flex gap-2">
+          <flux:button variant="ghost" @click="$wire.set('showManageMembers', false)">Batal</flux:button>
+          <flux:button variant="primary" wire:click="saveMembers">Simpan Anggota</flux:button>
+        </div>
+      </div>
+    </div>
+  </flux:modal>
 </div>

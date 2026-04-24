@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Project\Space;
-use App\Models\Project\SpaceMember;
 use App\Models\Project\Task;
 use App\Models\Project\TaskStatus;
 use App\Models\Project\Workspace;
@@ -42,15 +41,16 @@ test('space route model binding resolves by uuid', function () {
     expect($url)->toContain($space->uuid)->not->toContain('/'.$space->id);
 });
 
-test('manager can manage every task in a space they are involved in without being assigned', function () {
+test('manager can manage every task in a list they are a member of without being assigned', function () {
     $owner = User::factory()->create(['role' => 'member']);
     $manager = User::factory()->create(['role' => 'manager']);
 
     $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
     $space = $workspace->spaces()->create(['name' => 'Sales', 'position' => 0]);
-    SpaceMember::create(['space_id' => $space->id, 'user_id' => $manager->id, 'role' => 'manager']);
 
     $list = $space->lists()->create(['name' => 'Pipeline', 'position' => 0]);
+    $list->members()->attach($manager->id);
+
     $status = TaskStatus::create(['task_list_id' => $list->id, 'name' => 'Open', 'position' => 0, 'type' => 'open']);
     $task = Task::create([
         'task_list_id' => $list->id,
@@ -92,7 +92,8 @@ test('accessible spaces scope grants administrators access to every space but re
 
     $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
     $space = $workspace->spaces()->create(['name' => 'Private', 'position' => 0]);
-    SpaceMember::create(['space_id' => $space->id, 'user_id' => $involvedManager->id, 'role' => 'manager']);
+    $list = $space->lists()->create(['name' => 'Private List', 'position' => 0]);
+    $list->members()->attach($involvedManager->id);
 
     expect(Space::accessibleBy($outsider->id)->count())->toBe(0);
     expect(Space::accessibleBy($administrator->id)->count())->toBe(1);

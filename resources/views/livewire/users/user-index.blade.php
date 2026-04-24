@@ -29,10 +29,10 @@
   <flux:table :paginate="$users">
     <flux:table.columns>
       <flux:table.column>Pengguna</flux:table.column>
-      <flux:table.column class="hidden sm:table-cell">Jabatan</flux:table.column>
-      <flux:table.column class="hidden sm:table-cell">Role</flux:table.column>
-      <flux:table.column class="hidden md:table-cell">Status</flux:table.column>
-      <flux:table.column class="hidden lg:table-cell">Bergabung</flux:table.column>
+      <flux:table.column>Jabatan</flux:table.column>
+      <flux:table.column>Role</flux:table.column>
+      <flux:table.column>Status</flux:table.column>
+      <flux:table.column>Bergabung</flux:table.column>
       <flux:table.column align="end">Aksi</flux:table.column>
     </flux:table.columns>
 
@@ -52,33 +52,15 @@
                   @endif
                 </div>
                 <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $user->email }}</p>
-                <div class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
-                  @php $role = strtolower(trim($user->role)); @endphp
-                  @if ($role === 'super_user')
-                    <flux:badge color="rose" size="sm" icon="star">Super User</flux:badge>
-                  @elseif ($role === 'administrator')
-                    <flux:badge color="amber" size="sm" icon="shield-check">Administrator</flux:badge>
-                  @elseif ($role === 'manager')
-                    <flux:badge color="blue" size="sm" icon="briefcase">Manager</flux:badge>
-                  @elseif ($role === 'member')
-                    <flux:badge color="yellow" size="sm" icon="user">Member</flux:badge>
-                  @else
-                    <flux:badge color="zinc" size="sm" icon="clock">Guest/Pending</flux:badge>
-                  @endif
-
-                  @if ($user->position)
-                    <flux:text variant="subtle" class="text-xs">· {{ $user->position }}</flux:text>
-                  @endif
-                </div>
               </div>
             </div>
           </flux:table.cell>
 
-          <flux:table.cell class="hidden sm:table-cell">
+          <flux:table.cell>
             <flux:text variant="subtle">{{ $user->position ?? '—' }}</flux:text>
           </flux:table.cell>
 
-          <flux:table.cell class="hidden sm:table-cell">
+          <flux:table.cell>
             @php $role = strtolower(trim($user->role)); @endphp
             @if ($role === 'super_user')
               <flux:badge color="rose" size="sm" icon="star">Super User</flux:badge>
@@ -87,13 +69,13 @@
             @elseif ($role === 'manager')
               <flux:badge color="blue" size="sm" icon="briefcase">Manager</flux:badge>
             @elseif ($role === 'member')
-              <flux:badge color="yellow" size="sm" icon="clock">Member</flux:badge>
+              <flux:badge color="yellow" size="sm" icon="users">Member</flux:badge>
             @else
-              <flux:badge color="zinc" size="sm" icon="user">Guest/Pending</flux:badge>
+              <flux:badge color="zinc" size="sm" icon="clock">Guest/Pending</flux:badge>
             @endif
           </flux:table.cell>
 
-          <flux:table.cell class="hidden md:table-cell">
+          <flux:table.cell>
             <div class="flex flex-wrap items-center gap-1.5">
               @if ($user->email_verified_at)
                 <flux:badge color="green" size="sm" icon="check-circle">Terverifikasi</flux:badge>
@@ -106,7 +88,7 @@
             </div>
           </flux:table.cell>
 
-          <flux:table.cell class="hidden lg:table-cell">
+          <flux:table.cell>
             <flux:text variant="subtle" class="whitespace-nowrap text-xs"
               title="{{ $user->created_at->format('d M Y H:i') }}">
               {{ $user->created_at->format('d M Y') }}

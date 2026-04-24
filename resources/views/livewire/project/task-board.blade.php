@@ -1,7 +1,7 @@
 <div>
-  <div class="mb-6">
+  <div class="mb-4">
     @include('livewire.project.partials.breadcrumb')
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-3">
       <h1 class="hidden lg:block text-2xl font-bold text-zinc-900 dark:text-white">
         {{ $taskList->name }}
       </h1>
@@ -9,14 +9,77 @@
         @include('livewire.project.partials.view-toggle', ['active' => 'board'])
       </div>
     </div>
+
+    <div class="mt-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700/60 dark:bg-zinc-800/40">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+
+        <div class="flex items-center justify-between sm:w-auto">
+          <span
+            class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <flux:icon name="funnel" class="size-3.5" />
+            Filter
+          </span>
+
+          @if ($this->hasActiveFilter)
+            <button wire:click="clearFilters"
+              class="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-red-600 transition-colors hover:bg-red-50 sm:hidden dark:text-red-400 dark:hover:bg-red-500/10">
+              <flux:icon name="x-mark" class="size-3" />
+              Hapus
+            </button>
+          @endif
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:flex-wrap sm:items-center">
+
+          <flux:select wire:model.live="filterAssigneeId" size="sm" class="w-full sm:!w-auto sm:min-w-[140px]">
+            <flux:select.option value="">Semua Anggota</flux:select.option>
+            @foreach ($this->availableAssignees as $member)
+              <flux:select.option value="{{ $member->id }}">{{ $member->name }}</flux:select.option>
+            @endforeach
+          </flux:select>
+
+          <flux:select wire:model.live="filterPriority" size="sm" class="w-full sm:!w-auto sm:min-w-[140px]">
+            <flux:select.option value="">Semua Prioritas</flux:select.option>
+            <flux:select.option value="urgent">🔴 Urgent</flux:select.option>
+            <flux:select.option value="high">🟠 High</flux:select.option>
+            <flux:select.option value="normal">🔵 Normal</flux:select.option>
+            <flux:select.option value="low">⚪ Low</flux:select.option>
+          </flux:select>
+
+          @if ($this->availableLabels->isNotEmpty())
+            <flux:select wire:model.live="filterLabelId" size="sm"
+              class="col-span-2 w-full sm:col-span-1 sm:!w-auto sm:min-w-[140px]">
+              <flux:select.option value="">Semua Label</flux:select.option>
+              @foreach ($this->availableLabels as $label)
+                <flux:select.option value="{{ $label->id }}">{{ $label->name }}</flux:select.option>
+              @endforeach
+            </flux:select>
+          @endif
+        </div>
+
+        @if ($this->hasActiveFilter)
+          <button wire:click="clearFilters"
+            class="hidden sm:flex ml-auto items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10">
+            <flux:icon name="x-mark" class="size-3" />
+            Hapus Filter
+          </button>
+        @endif
+
+      </div>
+    </div>
   </div>
 
   <div class="kanban-board flex gap-4 overflow-x-auto overflow-y-hidden pb-4 -mx-3 px-3 sm:mx-0 sm:px-0"
-    x-data="kanbanBoard()" x-init="init()" @pointerdown="startDrag" @pointerleave="stopDrag" @pointerup="stopDrag"
-    @pointercancel="stopDrag" @pointermove="doDrag" @wheel.passive="handleWheel">
+    x-data="kanbanBoard({{ $canManage ? 'true' : 'false' }})" x-init="init()" @pointerdown="startDrag" @pointerleave="stopDrag"
+    @pointerup="stopDrag" @pointercancel="stopDrag" @pointermove="doDrag" @wheel.passive="handleWheel">
     @foreach ($this->statuses as $status)
+      @php
+        $overdueCount = $status->tasks
+            ->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->due_date->isToday())
+            ->count();
+      @endphp
       <div wire:key="status-{{ $status->id }}"
-        class="kanban-col-wrapper flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 cursor-grab border-t-4"
+        class="kanban-col-wrapper flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-t-4 {{ $canManage ? 'cursor-grab' : '' }}"
         style="border-top-color: {{ $status->color }}" data-column-id="{{ $status->id }}">
         <div class="flex items-center justify-between px-3 py-3">
           <div class="flex items-center gap-2 min-w-0 flex-1">
@@ -37,14 +100,22 @@
             @else
               <span class="truncate text-sm font-semibold text-zinc-700 dark:text-zinc-300">{{ $status->name }}</span>
               <span
-                class="rounded-full bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+                class="rounded-md bg-zinc-200 px-1.5 py-0.5 text-xs font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
                 {{ $status->tasks->count() }}
               </span>
+              @if ($overdueCount > 0)
+                <span
+                  class="inline-flex items-center gap-0.5 rounded-md bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-500/15 dark:text-red-400"
+                  title="{{ $overdueCount }} tugas lewat tenggat">
+                  <flux:icon name="exclamation-triangle" class="size-3" />
+                  {{ $overdueCount }}
+                </span>
+              @endif
             @endif
           </div>
 
           @if ($canManage)
-            <div class="relative flex items-center gap-1" x-data="{ open: false }">
+            <div class="relative flex items-center gap-0.5" x-data="{ open: false }">
               <button @click="$wire.set('createInStatusId', {{ $status->id }})"
                 class="rounded-md p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 transition-colors"
                 title="Tambah Tugas">
@@ -77,80 +148,110 @@
         <div class="kanban-column flex min-h-[100px] flex-col gap-2 px-2 pb-2" data-status-id="{{ $status->id }}"
           wire:key="col-status-{{ $status->id }}">
           @foreach ($status->tasks as $task)
+            @php
+              $dd = $task->due_date;
+              $isToday = $dd?->isToday();
+              $isPast = $dd && $dd->isPast() && !$isToday;
+              $isTomorrow = $dd?->isTomorrow();
+              $ddClass = $isPast
+                  ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400 font-semibold'
+                  : ($isToday
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400 font-semibold'
+                      : ($isTomorrow
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
+                          : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700/60 dark:text-zinc-300'));
+              $ddLabel = $dd
+                  ? ($isToday
+                      ? 'Hari ini'
+                      : ($isTomorrow
+                          ? 'Besok'
+                          : ($isPast
+                              ? (int) ceil($dd->diffInDays(now(), true)) . 'h lewat'
+                              : $dd->isoFormat('D MMM'))))
+                  : null;
+            @endphp
             <div wire:key="task-{{ $task->id }}"
-              class="task-card group/card relative cursor-pointer rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition-all hover:shadow-md active:cursor-grabbing active:shadow-lg active:ring-2 active:ring-indigo-400/30 dark:border-zinc-700 dark:bg-zinc-800"
-              data-task-id="{{ $task->id }}"
+              class="task-card group/card relative cursor-pointer overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-zinc-300 {{ $task->can_drag ? 'active:cursor-grabbing active:shadow-lg active:ring-2 active:ring-indigo-400/30' : 'task-locked' }} dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
+              data-task-id="{{ $task->id }}" data-can-drag="{{ $task->can_drag ? '1' : '0' }}"
               @click="if (!_isDraggingTask) $wire.openTaskDetail({{ $task->id }})">
-              @if ($task->labels->isNotEmpty())
-                <div class="mb-2 flex flex-wrap gap-1">
-                  @foreach ($task->labels as $label)
-                    <span class="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-                      style="background-color: {{ $label->color }}">
-                      {{ $label->name }}
-                    </span>
-                  @endforeach
-                </div>
-              @endif
-              <div class="mb-2 pr-10 text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $task->title }}</div>
 
-              <div class="absolute right-2 top-2 opacity-0 group-hover/card:opacity-60 transition-opacity">
-                <flux:icon name="bars-2" class="size-4 text-zinc-400" />
-              </div>
+              <div class="absolute inset-y-0 left-0 w-1" style="background-color: {{ $task->priority_color }}"
+                title="Prioritas: {{ ucfirst($task->priority) }}"></div>
 
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="h-2 w-2 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}"
-                    title="Priority: {{ ucfirst($task->priority) }}"></div>
-
-                  @if (filled($task->description))
-                    <span class="text-[10px] text-zinc-400 dark:text-zinc-500" title="Ada Deskripsi">
-                      <flux:icon name="document-text" class="inline size-3" />
-                    </span>
-                  @endif
-
-                  @if ($task->subtasks->isNotEmpty())
-                    <span class="text-[10px] text-zinc-400 dark:text-zinc-500" title="Checklist">
-                      <flux:icon name="bars-3-bottom-left" class="inline size-3" />
-                      {{ $task->subtasks->where('is_completed', true)->count() }}/{{ $task->subtasks->count() }}
-                    </span>
-                  @endif
-
-                  @if ($task->comments_count > 0)
-                    <span class="text-[10px] text-zinc-400 dark:text-zinc-500" title="Komentar">
-                      <flux:icon name="chat-bubble-left" class="inline size-[11px] mb-0.5" />
-                      {{ $task->comments_count }}
-                    </span>
-                  @endif
-
-                  @if ($task->attachments_count > 0)
-                    <span class="text-[10px] text-zinc-400 dark:text-zinc-500" title="Lampiran">
-                      <flux:icon name="paper-clip" class="inline size-3" /> {{ $task->attachments_count }}
-                    </span>
-                  @endif
-
-                  @if ($task->due_date)
-                    <span
-                      class="text-[10px] {{ $task->due_date->isPast() ? 'text-red-500 font-medium' : 'text-zinc-400 dark:text-zinc-500' }}"
-                      title="Tenggat Waktu: {{ $task->due_date->format('d M') }}">
-                      <flux:icon name="clock" class="inline size-3" /> {{ $task->due_date->format('M d') }}
-                    </span>
-                  @endif
-                </div>
-
-                @if ($task->assignees->isNotEmpty())
-                  <div class="flex -space-x-1.5">
-                    @foreach ($task->assignees->take(3) as $assignee)
-                      <flux:avatar circle :name="$assignee->name" :initials="$assignee->initials()" :src="$assignee->avatar"
-                        size="xs" class="ring-2 ring-white dark:ring-zinc-800" />
+              <div class="p-3 pl-3.5">
+                @if ($task->labels->isNotEmpty())
+                  <div class="mb-2 flex flex-wrap gap-1">
+                    @foreach ($task->labels as $label)
+                      <span class="rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+                        style="background-color: {{ $label->color }}">
+                        {{ $label->name }}
+                      </span>
                     @endforeach
-                    @if ($task->assignees->count() > 3)
-                      <div
-                        class="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-medium text-zinc-600 ring-2 ring-white dark:bg-zinc-700 dark:text-zinc-400 dark:ring-zinc-800">
-                        +{{ $task->assignees->count() - 3 }}
-                      </div>
-                    @endif
                   </div>
                 @endif
+
+                <div class="mb-2 pr-8 text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $task->title }}</div>
+
+                @if ($task->can_drag)
+                  <div class="absolute right-2 top-2 opacity-0 group-hover/card:opacity-60 transition-opacity">
+                    <flux:icon name="bars-2" class="size-4 text-zinc-400" />
+                  </div>
+                @endif
+
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex flex-wrap items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
+                    @if (filled($task->description))
+                      <span title="Ada Deskripsi">
+                        <flux:icon name="document-text" class="size-3.5" />
+                      </span>
+                    @endif
+
+                    @if ($task->subtasks->isNotEmpty())
+                      <span class="flex items-center gap-0.5 text-[10px]" title="Subtask">
+                        <flux:icon name="bars-3-bottom-left" class="size-3.5" />
+                        {{ $task->subtasks->where('is_completed', true)->count() }}/{{ $task->subtasks->count() }}
+                      </span>
+                    @endif
+
+                    @if ($task->comments_count > 0)
+                      <span class="flex items-center gap-0.5 text-[10px]" title="Komentar">
+                        <flux:icon name="chat-bubble-left" class="size-3.5" />
+                        {{ $task->comments_count }}
+                      </span>
+                    @endif
+
+                    @if ($task->attachments_count > 0)
+                      <span class="flex items-center gap-0.5 text-[10px]" title="Lampiran">
+                        <flux:icon name="paper-clip" class="size-3.5" />
+                        {{ $task->attachments_count }}
+                      </span>
+                    @endif
+
+                    @if ($dd)
+                      <span
+                        class="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] {{ $ddClass }}"
+                        title="Tenggat {{ $dd->format('d M Y') }}">
+                        <flux:icon name="clock" class="size-3" />
+                        {{ $ddLabel }}
+                      </span>
+                    @endif
+                  </div>
+
+                  @if ($task->assignees->isNotEmpty())
+                    <div class="flex shrink-0 -space-x-1.5">
+                      @foreach ($task->assignees->take(3) as $assignee)
+                        <flux:avatar circle :name="$assignee->name" :initials="$assignee->initials()"
+                          :src="$assignee->avatar" size="xs" class="ring-2 ring-white dark:ring-zinc-800" />
+                      @endforeach
+                      @if ($task->assignees->count() > 3)
+                        <div
+                          class="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-medium text-zinc-600 ring-2 ring-white dark:bg-zinc-700 dark:text-zinc-400 dark:ring-zinc-800">
+                          +{{ $task->assignees->count() - 3 }}
+                        </div>
+                      @endif
+                    </div>
+                  @endif
+                </div>
               </div>
             </div>
           @endforeach
@@ -247,13 +348,14 @@
 
 @script
   <script>
-    Alpine.data('kanbanBoard', () => ({
+    Alpine.data('kanbanBoard', (canManage = true) => ({
       _sortableInstances: [],
       _columnSortable: null,
       _hookCleanup: null,
       _dragFrame: null,
       _initDebounce: null,
       _isDraggingTask: false,
+      _canManage: canManage,
 
       isDown: false,
       startX: 0,
@@ -303,6 +405,7 @@
       },
 
       _initColumnSortable() {
+        if (!this._canManage) return;
         const board = this.$el;
         if (!board) return;
 
@@ -349,7 +452,7 @@
             delay: 250,
             delayOnTouchOnly: true,
             touchStartThreshold: 10,
-            filter: 'button, a, input, select, textarea',
+            filter: 'button, a, input, select, textarea, .task-locked',
             preventOnFilter: false,
             forceFallback: false, // <-- was true, caused ghost card glitch
             onStart: (evt) => {

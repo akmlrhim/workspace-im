@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
         $middleware->appendToGroup('web', TrackLastVisitedUrl::class);
+        $middleware->trustProxies(at: '*');
 
         $middleware->alias([
             'social.skip-password-confirm' => SkipPasswordConfirmForSocialUsers::class,

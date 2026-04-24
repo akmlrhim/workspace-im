@@ -1,7 +1,6 @@
 <?php
 
 use App\Livewire\Project\GeneralTaskboard;
-use App\Models\Project\SpaceMember;
 use App\Models\Project\Task;
 use App\Models\Project\Workspace;
 use App\Models\User;
@@ -113,22 +112,23 @@ test('non-assigned member cannot edit task but can view it', function () {
     expect($task->canBeManagedBy($owner))->toBeTrue();
 });
 
-test('manager can edit any task in a space they are a member of', function () {
+test('manager can edit any task in a list they are a member of', function () {
     $owner = User::factory()->create(['role' => 'member']);
     $manager = User::factory()->create(['role' => 'manager']);
 
     $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
     $space = $workspace->spaces()->create(['name' => 'Dev', 'position' => 0, 'color' => '#3b82f6', 'icon' => 'code-bracket']);
-    SpaceMember::create(['space_id' => $space->id, 'user_id' => $manager->id, 'role' => 'manager']);
 
     $list = $space->lists()->create(['name' => 'Tasks', 'position' => 0]);
+    $list->members()->attach($manager->id);
+
     $status = $list->statuses()->create(['name' => 'Open', 'position' => 0, 'type' => 'open', 'color' => '#6b7280']);
     $task = Task::create(['task_list_id' => $list->id, 'task_status_id' => $status->id, 'title' => 'Some Task', 'created_by' => $owner->id]);
 
     expect($task->canBeManagedBy($manager))->toBeTrue();
 });
 
-test('manager cannot edit tasks in spaces they are not involved in', function () {
+test('manager cannot edit tasks in lists they are not involved in', function () {
     $owner = User::factory()->create(['role' => 'member']);
     $manager = User::factory()->create(['role' => 'manager']);
 

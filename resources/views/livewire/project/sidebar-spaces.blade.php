@@ -7,7 +7,7 @@
         $spacePath = 'project-management/spaces/' . $sidebarSpace->uuid;
       @endphp
 
-      <flux:sidebar.group expandable :expanded="request()->is($spacePath . '*')" class="grid"
+      <flux:sidebar.group expandable :expanded="true" class="grid"
         wire:key="sidebar-space-{{ $sidebarSpace->id }}">
         <x-slot:heading>
           <a href="{{ route('project-management.spaces.show', $sidebarSpace) }}" wire:navigate

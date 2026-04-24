@@ -170,7 +170,7 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
+            <table class="w-full whitespace-nowrap text-left text-sm">
               <thead>
                 <tr class="border-b border-zinc-100 dark:border-zinc-700">
                   <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Judul Tugas</th>
@@ -384,7 +384,7 @@
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
+        <table class="w-full whitespace-nowrap text-left text-sm">
           <thead>
             <tr class="border-b border-zinc-100 dark:border-zinc-700">
               <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Anggota</th>

@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::dropIfExists('space_members');
+    }
+
+    public function down(): void
+    {
         Schema::create('space_members', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
@@ -18,10 +23,5 @@ return new class extends Migration
 
             $table->unique(['space_id', 'user_id']);
         });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('space_members');
     }
 };
