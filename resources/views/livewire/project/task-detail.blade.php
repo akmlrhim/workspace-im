@@ -98,9 +98,9 @@
 
     {{-- Tab Content --}}
     <div class="pt-6">
-      {{-- ═══════════════ OVERVIEW ═══════════════ --}}
+
       <div x-show="activeTab === 'overview'" x-cloak class="space-y-6">
-        {{-- Meta card: Status / Priority / Due date --}}
+        {{-- Overview  --}}
         <div
           class="grid grid-cols-1 gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 sm:grid-cols-3 dark:border-zinc-700/50 dark:bg-zinc-800/20">
           <div>
@@ -366,7 +366,7 @@
         </div>
       </div>
 
-      {{-- ═══════════════ CHECKLIST ═══════════════ --}}
+      {{-- Checklist  --}}
       <div x-show="activeTab === 'checklist'" x-cloak>
         <div class="mb-3 flex items-center justify-between">
           <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
@@ -725,7 +725,7 @@
         @endforelse
       </div>
 
-      {{-- ═══════════════ COMMENTS ═══════════════ --}}
+      {{-- Comments  --}}
       <div x-show="activeTab === 'comments'" x-cloak>
         <form wire:submit="addComment" class="mb-4">
           <flux:textarea wire:model="newComment" placeholder="Tambahkan komentar... (Ctrl+Enter untuk kirim)"
@@ -816,7 +816,7 @@
         @endforelse
       </div>
 
-      {{-- ═══════════════ ACTIVITY ═══════════════ --}}
+      {{-- Activity  --}}
       <div x-show="activeTab === 'activity'" x-cloak class="space-y-6">
         {{-- Time tracking --}}
         <div class="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-700/50 dark:bg-zinc-800/30">
@@ -837,21 +837,36 @@
 
           @if ($timeEntries->isNotEmpty())
             <div class="space-y-2">
-              <h4 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Riwayat Sesi</h4>
+              <h4 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Riwayat Sesi — Semua Anggota</h4>
 
               <div
-                class="max-h-40 overflow-y-auto rounded-lg border border-zinc-200 bg-white custom-scrollbar dark:border-zinc-700 dark:bg-zinc-900/50">
+                class="max-h-56 overflow-y-auto rounded-lg border border-zinc-200 bg-white custom-scrollbar dark:border-zinc-700 dark:bg-zinc-900/50">
                 <div class="divide-y divide-zinc-100 dark:divide-zinc-800/50">
                   @foreach ($timeEntries as $entry)
                     <div
-                      class="flex items-center justify-between px-3 py-2 text-xs transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                      <span class="font-medium text-zinc-600 dark:text-zinc-300">
-                        {{ $entry->started_at->format('M d, H:i') }}
-                      </span>
+                      class="flex items-center justify-between gap-3 px-3 py-2.5 text-xs transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                      <div class="flex items-center gap-2.5 min-w-0">
+                        <flux:avatar circle :name="$entry->user?->name ?? 'Unknown'"
+                          :initials="$entry->user?->initials() ?? '?'" :src="$entry->user?->avatar" size="xs"
+                          class="size-6 shrink-0 ring-2 ring-white dark:ring-zinc-900" />
+                        <div class="min-w-0">
+                          <span class="block truncate font-medium text-zinc-700 dark:text-zinc-200">
+                            {{ $entry->user?->name ?? 'Unknown' }}
+                          </span>
+                          <span class="block text-[10px] text-zinc-400 dark:text-zinc-500">
+                            {{ $entry->started_at->format('d M Y, H:i') }}
+                            @if ($entry->stopped_at)
+                              — {{ $entry->stopped_at->format('H:i') }}
+                            @endif
+                          </span>
+                        </div>
+                      </div>
 
-                      <span>
+                      <span class="shrink-0">
                         @if ($entry->stopped_at)
-                          <span class="font-mono text-zinc-500 dark:text-zinc-400">
+                          <span
+                            class="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 font-mono text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                            <flux:icon name="clock" class="size-3 text-zinc-400" />
                             {{ floor($entry->duration_seconds / 3600) }}h
                             {{ floor(($entry->duration_seconds % 3600) / 60) }}m
                           </span>
@@ -859,7 +874,7 @@
                           <span
                             class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20">
                             <span class="size-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                            Running
+                            Berjalan
                           </span>
                         @endif
                       </span>
@@ -870,7 +885,7 @@
             </div>
           @else
             <p class="text-xs italic text-zinc-400 dark:text-zinc-500">
-              Belum ada sesi. Klik tombol timer di header untuk memulai pencatatan waktu.
+              Belum ada sesi pencatatan waktu untuk tugas ini.
             </p>
           @endif
         </div>

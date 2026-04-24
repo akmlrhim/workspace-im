@@ -102,6 +102,11 @@ class TaskBoard extends Component
 			return true;
 		}
 
+		// List members (assigned to any task or added as member) can create tasks
+		if ($this->taskList->members()->where('users.id', $user->id)->exists()) {
+			return true;
+		}
+
 		return $this->taskList->tasks()->whereHas('assignees', fn($q) => $q->where('users.id', $user->id))->exists()
 			|| $this->taskList->tasks()->where('assigned_to', $user->id)->exists();
 	}
