@@ -28,14 +28,14 @@
   @endphp
 
   <flux:sidebar collapsible
-    class="flex flex-col border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 sticky top-0 h-dvh">
+    class="flex flex-col border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 sticky top-0 h-dvh data-flux-sidebar-on-mobile:z-50! data-flux-sidebar-on-mobile:bg-zinc-50! dark:data-flux-sidebar-on-mobile:bg-zinc-900!">
 
     <flux:sidebar.header class="flex items-center justify-between pb-4">
       <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
       <flux:sidebar.collapse />
     </flux:sidebar.header>
 
-    <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar">
+    <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-zinc-50 dark:bg-zinc-900">
       <flux:sidebar.nav>
 
         @if ($isGuestUser)
@@ -54,7 +54,7 @@
           </div>
 
           @if ($currentModuleKey === 'project' && auth()->check())
-            <div class="mt-6 mb-2 px-3 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            <div class="mt-2 px-3 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
               Workspace
             </div>
             <livewire:project.sidebar-spaces />
@@ -65,7 +65,7 @@
       </flux:sidebar.nav>
     </div>
 
-    <div class="shrink-0 mt-auto border-t border-zinc-200 pt-4 dark:border-zinc-700">
+    <div class="shrink-0 mt-auto border-t border-zinc-200 bg-zinc-50 pt-4 dark:border-zinc-700 dark:bg-zinc-900">
       <x-desktop-user-menu class="w-full" :name="auth()->check() ? auth()->user()->name : 'Guest'" />
     </div>
 

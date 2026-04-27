@@ -3,6 +3,11 @@
     <div>
       <flux:heading size="xl">Beban Kerja & Traffic</flux:heading>
     </div>
+
+    <div class="flex items-center gap-2">
+      <flux:input onclick="this.showPicker()" type="month" wire:model.live="selectedMonth" size="sm" icon="calendar"
+        class="w-full sm:w-72" />
+    </div>
   </div>
 
   <div class="mb-6">

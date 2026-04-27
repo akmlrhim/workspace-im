@@ -1,6 +1,6 @@
 <div>
   @if ($sidebarSpaces->isNotEmpty())
-    <flux:separator class="my-2" />
+    <flux:separator class="my-1" />
 
     @foreach ($sidebarSpaces as $sidebarSpace)
       @php

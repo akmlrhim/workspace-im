@@ -129,8 +129,8 @@
           <div>
             <label
               class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Tenggat</label>
-            <flux:input type="date" wire:model="taskDueDate" wire:change="updateDueDate" :readonly="$ro"
-              size="sm" />
+            <flux:input type="date" onclick="this.showPicker()" wire:model="taskDueDate" wire:change="updateDueDate"
+              :readonly="$ro" size="sm" />
           </div>
         </div>
 
@@ -576,7 +576,7 @@
                             class="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Tenggat
                             Waktu</label>
                           <div class="flex items-center gap-2">
-                            <flux:input type="date" wire:model="activeItemDueDate"
+                            <flux:input type="date" wire:model="activeItemDueDate" onclick="this.showPicker()"
                               wire:change="updateChecklistItemDueDate" size="sm" class="w-full max-w-[200px]" />
                             @if ($activeItemDueDate)
                               <button wire:click="clearChecklistItemDueDate"
@@ -837,7 +837,8 @@
 
           @if ($timeEntries->isNotEmpty())
             <div class="space-y-2">
-              <h4 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Riwayat Sesi — Semua Anggota</h4>
+              <h4 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Riwayat Sesi — Semua Anggota
+              </h4>
 
               <div
                 class="max-h-56 overflow-y-auto rounded-lg border border-zinc-200 bg-white custom-scrollbar dark:border-zinc-700 dark:bg-zinc-900/50">
