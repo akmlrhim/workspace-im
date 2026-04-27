@@ -12,19 +12,20 @@
 
   <div class="mb-6">
     <div
-      class="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
+      class="flex w-full sm:inline-flex sm:w-auto items-center rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
       <button wire:click="switchView('task')"
-        class="rounded-md px-4 py-2 text-sm font-medium transition-all {{ $view === 'task' ? 'bg-white text-teal-700 shadow-sm dark:bg-zinc-700 dark:text-teal-400' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
-        <span class="flex items-center gap-2">
-          <flux:icon name="clipboard-document-list" variant="micro" class="size-4" />
-          Lihat berdasarkan tugas
+        class="flex-1 sm:flex-none rounded-md px-2 sm:px-4 py-2.5 sm:py-2 text-sm font-medium transition-all {{ $view === 'task' ? 'bg-white text-teal-700 shadow-sm dark:bg-zinc-700 dark:text-teal-400' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+        <span class="flex items-center justify-center gap-2">
+          <flux:icon name="clipboard-document-list" variant="micro" class="size-4 shrink-0" />
+          <span class="truncate">View by Task</span>
         </span>
       </button>
+
       <button wire:click="switchView('member')"
-        class="rounded-md px-4 py-2 text-sm font-medium transition-all {{ $view === 'member' ? 'bg-white text-teal-700 shadow-sm dark:bg-zinc-700 dark:text-teal-400' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
-        <span class="flex items-center gap-2">
-          <flux:icon name="users" variant="micro" class="size-4" />
-          Lihat berdasarkan anggota
+        class="flex-1 sm:flex-none rounded-md px-2 sm:px-4 py-2.5 sm:py-2 text-sm font-medium transition-all {{ $view === 'member' ? 'bg-white text-teal-700 shadow-sm dark:bg-zinc-700 dark:text-teal-400' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+        <span class="flex items-center justify-center gap-2">
+          <flux:icon name="users" variant="micro" class="size-4 shrink-0" />
+          <span class="truncate">View by Member</span>
         </span>
       </button>
     </div>
@@ -309,78 +310,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="mb-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Distribusi Tugas per Anggota</h3>
-        <flux:icon name="chart-bar" class="size-5 text-zinc-400" />
-      </div>
-      @if (count($memberTraffic) > 0)
-        @php
-          $memberMax = max(1, max(array_map(fn($r) => $r['open'] + $r['active'] + $r['closed'], $memberTraffic)));
-        @endphp
-        <div class="flex items-end gap-3" style="height: 180px;">
-          @foreach ($memberTraffic as $item)
-            @php $itemTotal = $item['open'] + $item['active'] + $item['closed']; @endphp
-            <div class="group relative flex flex-1 flex-col items-center justify-end" style="height: 100%;">
-              <div
-                class="pointer-events-none absolute -top-2 z-10 hidden -translate-y-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs shadow-lg group-hover:block dark:border-zinc-600 dark:bg-zinc-800">
-                <div class="mb-1 font-semibold text-zinc-700 dark:text-zinc-200">{{ $item['name'] }}</div>
-                <div class="flex items-center gap-1.5"><span
-                    class="inline-block size-2 rounded-full bg-zinc-400"></span>Belum Dikerjakan: {{ $item['open'] }}
-                </div>
-                <div class="flex items-center gap-1.5"><span
-                    class="inline-block size-2 rounded-full bg-teal-500"></span>Sedang Dikerjakan:
-                  {{ $item['active'] }}
-                </div>
-                <div class="flex items-center gap-1.5"><span
-                    class="inline-block size-2 rounded-full bg-emerald-500"></span>Selesai: {{ $item['closed'] }}
-                </div>
-              </div>
-              <div class="flex w-full flex-col items-center justify-end" style="height: calc(100% - 24px);">
-                @if ($itemTotal > 0)
-                  <div class="w-[50%] overflow-hidden rounded-t-md"
-                    style="height: {{ ($itemTotal / $memberMax) * 100 }}%;">
-                    @if ($item['closed'] > 0)
-                      <div class="w-full bg-emerald-500 dark:bg-emerald-400"
-                        style="height: {{ ($item['closed'] / $itemTotal) * 100 }}%;"></div>
-                    @endif
-                    @if ($item['active'] > 0)
-                      <div class="w-full bg-teal-500 dark:bg-teal-400"
-                        style="height: {{ ($item['active'] / $itemTotal) * 100 }}%;"></div>
-                    @endif
-                    @if ($item['open'] > 0)
-                      <div class="w-full bg-zinc-400 dark:bg-zinc-500"
-                        style="height: {{ ($item['open'] / $itemTotal) * 100 }}%;"></div>
-                    @endif
-                  </div>
-                @endif
-              </div>
-              <span class="mt-1 truncate text-center text-[11px] leading-tight text-zinc-500 dark:text-zinc-400"
-                style="max-width: 100%;">{{ Str::limit($item['name'], 12) }}</span>
-            </div>
-          @endforeach
-        </div>
-        <div class="mt-3 flex justify-center gap-4">
-          <div class="flex items-center gap-1.5">
-            <div class="size-2 rounded-full bg-zinc-400 dark:bg-zinc-500"></div>
-            <span class="text-[11px] text-zinc-500 dark:text-zinc-400">Belum Dikerjakan</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="size-2 rounded-full bg-teal-500 dark:bg-teal-400"></div>
-            <span class="text-[11px] text-zinc-500 dark:text-zinc-400">Sedang Dikerjakan</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="size-2 rounded-full bg-emerald-500 dark:bg-emerald-400"></div>
-            <span class="text-[11px] text-zinc-500 dark:text-zinc-400">Selesai</span>
-          </div>
-        </div>
-      @else
-        <div class="flex items-center justify-center text-sm text-zinc-400" style="height: 180px;">Tidak ada data
-          tersedia
-        </div>
-      @endif
     </div>
 
     <div class="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
