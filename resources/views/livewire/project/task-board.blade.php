@@ -71,7 +71,7 @@
 
   <div class="kanban-board flex gap-4 overflow-x-auto overflow-y-hidden pb-4 -mx-3 px-3 sm:mx-0 sm:px-0"
     x-data="kanbanBoard({{ $canManage ? 'true' : 'false' }})" x-init="init()" @pointerdown="startDrag" @pointerleave="stopDrag"
-    @pointerup="stopDrag" @pointercancel="stopDrag" @pointermove="doDrag" @wheel.passive="handleWheel">
+    @pointerup="stopDrag" @pointercancel="stopDrag" @pointermove="doDrag">
     @foreach ($this->statuses as $status)
       @php
         $overdueCount = $status->tasks
@@ -537,19 +537,6 @@
         });
       },
 
-      handleWheel(e) {
-        if (Math.abs(e.deltaX) > 0 || e.shiftKey) return;
-        if (document.body.classList.contains('is-dragging') || document.body.classList.contains(
-            'is-dragging-column')) return;
-
-        const el = this.$el;
-        const atLeft = el.scrollLeft === 0;
-        const atRight = Math.ceil(el.scrollLeft + el.clientWidth) >= el.scrollWidth;
-
-        if ((e.deltaY < 0 && atLeft) || (e.deltaY > 0 && atRight)) return;
-
-        el.scrollLeft += e.deltaY;
-      },
     }));
   </script>
 @endscript
