@@ -99,7 +99,7 @@
               </form>
             @else
               <span class="truncate text-sm font-semibold text-zinc-700 dark:text-zinc-300">{{ $status->name }}</span>
-              <span
+              <span data-task-count
                 class="rounded-md bg-zinc-200 px-1.5 py-0.5 text-xs font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
                 {{ $status->tasks->count() }}
               </span>
@@ -173,7 +173,7 @@
             <div wire:key="task-{{ $task->id }}"
               class="task-card group/card relative cursor-pointer overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-zinc-300 {{ $task->can_drag ? 'active:cursor-grabbing active:shadow-lg active:ring-2 active:ring-indigo-400/30' : 'task-locked' }} dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
               data-task-id="{{ $task->id }}" data-can-drag="{{ $task->can_drag ? '1' : '0' }}"
-              @click="if (!_isDraggingTask) $wire.openTaskDetail({{ $task->id }})">
+              @click="if (!_isDraggingTask && !$event.target.closest('[data-no-drag]')) $wire.openTaskDetail({{ $task->id }})">
 
               <div class="absolute inset-y-0 left-0 w-1" style="background-color: {{ $task->priority_color }}"
                 title="Prioritas: {{ ucfirst($task->priority) }}"></div>
@@ -191,12 +191,6 @@
                 @endif
 
                 <div class="mb-2 pr-8 text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $task->title }}</div>
-
-                @if ($task->can_drag)
-                  <div class="absolute right-2 top-2 opacity-0 group-hover/card:opacity-60 transition-opacity">
-                    <flux:icon name="bars-2" class="size-4 text-zinc-400" />
-                  </div>
-                @endif
 
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex flex-wrap items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
@@ -490,7 +484,7 @@
           if (!col) return;
           const wrapper = col.closest('.kanban-col-wrapper');
           if (!wrapper) return;
-          const badge = wrapper.querySelector('.rounded-full.bg-zinc-200, .rounded-full.dark\\:bg-zinc-700');
+          const badge = wrapper.querySelector('[data-task-count]');
           if (badge) {
             badge.textContent = col.querySelectorAll('.task-card').length;
           }

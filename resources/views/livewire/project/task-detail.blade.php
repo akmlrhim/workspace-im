@@ -20,13 +20,59 @@
       class="sticky top-0 z-10 -mx-1 rounded-t-xl border-b border-zinc-200 bg-white/95 px-1 pt-2 backdrop-blur max-sm:rounded-t-none dark:border-zinc-700/60 dark:bg-zinc-800/95">
       <div class="flex items-start justify-between gap-2 pr-10">
         <div class="min-w-0 flex-1">
-          <div class="group relative">
-            <flux:input wire:model.blur="taskTitle" wire:change="saveTitle" :readonly="$ro"
-              class="!text-lg !font-semibold !border-zinc-200/0 hover:!border-zinc-200 dark:hover:!border-zinc-700 !bg-transparent hover:!bg-zinc-50 focus:!bg-white dark:hover:!bg-zinc-800/50 dark:focus:!bg-zinc-900 !px-2 !py-1.5 !rounded-md transition-colors"
-              placeholder="Judul tugas..." />
+          <div x-data="{
+              editing: false,
+              draft: @js($taskTitle),
+              start() {
+                  if (!{{ $canManage ? 'true' : 'false' }}) return;
+                  this.draft = this.$wire.taskTitle;
+                  this.editing = true;
+                  this.$nextTick(() => this.$refs.titleInput?.focus());
+              },
+              async save() {
+                  if (!this.editing) return;
+                  const next = (this.draft ?? '').trim();
+                  if (next === '' || next === this.$wire.taskTitle) {
+                      this.cancel();
+                      return;
+                  }
+                  this.$wire.taskTitle = next;
+                  this.editing = false;
+                  await this.$wire.saveTitle();
+              },
+              cancel() {
+                  this.draft = this.$wire.taskTitle;
+                  this.editing = false;
+              },
+          }" class="group relative">
+            <button type="button" x-show="!editing" @click="start()"
+              class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-lg font-semibold transition-colors {{ $canManage ? 'hover:bg-zinc-100 dark:hover:bg-zinc-800' : 'cursor-default' }}"
+              title="{{ $canManage ? 'Klik untuk ubah judul' : '' }}">
+              <span class="flex-1 truncate text-zinc-900 dark:text-zinc-100">
+                {{ $taskTitle !== '' ? $taskTitle : 'Tanpa Judul' }}
+              </span>
+              @if ($canManage)
+                <flux:icon name="pencil-square"
+                  class="size-4 shrink-0 text-zinc-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-zinc-500" />
+              @endif
+            </button>
+
             @if ($canManage)
-              <flux:icon name="pencil-square"
-                class="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-zinc-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-zinc-500" />
+              <div x-show="editing" x-cloak class="flex items-center gap-1.5">
+                <input type="text" x-ref="titleInput" x-model="draft" maxlength="500"
+                  @keydown.enter.prevent="save()" @keydown.escape.prevent="cancel()" @blur="save()"
+                  placeholder="Judul tugas..."
+                  class="flex-1 rounded-md border border-indigo-300 bg-white px-2 py-1.5 text-lg font-semibold text-zinc-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-indigo-500/60 dark:bg-zinc-900 dark:text-zinc-100" />
+                <button type="button" @mousedown.prevent @click="save()"
+                  class="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+                  title="Simpan">
+                  <flux:icon name="check" class="size-4" />
+                </button>
+                <button type="button" @mousedown.prevent @click="cancel()"
+                  class="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700" title="Batal">
+                  <flux:icon name="x-mark" class="size-4" />
+                </button>
+              </div>
             @endif
           </div>
         </div>
