@@ -65,7 +65,7 @@
           class="group flex border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
           wire:key="gantt-{{ $task->id }}">
           <div class="w-64 shrink-0 border-r border-zinc-200 px-4 py-3 dark:border-zinc-700 relative">
-            <button wire:click="openTaskDetail({{ $task->id }})"
+            <button @click="$flux.modal('task-detail-gantt').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
               class="flex items-center gap-2 text-sm font-medium text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400 text-left truncate w-full pr-12">
               <div class="h-2 w-2 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}"></div>
               <span class="truncate">{{ $task->title }}</span>
@@ -92,7 +92,7 @@
             <div
               class="absolute top-1/2 -translate-y-1/2 h-6 rounded-full transition-all group-hover:h-7 cursor-pointer"
               style="left: {{ $leftPercent }}%; width: {{ max($widthPercent, 2) }}%; background-color: {{ $task->status->color ?? '#6366f1' }};"
-              wire:click="openTaskDetail({{ $task->id }})"
+              @click="$flux.modal('task-detail-gantt').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
               title="{{ $task->title }} — Due: {{ $task->due_date->format('M d') }}">
               <span class="absolute inset-0 flex items-center px-2 text-[10px] font-medium text-white truncate">
                 @if ($widthPercent > 8)
@@ -117,12 +117,13 @@
   <div class="sm:hidden space-y-2">
     @forelse ($tasks as $task)
       @php
-        $isOverdue = $task->due_date->isPast();
+        $isClosed = $task->status?->type === 'closed';
+        $isOverdue = ! $isClosed && $task->due_date->isPast();
         $daysLeft = now()->startOfDay()->diffInDays($task->due_date->startOfDay(), false);
       @endphp
-      <button wire:click="openTaskDetail({{ $task->id }})"
+      <button @click="$flux.modal('task-detail-gantt').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
         class="flex w-full items-center gap-3 rounded-xl border bg-white p-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800
-        {{ $isOverdue ? 'border-red-200 dark:border-red-800/40' : 'border-zinc-200 dark:border-zinc-700' }}"
+        {{ $isClosed ? 'border-green-200 dark:border-green-800/30' : ($isOverdue ? 'border-red-200 dark:border-red-800/40' : 'border-zinc-200 dark:border-zinc-700') }}"
         wire:key="gantt-m-{{ $task->id }}">
         <div class="h-8 w-1 shrink-0 rounded-full" style="background-color: {{ $task->status->color ?? '#6366f1' }}"></div>
         <div class="min-w-0 flex-1">
@@ -141,11 +142,18 @@
           </div>
         </div>
         <div class="shrink-0 text-right">
-          <div class="text-xs font-medium {{ $isOverdue ? 'text-red-500' : 'text-zinc-600 dark:text-zinc-400' }}">
+          <div class="text-xs font-medium
+            {{ $isClosed ? 'text-green-600 dark:text-green-400' : ($isOverdue ? 'text-red-500' : 'text-zinc-600 dark:text-zinc-400') }}">
             {{ $task->due_date->format('M d') }}
           </div>
-          <div class="text-[10px] {{ $isOverdue ? 'text-red-400' : 'text-zinc-400 dark:text-zinc-500' }}">
-            @if ($isOverdue)
+          <div class="flex items-center justify-end gap-0.5 text-[10px]
+            {{ $isClosed ? 'text-green-500 dark:text-green-400' : ($isOverdue ? 'text-red-400' : 'text-zinc-400 dark:text-zinc-500') }}">
+            @if ($isClosed)
+              <svg class="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Selesai
+            @elseif ($isOverdue)
               {{ abs($daysLeft) }}h lalu
             @elseif ($daysLeft == 0)
               Hari ini
@@ -165,12 +173,17 @@
   </div>
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')
-  @if ($showTaskDetail && $selectedTaskId)
-    <flux:modal wire:model="showTaskDetail"
-      class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-      <div class="max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:h-[calc(100dvh-4rem)]">
-        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'gantt-detail-' . $selectedTaskId" />
+  <flux:modal name="task-detail-gantt" wire:model="showTaskDetail" :closable="false" @close="$wire.closeTaskDetail()"
+    @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('task-detail-gantt').close()"
+    class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+    <div class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
+      <div wire:loading wire:target="openTaskDetail"
+        class="absolute inset-0 z-50 bg-white px-1 dark:bg-zinc-900">
+        @include('livewire.project.partials.task-detail-skeleton')
       </div>
-    </flux:modal>
-  @endif
+      @if ($selectedTaskId)
+        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'gantt-detail-' . $selectedTaskId" />
+      @endif
+    </div>
+  </flux:modal>
 </div>

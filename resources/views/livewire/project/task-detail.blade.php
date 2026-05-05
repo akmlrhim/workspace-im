@@ -18,7 +18,7 @@
     {{-- Sticky Header --}}
     <div
       class="sticky top-0 z-10 -mx-1 rounded-t-xl border-b border-zinc-200 bg-white/95 px-1 pt-2 backdrop-blur max-sm:rounded-t-none dark:border-zinc-700/60 dark:bg-zinc-800/95">
-      <div class="flex items-start justify-between gap-2 pr-10">
+      <div class="flex items-start justify-between gap-2">
         <div class="min-w-0 flex-1">
           <div x-data="{
               editing: false,
@@ -59,9 +59,8 @@
 
             @if ($canManage)
               <div x-show="editing" x-cloak class="flex items-center gap-1.5">
-                <input type="text" x-ref="titleInput" x-model="draft" maxlength="500"
-                  @keydown.enter.prevent="save()" @keydown.escape.prevent="cancel()" @blur="save()"
-                  placeholder="Judul tugas..."
+                <input type="text" x-ref="titleInput" x-model="draft" maxlength="500" @keydown.enter.prevent="save()"
+                  @keydown.escape.prevent="cancel()" @blur="save()" placeholder="Judul tugas..."
                   class="flex-1 rounded-md border border-indigo-300 bg-white px-2 py-1.5 text-lg font-semibold text-zinc-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-indigo-500/60 dark:bg-zinc-900 dark:text-zinc-100" />
                 <button type="button" @mousedown.prevent @click="save()"
                   class="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
@@ -77,8 +76,8 @@
           </div>
         </div>
 
-        @if ($canManage)
-          <div class="flex shrink-0 items-center gap-1 pt-1.5">
+        <div class="flex shrink-0 items-center gap-1 pt-1.5">
+          @if ($canManage)
             @if ($activeTimerId)
               <flux:button icon="stop-circle" size="sm" variant="danger" wire:click="stopTimer" class="relative">
                 <span class="hidden sm:inline">Stop</span>
@@ -96,8 +95,14 @@
             <flux:button icon="trash" size="sm" variant="ghost"
               class="text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
               wire:click="$dispatch('open-delete-task-modal', { taskId: {{ $task->id }} })" title="Hapus Tugas" />
-          </div>
-        @endif
+          @endif
+
+          <flux:modal.close>
+            <flux:button icon="x-mark" size="sm" variant="ghost"
+              class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!"
+              title="Tutup" />
+          </flux:modal.close>
+        </div>
       </div>
 
       {{-- Tabs --}}
@@ -914,8 +919,8 @@
                           <span
                             class="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 font-mono text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                             <flux:icon name="clock" class="size-3 text-zinc-400" />
-                            {{ floor($entry->duration_seconds / 3600) }}h
-                            {{ floor(($entry->duration_seconds % 3600) / 60) }}m
+                            {{ floor($entry->duration_seconds / 3600) }}jam
+                            {{ floor(($entry->duration_seconds % 3600) / 60) }}menit
                           </span>
                         @else
                           <span

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Project\Folder;
 use App\Models\Project\Space;
 use App\Models\Project\Task;
+use App\Models\Project\TaskActivity;
 use App\Models\Project\TaskLabel;
 use App\Models\Project\TaskList;
 use App\Models\Project\Workspace;
@@ -15,17 +16,23 @@ use Illuminate\Support\Collection;
 
 class ProjectSeeder extends Seeder
 {
+    /** @var array<string, TaskLabel> */
+    private array $labels = [];
+
     public function run(): void
     {
-        $admin = User::where('email', 'admin@example.com')->first();
-        $manager = User::where('email', 'budi@example.com')->first();
-        $allUsers = User::all();
+        $superUser = User::where('email', 'superuser@erp.test')->first();
+        $admin = User::where('email', 'admin@erp.test')->first();
+        $manager = User::where('email', 'manager@erp.test')->first();
+        $member = User::where('email', 'member@erp.test')->first();
 
         if (! $admin) {
-            $this->command->warn('No admin user found. Run UserSeeder first.');
+            $this->command->warn('Admin user tidak ditemukan. Jalankan UserSeeder terlebih dahulu.');
 
             return;
         }
+
+        $allUsers = collect([$superUser, $admin, $manager, $member])->filter()->values();
 
         // ── Workspace ──────────────────────────────────────────
         $workspace = Workspace::firstOrCreate(
@@ -34,171 +41,260 @@ class ProjectSeeder extends Seeder
         );
 
         foreach ($allUsers as $user) {
-            WorkspaceMember::firstOrCreate([
-                'workspace_id' => $workspace->id,
-                'user_id' => $user->id,
-            ], [
-                'role' => $user->id === $admin->id ? 'owner' : 'member',
-            ]);
-        }
-
-        // ── Labels ─────────────────────────────────────────────
-        $labelData = [
-            ['name' => 'Bug', 'color' => '#ef4444'],
-            ['name' => 'Feature', 'color' => '#3b82f6'],
-            ['name' => 'Improvement', 'color' => '#10b981'],
-            ['name' => 'Design', 'color' => '#8b5cf6'],
-            ['name' => 'Documentation', 'color' => '#f59e0b'],
-            ['name' => 'Urgent', 'color' => '#dc2626'],
-        ];
-
-        $labels = [];
-        foreach ($labelData as $ld) {
-            $labels[$ld['name']] = TaskLabel::firstOrCreate(
-                ['workspace_id' => $workspace->id, 'name' => $ld['name']],
-                ['color' => $ld['color']]
+            WorkspaceMember::firstOrCreate(
+                ['workspace_id' => $workspace->id, 'user_id' => $user->id],
+                ['role' => $user->id === $admin->id ? 'owner' : 'member']
             );
         }
 
-        // ── Space: Engineering ─────────────────────────────────
-        $engineering = Space::firstOrCreate(
-            ['workspace_id' => $workspace->id, 'slug' => 'engineering'],
-            ['name' => 'Engineering', 'color' => '#6366f1', 'icon' => 'code-bracket', 'position' => 0]
-        );
+        // ── Labels ─────────────────────────────────────────────
+        $this->labels = $this->createLabels($workspace->id);
 
-        // Folder: Sprint Q2
-        $sprintFolder = Folder::firstOrCreate(
-            ['space_id' => $engineering->id, 'name' => 'Sprint Q2 2026'],
-            ['position' => 0]
-        );
+        // ── 3 Spaces ───────────────────────────────────────────
+        $this->seedDivisi($workspace, $admin, $allUsers);
+        $this->seedProyek($workspace, $admin, $allUsers);
+        $this->seedHQ($workspace, $admin, $allUsers);
 
-        $sprint1 = $this->createList($engineering, 'Sprint 1', 0, $sprintFolder->id);
-        $sprint2 = $this->createList($engineering, 'Sprint 2', 1, $sprintFolder->id);
-        $backlog = $this->createList($engineering, 'Backlog', 2);
-
-        // Assign members to lists
-        $engMembers = $allUsers->whereIn('email', ['admin@example.com', 'budi@example.com', 'siti@example.com', 'ahmad@example.com', 'rizky@example.com']);
-        $sprint1->members()->syncWithoutDetaching($engMembers->pluck('id'));
-        $sprint2->members()->syncWithoutDetaching($engMembers->pluck('id'));
-        $backlog->members()->syncWithoutDetaching($engMembers->pluck('id'));
-
-        $s1Statuses = $sprint1->statuses()->orderBy('position')->get();
-        $this->seedTasks($sprint1, $s1Statuses, $admin, [
-            ['title' => 'Set up CI/CD pipeline', 'priority' => 'high', 'si' => 3, 'due' => 2, 'labels' => ['Feature']],
-            ['title' => 'Implement user authentication', 'priority' => 'urgent', 'si' => 2, 'due' => 1, 'labels' => ['Feature', 'Urgent']],
-            ['title' => 'Design database schema', 'priority' => 'normal', 'si' => 3, 'due' => null],
-            ['title' => 'Create API endpoints for tasks', 'priority' => 'high', 'si' => 1, 'due' => 5, 'labels' => ['Feature']],
-            ['title' => 'Write unit tests for auth module', 'priority' => 'normal', 'si' => 0, 'due' => 7],
-            ['title' => 'Set up error tracking (Sentry)', 'priority' => 'low', 'si' => 0, 'due' => 10],
-            ['title' => 'Optimize database queries', 'priority' => 'high', 'si' => 1, 'due' => 3, 'labels' => ['Improvement']],
-            ['title' => 'Implement file upload system', 'priority' => 'normal', 'si' => 0, 'due' => 8, 'labels' => ['Feature']],
-        ], $labels, $engMembers->values());
-
-        $s2Statuses = $sprint2->statuses()->orderBy('position')->get();
-        $this->seedTasks($sprint2, $s2Statuses, $admin, [
-            ['title' => 'Build notification system', 'priority' => 'high', 'si' => 0, 'due' => 12, 'labels' => ['Feature']],
-            ['title' => 'Add real-time updates via WebSocket', 'priority' => 'normal', 'si' => 0, 'due' => 15],
-            ['title' => 'Implement role-based access control', 'priority' => 'urgent', 'si' => 1, 'due' => 10, 'labels' => ['Feature', 'Urgent']],
-            ['title' => 'Create audit log module', 'priority' => 'normal', 'si' => 0, 'due' => 18],
-            ['title' => 'Performance profiling & optimization', 'priority' => 'high', 'si' => 0, 'due' => 20, 'labels' => ['Improvement']],
-        ], $labels, $engMembers->values());
-
-        $blStatuses = $backlog->statuses()->orderBy('position')->get();
-        $this->seedTasks($backlog, $blStatuses, $admin, [
-            ['title' => 'Investigate caching strategies', 'priority' => 'low', 'si' => 0, 'due' => null],
-            ['title' => 'Plan mobile responsive design', 'priority' => 'normal', 'si' => 0, 'due' => null],
-            ['title' => 'Add dark mode support', 'priority' => 'low', 'si' => 0, 'due' => null, 'labels' => ['Design']],
-            ['title' => 'Create onboarding wizard', 'priority' => 'high', 'si' => 0, 'due' => null, 'labels' => ['Feature']],
-        ], $labels, $engMembers->values());
-
-        // ── Space: Marketing ───────────────────────────────────
-        $marketing = Space::firstOrCreate(
-            ['workspace_id' => $workspace->id, 'slug' => 'marketing'],
-            ['name' => 'Marketing', 'color' => '#ec4899', 'icon' => 'megaphone', 'position' => 1]
-        );
-
-        $campaigns = $this->createList($marketing, 'Q2 Campaigns', 0);
-        $contentPlan = $this->createList($marketing, 'Content Plan', 1);
-
-        $mktMembers = $allUsers->whereIn('email', ['admin@example.com', 'dewi@example.com', 'putri@example.com', 'indah@example.com']);
-        $campaigns->members()->syncWithoutDetaching($mktMembers->pluck('id'));
-        $contentPlan->members()->syncWithoutDetaching($mktMembers->pluck('id'));
-
-        $cStatuses = $campaigns->statuses()->orderBy('position')->get();
-        $this->seedTasks($campaigns, $cStatuses, $admin, [
-            ['title' => 'Create social media content calendar', 'priority' => 'high', 'si' => 1, 'due' => 5],
-            ['title' => 'Design landing page for product launch', 'priority' => 'urgent', 'si' => 1, 'due' => 3, 'labels' => ['Design', 'Urgent']],
-            ['title' => 'Write blog post: Getting Started Guide', 'priority' => 'normal', 'si' => 0, 'due' => 10, 'labels' => ['Documentation']],
-            ['title' => 'Prepare email newsletter', 'priority' => 'normal', 'si' => 2, 'due' => 7],
-            ['title' => 'Analyze competitor SEO strategies', 'priority' => 'low', 'si' => 0, 'due' => 14],
-        ], $labels, $mktMembers->values());
-
-        $cpStatuses = $contentPlan->statuses()->orderBy('position')->get();
-        $this->seedTasks($contentPlan, $cpStatuses, $admin, [
-            ['title' => 'Draft product announcement article', 'priority' => 'high', 'si' => 1, 'due' => 4, 'labels' => ['Documentation']],
-            ['title' => 'Create tutorial video script', 'priority' => 'normal', 'si' => 0, 'due' => 12],
-            ['title' => 'Design infographic for features', 'priority' => 'normal', 'si' => 0, 'due' => 15, 'labels' => ['Design']],
-        ], $labels, $mktMembers->values());
-
-        // ── Space: Design ──────────────────────────────────────
-        $design = Space::firstOrCreate(
-            ['workspace_id' => $workspace->id, 'slug' => 'design'],
-            ['name' => 'Design', 'color' => '#f59e0b', 'icon' => 'paint-brush', 'position' => 2]
-        );
-
-        // Folder: UI Components
-        $uiFolder = Folder::firstOrCreate(
-            ['space_id' => $design->id, 'name' => 'UI Components'],
-            ['position' => 0]
-        );
-
-        $uiKit = $this->createList($design, 'UI Kit v2', 0, $uiFolder->id);
-        $brandGuide = $this->createList($design, 'Brand Guidelines', 1);
-
-        $dsMembers = $allUsers->whereIn('email', ['admin@example.com', 'siti@example.com', 'indah@example.com', 'rizky@example.com']);
-        $uiKit->members()->syncWithoutDetaching($dsMembers->pluck('id'));
-        $brandGuide->members()->syncWithoutDetaching($dsMembers->pluck('id'));
-
-        $uiStatuses = $uiKit->statuses()->orderBy('position')->get();
-        $this->seedTasks($uiKit, $uiStatuses, $admin, [
-            ['title' => 'Create button component variants', 'priority' => 'high', 'si' => 3, 'due' => 3, 'labels' => ['Design']],
-            ['title' => 'Design modal patterns', 'priority' => 'normal', 'si' => 2, 'due' => 7, 'labels' => ['Design']],
-            ['title' => 'Create form input styles', 'priority' => 'normal', 'si' => 1, 'due' => 10, 'labels' => ['Design']],
-            ['title' => 'Design notification system UI', 'priority' => 'high', 'si' => 0, 'due' => 12, 'labels' => ['Design', 'Feature']],
-            ['title' => 'Create illustration library', 'priority' => 'low', 'si' => 0, 'due' => 20, 'labels' => ['Design']],
-            ['title' => 'Design empty state patterns', 'priority' => 'normal', 'si' => 0, 'due' => 15, 'labels' => ['Design']],
-        ], $labels, $dsMembers->values());
-
-        $bgStatuses = $brandGuide->statuses()->orderBy('position')->get();
-        $this->seedTasks($brandGuide, $bgStatuses, $admin, [
-            ['title' => 'Define color palette', 'priority' => 'high', 'si' => 3, 'due' => null, 'labels' => ['Design']],
-            ['title' => 'Create typography guidelines', 'priority' => 'normal', 'si' => 2, 'due' => null, 'labels' => ['Design', 'Documentation']],
-            ['title' => 'Design logo variations', 'priority' => 'normal', 'si' => 1, 'due' => 10, 'labels' => ['Design']],
-        ], $labels, $dsMembers->values());
-
-        // ── Space: HR & Operations ─────────────────────────────
-        $hr = Space::firstOrCreate(
-            ['workspace_id' => $workspace->id, 'slug' => 'hr-operations'],
-            ['name' => 'HR & Operations', 'color' => '#14b8a6', 'icon' => 'users', 'position' => 3]
-        );
-
-        $onboarding = $this->createList($hr, 'Onboarding Checklist', 0);
-        $hrMembers = $allUsers->whereIn('email', ['admin@example.com', 'budi@example.com', 'putri@example.com', 'fajar@example.com']);
-        $onboarding->members()->syncWithoutDetaching($hrMembers->pluck('id'));
-
-        $obStatuses = $onboarding->statuses()->orderBy('position')->get();
-        $this->seedTasks($onboarding, $obStatuses, $admin, [
-            ['title' => 'Prepare offer letter template', 'priority' => 'high', 'si' => 3, 'due' => null],
-            ['title' => 'Set up new employee workspace', 'priority' => 'normal', 'si' => 2, 'due' => 5],
-            ['title' => 'Create training schedule', 'priority' => 'normal', 'si' => 1, 'due' => 7],
-            ['title' => 'Review benefits documentation', 'priority' => 'low', 'si' => 0, 'due' => 14],
-            ['title' => 'Organize team introduction meeting', 'priority' => 'normal', 'si' => 0, 'due' => 3],
-        ], $labels, $hrMembers->values());
-
-        $this->command->info('Project demo data seeded: 4 spaces, 8 lists, ~40 tasks with members and labels.');
+        $this->command->info('✅ Project seeder selesai: 3 spaces (Divisi, Proyek, HQ) dengan lists & tasks lengkap.');
     }
 
-    private function createList(Space $space, string $name, int $position, ?int $folderId = null): TaskList
+    // Space divisi
+    private function seedDivisi(Workspace $workspace, User $admin, Collection $allUsers): void
+    {
+        $space = Space::firstOrCreate(
+            ['workspace_id' => $workspace->id, 'slug' => 'divisi'],
+            ['name' => 'Divisi', 'color' => '#8b5cf6', 'icon' => 'building-office-2', 'position' => 0]
+        );
+
+        $this->command->line('  → Seeding space: Divisi');
+
+        // ── List: HR & Rekrutmen ───────────────────────────────
+        $hr = $this->makeList($space, 'HR & Rekrutmen', 0);
+        $hr->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $hrStatus = $hr->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($hr, $hrStatus, $admin, $allUsers, [
+            ['title' => 'Buat job description Senior Developer', 'priority' => 'high', 'si' => 3, 'due' => -5, 'labels' => ['Dokumentasi']],
+            ['title' => 'Posting lowongan di LinkedIn & JobStreet', 'priority' => 'high', 'si' => 3, 'due' => -3],
+            ['title' => 'Screening 30 CV pelamar', 'priority' => 'normal', 'si' => 2, 'due' => -1],
+            ['title' => 'Jadwalkan interview tahap 1', 'priority' => 'normal', 'si' => 1, 'due' => 2],
+            ['title' => 'Lakukan background check kandidat terpilih', 'priority' => 'high', 'si' => 1, 'due' => 5],
+            ['title' => 'Siapkan kontrak kerja karyawan baru', 'priority' => 'normal', 'si' => 0, 'due' => 7, 'labels' => ['Dokumentasi', 'Legal']],
+            ['title' => 'Orientasi karyawan baru batch Mei 2026', 'priority' => 'normal', 'si' => 0, 'due' => 10],
+            ['title' => 'Update database rekrutmen internal', 'priority' => 'low', 'si' => 0, 'due' => 14],
+            ['title' => 'Rekap biaya rekrutmen Q1 2026', 'priority' => 'normal', 'si' => 3, 'due' => -7, 'labels' => ['Keuangan']],
+        ]);
+
+        // ── List: Evaluasi Kinerja ─────────────────────────────
+        $evaluasi = $this->makeList($space, 'Evaluasi Kinerja', 1);
+        $evaluasi->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $evalStatus = $evaluasi->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($evaluasi, $evalStatus, $admin, $allUsers, [
+            ['title' => 'Distribusi form KPI Q1 2026', 'priority' => 'high', 'si' => 3, 'due' => -10, 'labels' => ['Dokumentasi']],
+            ['title' => 'Rekap hasil evaluasi kinerja Q1 2026', 'priority' => 'high', 'si' => 2, 'due' => -2],
+            ['title' => 'Meeting 1-on-1 dengan seluruh team lead', 'priority' => 'normal', 'si' => 1, 'due' => 3],
+            ['title' => 'Siapkan laporan kinerja divisi Q1 2026', 'priority' => 'normal', 'si' => 1, 'due' => 5, 'labels' => ['Dokumentasi']],
+            ['title' => 'Finalisasi dan approval bonus Q1 2026', 'priority' => 'urgent', 'si' => 0, 'due' => 7, 'labels' => ['Mendesak', 'Keuangan']],
+            ['title' => 'Tetapkan target KPI Q2 2026 per divisi', 'priority' => 'normal', 'si' => 0, 'due' => 14],
+            ['title' => 'Buat template form evaluasi kinerja', 'priority' => 'low', 'si' => 3, 'due' => -20, 'labels' => ['Dokumentasi']],
+            ['title' => 'Sosialisasi sistem penilaian baru ke karyawan', 'priority' => 'normal', 'si' => 0, 'due' => 21],
+        ]);
+
+        // ── List: Pengembangan SDM ─────────────────────────────
+        $sdm = $this->makeList($space, 'Pengembangan SDM', 2);
+        $sdm->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $sdmStatus = $sdm->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($sdm, $sdmStatus, $admin, $allUsers, [
+            ['title' => 'Identifikasi kebutuhan pelatihan 2026', 'priority' => 'normal', 'si' => 3, 'due' => -20, 'labels' => ['Dokumentasi']],
+            ['title' => 'Daftarkan tim ke training Agile PM', 'priority' => 'high', 'si' => 2, 'due' => -5],
+            ['title' => 'Workshop komunikasi efektif — 20 Mei', 'priority' => 'normal', 'si' => 1, 'due' => 7],
+            ['title' => 'Program sertifikasi ISO 9001 tim QA', 'priority' => 'high', 'si' => 0, 'due' => 21, 'labels' => ['Peningkatan', 'Mendesak']],
+            ['title' => 'Buat modul onboarding digital interaktif', 'priority' => 'normal', 'si' => 0, 'due' => 30, 'labels' => ['Fitur Baru']],
+            ['title' => 'Evaluasi efektivitas pelatihan Q1 2026', 'priority' => 'normal', 'si' => 3, 'due' => -15, 'labels' => ['Dokumentasi']],
+            ['title' => 'Rencanakan program mentoring internal', 'priority' => 'low', 'si' => 0, 'due' => 35],
+            ['title' => 'Anggaran pelatihan Q2 2026', 'priority' => 'high', 'si' => 1, 'due' => 5, 'labels' => ['Keuangan']],
+        ]);
+
+        // ── List: Administrasi Divisi ──────────────────────────
+        $admin2 = $this->makeList($space, 'Administrasi Divisi', 3);
+        $admin2->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $admStatus = $admin2->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($admin2, $admStatus, $admin, $allUsers, [
+            ['title' => 'Update struktur organisasi perusahaan', 'priority' => 'normal', 'si' => 3, 'due' => -7, 'labels' => ['Dokumentasi']],
+            ['title' => 'Rekap absensi dan lembur April 2026', 'priority' => 'high', 'si' => 2, 'due' => -1],
+            ['title' => 'Pengajuan cuti tahunan karyawan', 'priority' => 'normal', 'si' => 1, 'due' => 3],
+            ['title' => 'Update SOP rekrutmen dan onboarding', 'priority' => 'normal', 'si' => 1, 'due' => 10, 'labels' => ['Dokumentasi', 'Peningkatan']],
+            ['title' => 'Laporan headcount bulanan ke direksi', 'priority' => 'high', 'si' => 0, 'due' => 7],
+            ['title' => 'Inventarisasi aset divisi 2026', 'priority' => 'low', 'si' => 0, 'due' => 21],
+        ]);
+    }
+
+    // space proyek
+    private function seedProyek(Workspace $workspace, User $admin, Collection $allUsers): void
+    {
+        $space = Space::firstOrCreate(
+            ['workspace_id' => $workspace->id, 'slug' => 'proyek'],
+            ['name' => 'Proyek', 'color' => '#f59e0b', 'icon' => 'rocket-launch', 'position' => 1]
+        );
+
+        $this->command->line('  → Seeding space: Proyek');
+
+        $folderQ2 = Folder::firstOrCreate(
+            ['space_id' => $space->id, 'name' => 'Proyek Q2 2026'],
+            ['position' => 0]
+        );
+
+        $web = $this->makeList($space, 'Website Redesign', 0, $folderQ2->id);
+        $web->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $webStatus = $web->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($web, $webStatus, $admin, $allUsers, [
+            ['title' => 'Analisis kebutuhan dan riset pengguna', 'priority' => 'normal', 'si' => 3, 'due' => -20, 'labels' => ['Dokumentasi']],
+            ['title' => 'Buat wireframe halaman utama & produk', 'priority' => 'high', 'si' => 3, 'due' => -15, 'labels' => ['Desain']],
+            ['title' => 'Desain UI kit dan sistem komponen', 'priority' => 'high', 'si' => 2, 'due' => -3, 'labels' => ['Desain']],
+            ['title' => 'Implementasi halaman beranda (homepage)', 'priority' => 'high', 'si' => 1, 'due' => 5, 'labels' => ['Fitur Baru']],
+            ['title' => 'Implementasi halaman produk & katalog', 'priority' => 'normal', 'si' => 1, 'due' => 10, 'labels' => ['Fitur Baru']],
+            ['title' => 'Integrasi CMS dan manajemen konten', 'priority' => 'normal', 'si' => 0, 'due' => 14, 'labels' => ['Fitur Baru']],
+            ['title' => 'Testing cross-browser & responsif', 'priority' => 'high', 'si' => 0, 'due' => 21, 'labels' => ['Peningkatan']],
+            ['title' => 'Deployment ke staging dan review', 'priority' => 'urgent', 'si' => 0, 'due' => 25, 'labels' => ['Mendesak']],
+            ['title' => 'SEO optimization halaman-halaman utama', 'priority' => 'normal', 'si' => 0, 'due' => 28, 'labels' => ['Peningkatan']],
+            ['title' => 'Go-live website baru', 'priority' => 'urgent', 'si' => 0, 'due' => 35, 'labels' => ['Mendesak']],
+        ]);
+
+        // ── List: Mobile App Development ───────────────────────
+        $mobile = $this->makeList($space, 'Mobile App Development', 1, $folderQ2->id);
+        $mobile->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $mobileStatus = $mobile->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($mobile, $mobileStatus, $admin, $allUsers, [
+            ['title' => 'Dokumentasi kebutuhan fitur mobile app', 'priority' => 'normal', 'si' => 3, 'due' => -25, 'labels' => ['Dokumentasi']],
+            ['title' => 'Desain UI/UX aplikasi mobile', 'priority' => 'high', 'si' => 3, 'due' => -10, 'labels' => ['Desain']],
+            ['title' => 'Setup project React Native & environment', 'priority' => 'normal', 'si' => 2, 'due' => -5],
+            ['title' => 'Implementasi modul autentikasi & login', 'priority' => 'high', 'si' => 1, 'due' => 7, 'labels' => ['Fitur Baru']],
+            ['title' => 'Implementasi dashboard dan statistik', 'priority' => 'normal', 'si' => 1, 'due' => 14, 'labels' => ['Fitur Baru']],
+            ['title' => 'Integrasi API backend dengan mobile', 'priority' => 'high', 'si' => 0, 'due' => 20],
+            ['title' => 'Push notification & real-time updates', 'priority' => 'normal', 'si' => 0, 'due' => 25, 'labels' => ['Fitur Baru']],
+            ['title' => 'Testing di berbagai device & OS', 'priority' => 'high', 'si' => 0, 'due' => 28],
+            ['title' => 'Submit ke Google Play Store & App Store', 'priority' => 'urgent', 'si' => 0, 'due' => 35, 'labels' => ['Mendesak']],
+        ]);
+
+        // ── List: Implementasi ERP ─────────────────────────────
+        $erp = $this->makeList($space, 'Implementasi ERP', 2);
+        $erp->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $erpStatus = $erp->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($erp, $erpStatus, $admin, $allUsers, [
+            ['title' => 'Analisis proses bisnis eksisting perusahaan', 'priority' => 'urgent', 'si' => 3, 'due' => -30, 'labels' => ['Dokumentasi']],
+            ['title' => 'Mapping kebutuhan modul ERP per divisi', 'priority' => 'high', 'si' => 3, 'due' => -20, 'labels' => ['Dokumentasi']],
+            ['title' => 'Konfigurasi modul keuangan & akuntansi', 'priority' => 'high', 'si' => 2, 'due' => -5],
+            ['title' => 'Konfigurasi modul HR & payroll', 'priority' => 'high', 'si' => 2, 'due' => -3],
+            ['title' => 'Migrasi data dari sistem lama ke ERP', 'priority' => 'urgent', 'si' => 1, 'due' => 5, 'labels' => ['Mendesak']],
+            ['title' => 'Pelatihan user modul keuangan', 'priority' => 'normal', 'si' => 1, 'due' => 10],
+            ['title' => 'Pelatihan user modul HR & payroll', 'priority' => 'normal', 'si' => 0, 'due' => 12],
+            ['title' => 'UAT (User Acceptance Testing) modul utama', 'priority' => 'high', 'si' => 0, 'due' => 15, 'labels' => ['Peningkatan']],
+            ['title' => 'Perbaikan bug hasil UAT', 'priority' => 'high', 'si' => 0, 'due' => 19, 'labels' => ['Bug', 'Mendesak']],
+            ['title' => 'Go-live ERP phase 1', 'priority' => 'urgent', 'si' => 0, 'due' => 21, 'labels' => ['Mendesak']],
+        ]);
+
+        // ── List: QA & Testing ─────────────────────────────────
+        $qa = $this->makeList($space, 'QA & Testing', 3);
+        $qa->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $qaStatus = $qa->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($qa, $qaStatus, $admin, $allUsers, [
+            ['title' => 'Buat test plan Q2 2026', 'priority' => 'high', 'si' => 3, 'due' => -15, 'labels' => ['Dokumentasi']],
+            ['title' => 'Testing fitur autentikasi website', 'priority' => 'normal', 'si' => 3, 'due' => -7],
+            ['title' => 'Testing integrasi API backend', 'priority' => 'normal', 'si' => 2, 'due' => -2],
+            ['title' => 'Regression testing halaman website', 'priority' => 'high', 'si' => 1, 'due' => 5],
+            ['title' => 'Security audit & penetration testing', 'priority' => 'urgent', 'si' => 0, 'due' => 10, 'labels' => ['Mendesak', 'Bug']],
+            ['title' => 'Performance & load testing aplikasi', 'priority' => 'normal', 'si' => 0, 'due' => 12, 'labels' => ['Peningkatan']],
+            ['title' => 'Buat laporan hasil testing Q2 2026', 'priority' => 'normal', 'si' => 0, 'due' => 21, 'labels' => ['Dokumentasi']],
+        ]);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  SPACE: HQ
+    // ──────────────────────────────────────────────────────────
+
+    private function seedHQ(Workspace $workspace, User $admin, Collection $allUsers): void
+    {
+        $space = Space::firstOrCreate(
+            ['workspace_id' => $workspace->id, 'slug' => 'hq'],
+            ['name' => 'HQ', 'color' => '#10b981', 'icon' => 'star', 'position' => 2]
+        );
+
+        $this->command->line('  → Seeding space: HQ');
+
+        // ── List: Legal & Compliance ───────────────────────────
+        $legal = $this->makeList($space, 'Legal & Compliance', 0);
+        $legal->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $legalStatus = $legal->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($legal, $legalStatus, $admin, $allUsers, [
+            ['title' => 'Review kontrak vendor teknologi baru', 'priority' => 'high', 'si' => 2, 'due' => -3, 'labels' => ['Legal', 'Mendesak']],
+            ['title' => 'Update kebijakan privasi data (PDPA)', 'priority' => 'urgent', 'si' => 1, 'due' => 7, 'labels' => ['Legal', 'Mendesak']],
+            ['title' => 'Perpanjangan lisensi software suite', 'priority' => 'normal', 'si' => 1, 'due' => 14, 'labels' => ['Legal']],
+            ['title' => 'Audit kepatuhan ISO 27001 tahunan', 'priority' => 'high', 'si' => 0, 'due' => 21, 'labels' => ['Legal', 'Peningkatan']],
+            ['title' => 'Siapkan laporan pajak badan tahunan', 'priority' => 'urgent', 'si' => 0, 'due' => 28, 'labels' => ['Legal', 'Keuangan', 'Mendesak']],
+            ['title' => 'Review perjanjian kerja sama distributor', 'priority' => 'normal', 'si' => 3, 'due' => -10, 'labels' => ['Legal']],
+            ['title' => 'Finalisasi MOU kemitraan baru', 'priority' => 'high', 'si' => 0, 'due' => 30, 'labels' => ['Legal']],
+        ]);
+
+        // ── List: Agenda & Rapat ───────────────────────────────
+        $rapat = $this->makeList($space, 'Agenda & Rapat', 1);
+        $rapat->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $rapatStatus = $rapat->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($rapat, $rapatStatus, $admin, $allUsers, [
+            ['title' => 'Rapat board of directors Q2 2026', 'priority' => 'high', 'si' => 3, 'due' => -5, 'labels' => ['Dokumentasi']],
+            ['title' => 'Town hall seluruh karyawan — April 2026', 'priority' => 'normal', 'si' => 3, 'due' => -2],
+            ['title' => 'Review OKR Q1 2026 bersama direksi', 'priority' => 'high', 'si' => 2, 'due' => 3, 'labels' => ['Dokumentasi']],
+            ['title' => 'Kick-off meeting Q2 2026 lintas divisi', 'priority' => 'normal', 'si' => 1, 'due' => 7],
+            ['title' => 'Rapat evaluasi proyek strategis semua unit', 'priority' => 'high', 'si' => 0, 'due' => 14],
+            ['title' => 'Siapkan materi presentasi direksi Q2', 'priority' => 'high', 'si' => 1, 'due' => 5, 'labels' => ['Dokumentasi']],
+            ['title' => 'Annual General Meeting (AGM) 2026', 'priority' => 'urgent', 'si' => 0, 'due' => 45, 'labels' => ['Mendesak', 'Legal']],
+            ['title' => 'Rapat koordinasi antar divisi bulanan', 'priority' => 'normal', 'si' => 0, 'due' => 10],
+        ]);
+
+        // ── List: Keuangan ─────────────────────────────────────
+        $keuangan = $this->makeList($space, 'Keuangan', 2);
+        $keuangan->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $keuStatus = $keuangan->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($keuangan, $keuStatus, $admin, $allUsers, [
+            ['title' => 'Rekap laporan keuangan April 2026', 'priority' => 'urgent', 'si' => 2, 'due' => -2, 'labels' => ['Keuangan', 'Mendesak']],
+            ['title' => 'Review dan approval anggaran Q2 2026', 'priority' => 'high', 'si' => 1, 'due' => 5, 'labels' => ['Keuangan']],
+            ['title' => 'Approval pembelian server & infrastruktur', 'priority' => 'high', 'si' => 1, 'due' => 7, 'labels' => ['Keuangan', 'Mendesak']],
+            ['title' => 'Audit internal keuangan semester 1', 'priority' => 'normal', 'si' => 0, 'due' => 21, 'labels' => ['Keuangan']],
+            ['title' => 'Presentasi laporan keuangan ke direksi', 'priority' => 'high', 'si' => 0, 'due' => 14, 'labels' => ['Keuangan', 'Dokumentasi']],
+            ['title' => 'Rekonsiliasi bank Maret–April 2026', 'priority' => 'normal', 'si' => 3, 'due' => -7, 'labels' => ['Keuangan']],
+            ['title' => 'Proyeksi arus kas Q3 2026', 'priority' => 'normal', 'si' => 0, 'due' => 28, 'labels' => ['Keuangan', 'Dokumentasi']],
+        ]);
+
+        // ── List: Strategi & Planning ──────────────────────────
+        $strategi = $this->makeList($space, 'Strategi & Planning', 3);
+        $strategi->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $strStatus = $strategi->statuses()->orderBy('position')->get();
+
+        $this->seedTasks($strategi, $strStatus, $admin, $allUsers, [
+            ['title' => 'Review & update visi misi perusahaan 2026', 'priority' => 'normal', 'si' => 3, 'due' => -30, 'labels' => ['Dokumentasi']],
+            ['title' => 'OKR planning seluruh divisi Q2 2026', 'priority' => 'high', 'si' => 3, 'due' => -10, 'labels' => ['Dokumentasi']],
+            ['title' => 'Analisis kompetitor & tren industri Q1', 'priority' => 'normal', 'si' => 2, 'due' => -5, 'labels' => ['Dokumentasi']],
+            ['title' => 'Susun rencana ekspansi bisnis 2026–2027', 'priority' => 'high', 'si' => 1, 'due' => 30, 'labels' => ['Dokumentasi', 'Peningkatan']],
+            ['title' => 'Review dan perbarui kemitraan strategis', 'priority' => 'normal', 'si' => 0, 'due' => 21],
+            ['title' => 'Workshop inovasi produk bersama direksi', 'priority' => 'normal', 'si' => 0, 'due' => 28, 'labels' => ['Peningkatan']],
+            ['title' => 'Evaluasi target bisnis semester 1 2026', 'priority' => 'high', 'si' => 0, 'due' => 14, 'labels' => ['Dokumentasi']],
+        ]);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  HELPERS
+    // ──────────────────────────────────────────────────────────
+
+    private function makeList(Space $space, string $name, int $position, ?int $folderId = null): TaskList
     {
         $list = TaskList::firstOrCreate(
             ['space_id' => $space->id, 'name' => $name],
@@ -213,38 +309,81 @@ class ProjectSeeder extends Seeder
     }
 
     /**
-     * @param  array<string, TaskLabel>  $allLabels
-     * @param  Collection<int, User>  $members
+     * @param  \Illuminate\Database\Eloquent\Collection  $statuses
+     * @param  array<int, array<string, mixed>>  $taskData
      */
-    private function seedTasks(TaskList $list, $statuses, User $creator, array $taskData, array $allLabels, $members): void
+    private function seedTasks(TaskList $list, $statuses, User $creator, Collection $allUsers, array $taskData): void
     {
-        foreach ($taskData as $i => $t) {
+        foreach ($taskData as $position => $t) {
+            $statusId = $statuses[$t['si']]->id ?? $statuses->first()->id;
+            $dueDate = isset($t['due']) ? now()->addDays((int) $t['due'])->toDateString() : null;
+
             $task = Task::firstOrCreate(
                 ['task_list_id' => $list->id, 'title' => $t['title']],
                 [
-                    'task_status_id' => $statuses[$t['si']]->id,
+                    'task_status_id' => $statusId,
                     'priority' => $t['priority'],
-                    'assigned_to' => $members->count() > 0 ? $members[$i % $members->count()]->id : $creator->id,
-                    'due_date' => isset($t['due']) ? now()->addDays($t['due']) : null,
-                    'position' => $i,
+                    'due_date' => $dueDate,
+                    'position' => $position,
                     'created_by' => $creator->id,
                 ]
             );
 
-            // Assign 1-2 random members to the task
-            $assigneeCount = min($members->count(), rand(1, 2));
-            $task->assignees()->syncWithoutDetaching(
-                $members->random($assigneeCount)->pluck('id')
-            );
+            // Assign 1–2 random members from allUsers
+            if ($allUsers->isNotEmpty()) {
+                $count = min($allUsers->count(), rand(1, 2));
+                $task->assignees()->syncWithoutDetaching(
+                    $allUsers->random($count)->pluck('id')
+                );
+            }
 
             // Attach labels
             if (! empty($t['labels'])) {
                 $labelIds = collect($t['labels'])
-                    ->map(fn ($name) => $allLabels[$name]->id ?? null)
+                    ->map(fn ($name) => $this->labels[$name]->id ?? null)
                     ->filter()
+                    ->values()
                     ->toArray();
+
                 $task->labels()->syncWithoutDetaching($labelIds);
             }
+
+            // Create activity log
+            if ($task->wasRecentlyCreated) {
+                TaskActivity::create([
+                    'task_id' => $task->id,
+                    'user_id' => $creator->id,
+                    'type' => 'created',
+                    'new_value' => $task->title,
+                ]);
+            }
         }
+    }
+
+    /**
+     * @return array<string, TaskLabel>
+     */
+    private function createLabels(int $workspaceId): array
+    {
+        $labelData = [
+            ['name' => 'Bug', 'color' => '#ef4444'],
+            ['name' => 'Fitur Baru', 'color' => '#3b82f6'],
+            ['name' => 'Peningkatan', 'color' => '#10b981'],
+            ['name' => 'Desain', 'color' => '#8b5cf6'],
+            ['name' => 'Dokumentasi', 'color' => '#f59e0b'],
+            ['name' => 'Mendesak', 'color' => '#dc2626'],
+            ['name' => 'Legal', 'color' => '#0ea5e9'],
+            ['name' => 'Keuangan', 'color' => '#14b8a6'],
+        ];
+
+        $labels = [];
+        foreach ($labelData as $ld) {
+            $labels[$ld['name']] = TaskLabel::firstOrCreate(
+                ['workspace_id' => $workspaceId, 'name' => $ld['name']],
+                ['color' => $ld['color']]
+            );
+        }
+
+        return $labels;
     }
 }

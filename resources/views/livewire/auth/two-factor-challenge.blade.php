@@ -1,69 +1,92 @@
-<x-layouts::auth :title="__('Autentikasi Dua Faktor')">
-  <div class="flex flex-col gap-6">
-    <div class="relative w-full h-auto" x-cloak x-data="{
-        showRecoveryInput: @js($errors->has('recovery_code')),
-        code: '',
-        recovery_code: '',
-        toggleInput() {
-            this.showRecoveryInput = !this.showRecoveryInput;
-    
-            this.code = '';
-            this.recovery_code = '';
-    
-            $dispatch('clear-2fa-auth-code');
-    
-            $nextTick(() => {
-                this.showRecoveryInput ?
-                    this.$refs.recovery_code?.focus() :
-                    $dispatch('focus-2fa-auth-code');
-            });
-        },
-    }">
-      <div x-show="!showRecoveryInput">
-        <x-auth-header :title="__('Kode Autentikasi')" :description="__('Masukkan kode autentikasi yang diberikan oleh aplikasi autentikator Anda.')" />
+<x-layouts::auth.split :title="__('Autentikasi Dua Faktor')">
+
+  <div class="space-y-7" x-cloak x-data="{
+    showRecovery: @js($errors->has('recovery_code')),
+    code: '',
+    recovery_code: '',
+    toggle() {
+      this.showRecovery = !this.showRecovery;
+      this.code = '';
+      this.recovery_code = '';
+      $dispatch('clear-2fa-auth-code');
+      $nextTick(() => {
+        this.showRecovery
+          ? this.$refs.recovery_code?.focus()
+          : $dispatch('focus-2fa-auth-code');
+      });
+    },
+  }">
+
+    {{-- Icon + header --}}
+    <div class="space-y-4">
+      <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/30">
+        <svg class="h-7 w-7 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
       </div>
-
-      <div x-show="showRecoveryInput">
-        <x-auth-header :title="__('Kode Pemulihan')" :description="__('Masukkan salah satu emergency code Anda.')" />
+      <div>
+        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white" x-show="!showRecovery">Kode Autentikasi</h2>
+        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white" x-show="showRecovery" x-cloak>Kode Pemulihan</h2>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400" x-show="!showRecovery">
+          Masukkan kode 6 digit dari aplikasi autentikator Anda.
+        </p>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400" x-show="showRecovery" x-cloak>
+          Masukkan salah satu kode pemulihan darurat Anda.
+        </p>
       </div>
-
-      <form method="POST" action="{{ route('two-factor.login.store') }}">
-        @csrf
-
-        <div class="space-y-5 text-center">
-          <div x-show="!showRecoveryInput">
-            <div class="flex items-center justify-center my-5">
-              <flux:otp x-model="code" length="6" name="code" label="OTP Code" label:sr-only class="mx-auto" />
-            </div>
-          </div>
-
-          <div x-show="showRecoveryInput">
-            <div class="my-5">
-              <flux:input type="text" name="recovery_code" x-ref="recovery_code" x-bind:required="showRecoveryInput"
-                autocomplete="one-time-code" x-model="recovery_code" />
-            </div>
-
-            @error('recovery_code')
-              <flux:text color="red">
-                {{ $message }}
-              </flux:text>
-            @enderror
-          </div>
-
-          <flux:button variant="primary" type="submit" class="w-full">
-            {{ __('Lanjutkan') }}
-          </flux:button>
-        </div>
-
-        <div class="mt-5 space-x-0.5 text-sm leading-5 text-center">
-          <span class="opacity-50">{{ __('atau Anda dapat') }}</span>
-          <div class="inline font-medium underline cursor-pointer opacity-80">
-            <span x-show="!showRecoveryInput" @click="toggleInput()">{{ __('masuk menggunakan kode pemulihan') }}</span>
-            <span x-show="showRecoveryInput"
-              @click="toggleInput()">{{ __('masuk menggunakan kode autentikasi') }}</span>
-          </div>
-        </div>
-      </form>
     </div>
+
+    {{-- Form --}}
+    <form method="POST" action="{{ route('two-factor.login.store') }}" class="space-y-6">
+      @csrf
+
+      {{-- OTP input --}}
+      <div x-show="!showRecovery" class="flex justify-center">
+        <flux:otp x-model="code" length="6" name="code" label="OTP Code" label:sr-only />
+      </div>
+
+      {{-- Recovery code input --}}
+      <div x-show="showRecovery" x-cloak class="space-y-1.5">
+        <label for="recovery_code" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Kode Pemulihan
+        </label>
+        <input
+          id="recovery_code"
+          type="text"
+          name="recovery_code"
+          x-ref="recovery_code"
+          :required="showRecovery"
+          autocomplete="one-time-code"
+          x-model="recovery_code"
+          placeholder="xxxx-xxxx"
+          class="block w-full rounded-xl border px-4 py-3 text-sm shadow-sm outline-none transition hover:border-zinc-300 dark:hover:border-zinc-600 focus:ring-2
+            {{ $errors->has('recovery_code') ? 'border-red-400 bg-red-50 text-zinc-900 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500/60 dark:bg-red-900/20 dark:text-zinc-100' : 'border-zinc-200 bg-white text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500' }}"
+        />
+        @error('recovery_code')
+          <p class="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+            <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" clip-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" /></svg>
+            {{ $message }}
+          </p>
+        @enderror
+      </div>
+
+      <button type="submit"
+        class="flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 active:scale-[0.98]">
+        Lanjutkan
+      </button>
+    </form>
+
+    {{-- Toggle --}}
+    <p class="text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <span x-show="!showRecovery">Tidak bisa akses autentikator?</span>
+      <span x-show="showRecovery" x-cloak>Sudah punya autentikator?</span>
+      <button type="button" @click="toggle()"
+        class="ml-1 font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 underline underline-offset-2">
+        <span x-show="!showRecovery">Gunakan kode pemulihan</span>
+        <span x-show="showRecovery" x-cloak>Gunakan kode autentikator</span>
+      </button>
+    </p>
+
   </div>
-</x-layouts::auth>
+
+</x-layouts::auth.split>

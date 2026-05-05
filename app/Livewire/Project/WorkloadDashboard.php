@@ -30,7 +30,8 @@ class WorkloadDashboard extends Component
         $listeners = [];
 
         if ($this->workspaceId) {
-            $listeners["echo:workspace.{$this->workspaceId},TaskUpdatedGlobal"] = 'onBroadcastUpdate';
+            $listeners["echo:workspace.{$this->workspaceId},TaskListUpdated"] = 'onBroadcastUpdate';
+            $listeners["echo:workspace.{$this->workspaceId},TaskUpdated"] = 'onBroadcastUpdate';
             $listeners["echo:workspace.{$this->workspaceId},SpaceUpdated"] = 'onBroadcastUpdate';
         }
 

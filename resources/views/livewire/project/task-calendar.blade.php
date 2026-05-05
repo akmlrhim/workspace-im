@@ -1,25 +1,25 @@
 <div>
   <div class="mb-6">
     @include('livewire.project.partials.breadcrumb')
-
     <div class="flex items-center justify-between">
-      <h1 class="hidden lg:block text-2xl font-bold text-zinc-900 dark:text-white">{{ $taskList->name }}</h1>
+      <h1 class="hidden text-2xl font-bold text-zinc-900 dark:text-white lg:block">{{ $taskList->name }}</h1>
       <div class="flex items-center gap-2">
         @include('livewire.project.partials.view-toggle', ['active' => 'calendar'])
       </div>
     </div>
   </div>
+
   <div class="mb-4 flex items-center justify-between">
     <div class="flex items-center gap-2">
       <flux:button icon="chevron-left" size="sm" variant="ghost" wire:click="previousMonth" />
       <flux:button size="sm" variant="ghost" wire:click="goToToday">Hari Ini</flux:button>
       <flux:button icon="chevron-right" size="sm" variant="ghost" wire:click="nextMonth" />
     </div>
-    <h2 class="text-sm sm:text-lg font-semibold text-zinc-900 dark:text-white">{{ $monthLabel }}</h2>
+    <h2 class="text-sm font-semibold text-zinc-900 dark:text-white sm:text-lg">{{ $monthLabel }}</h2>
   </div>
 
   {{-- Desktop: Grid calendar --}}
-  <div class="hidden sm:block overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+  <div class="hidden overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 sm:block">
     <div class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60">
       @foreach (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $dayName)
         <div
@@ -29,28 +29,46 @@
         </div>
       @endforeach
     </div>
+
     @foreach ($weeks as $week)
       <div class="grid grid-cols-7 border-b border-zinc-100 last:border-b-0 dark:border-zinc-800">
         @foreach ($week as $day)
+          @php $dateStr = $day['date']->format('Y-m-d'); @endphp
           <div
-            class="min-h-[120px] border-r border-zinc-100 p-1.5 last:border-r-0 dark:border-zinc-800 transition-colors
-            {{ !$day['isCurrentMonth'] ? 'bg-zinc-50/50 dark:bg-zinc-900/30' : 'bg-white dark:bg-zinc-900' }}
+            class="group/cell min-h-[130px] border-r border-zinc-100 p-1.5 last:border-r-0 dark:border-zinc-800
+            {{ ! $day['isCurrentMonth'] ? 'bg-zinc-50/50 dark:bg-zinc-900/30' : 'bg-white dark:bg-zinc-900' }}
             {{ $day['date']->isWeekend() ? 'bg-zinc-50 dark:bg-zinc-800/20' : '' }}
             {{ $day['isToday'] ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : '' }}"
-            wire:key="cal-{{ $day['date']->format('Y-m-d') }}">
+            wire:key="cal-{{ $dateStr }}">
+
+            {{-- Cell header: date number + add button --}}
             <div class="mb-1 flex items-center justify-between">
               <span
                 class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium
                 {{ $day['isToday'] ? 'bg-indigo-600 text-white' : '' }}
-                {{ !$day['isCurrentMonth'] ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-700 dark:text-zinc-300' }}">
+                {{ ! $day['isCurrentMonth'] ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-700 dark:text-zinc-300' }}">
                 {{ $day['date']->day }}
               </span>
+
+              @if ($day['isCurrentMonth'])
+                <button
+                  @click="$flux.modal('cal-create-task').show(); $wire.openCreateTask('{{ $dateStr }}')"
+                  class="flex h-5 w-5 items-center justify-center rounded-md text-zinc-300 opacity-0 transition hover:bg-indigo-100 hover:text-indigo-600 group-hover/cell:opacity-100 dark:text-zinc-600 dark:hover:bg-indigo-900/40 dark:hover:text-indigo-400"
+                  title="Tambah tugas pada {{ $day['date']->isoFormat('D MMM') }}">
+                  <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              @endif
             </div>
+
+            {{-- Tasks --}}
             <div class="space-y-0.5">
               @foreach ($day['tasks']->take(3) as $task)
-                <div class="group relative flex w-full">
-                  <button wire:click="openTaskDetail({{ $task->id }})"
-                    class="flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] font-medium transition-all group-hover:opacity-80 pr-10"
+                <div class="group/task flex w-full">
+                  <button
+                    @click="$flux.modal('task-detail-calendar').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
+                    class="flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] font-medium transition-all hover:opacity-90"
                     style="background-color: {{ $task->status->color ?? '#6366f1' }}15; color: {{ $task->status->color ?? '#6366f1' }};"
                     title="{{ $task->title }}">
                     <div class="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -62,7 +80,7 @@
 
               @if ($day['tasks']->count() > 3)
                 <span class="block px-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
-                  +{{ $day['tasks']->count() - 3 }} more
+                  +{{ $day['tasks']->count() - 3 }} lagi
                 </span>
               @endif
             </div>
@@ -73,16 +91,19 @@
   </div>
 
   {{-- Mobile: List-style calendar --}}
-  <div class="sm:hidden space-y-1">
+  <div class="space-y-1 sm:hidden">
     @foreach ($weeks as $week)
       @foreach ($week as $day)
         @if ($day['isCurrentMonth'])
-          @php $hasTasks = $day['tasks']->isNotEmpty(); @endphp
+          @php
+            $hasTasks = $day['tasks']->isNotEmpty();
+            $dateStr = $day['date']->format('Y-m-d');
+          @endphp
           <div
-            class="rounded-lg border px-3 py-2 transition-colors
-            {{ $day['isToday'] ? 'border-indigo-300 bg-indigo-50/50 dark:border-indigo-700 dark:bg-indigo-900/10' : 'border-zinc-100 dark:border-zinc-800' }}
-            {{ !$hasTasks ? 'opacity-60' : '' }}"
-            wire:key="cal-m-{{ $day['date']->format('Y-m-d') }}">
+            class="rounded-xl border px-3 py-2.5 transition-colors
+            {{ $day['isToday'] ? 'border-indigo-300 bg-indigo-50/50 dark:border-indigo-700 dark:bg-indigo-900/10' : 'border-zinc-100 dark:border-zinc-800' }}"
+            wire:key="cal-m-{{ $dateStr }}">
+
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span
@@ -94,22 +115,35 @@
                   {{ $day['date']->format('D') }}
                 </span>
               </div>
-              @if ($hasTasks)
-                <span class="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-                  {{ $day['tasks']->count() }}
-                </span>
-              @endif
+              <div class="flex items-center gap-2">
+                @if ($hasTasks)
+                  <span class="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                    {{ $day['tasks']->count() }}
+                  </span>
+                @endif
+                <button
+                  @click="$flux.modal('cal-create-task').show(); $wire.openCreateTask('{{ $dateStr }}')"
+                  class="flex h-6 w-6 items-center justify-center rounded-md text-zinc-400 transition hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400">
+                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              </div>
             </div>
+
             @if ($hasTasks)
               <div class="mt-2 space-y-1 pl-9">
                 @foreach ($day['tasks'] as $task)
-                  <button wire:click="openTaskDetail({{ $task->id }})"
-                    class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                    style="color: {{ $task->status->color ?? '#6366f1' }};">
-                    <div class="h-2 w-2 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}"></div>
-                    <span class="truncate">{{ $task->title }}</span>
+                  <button
+                    @click="$flux.modal('task-detail-calendar').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
+                    class="flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-1.5 text-left text-xs font-medium transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                    style="border-left-color: {{ $task->status->color ?? '#6366f1' }}; color: {{ $task->status->color ?? '#6366f1' }};">
+                    <div class="h-2 w-2 shrink-0 rounded-full"
+                      style="background-color: {{ $task->priority_color }}"></div>
+                    <span class="flex-1 truncate text-zinc-900 dark:text-zinc-100">{{ $task->title }}</span>
                     @if ($task->assignee)
-                      <flux:avatar circle :name="$task->assignee->name" :initials="$task->assignee->initials()" :src="$task->assignee->avatar" size="xs" class="ml-auto shrink-0" />
+                      <flux:avatar circle :name="$task->assignee->name" :initials="$task->assignee->initials()"
+                        :src="$task->assignee->avatar" size="xs" class="ml-auto shrink-0" />
                     @endif
                   </button>
                 @endforeach
@@ -120,14 +154,57 @@
       @endforeach
     @endforeach
   </div>
+
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')
-  @if ($showTaskDetail && $selectedTaskId)
-    <flux:modal wire:model="showTaskDetail"
-      class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-      <div class="max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:h-[calc(100dvh-4rem)]">
-        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'cal-detail-' . $selectedTaskId" />
+
+  {{-- Quick Create Task Modal --}}
+  <flux:modal name="cal-create-task" wire:model="showCreateTask" class="w-full max-w-sm">
+    <div class="space-y-5">
+      <div>
+        <flux:heading size="lg">Tambah Tugas</flux:heading>
+        @if ($createTaskDate)
+          <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Tenggat:
+            <span class="font-medium text-indigo-600 dark:text-indigo-400">
+              {{ \Carbon\Carbon::parse($createTaskDate)->isoFormat('dddd, D MMMM Y') }}
+            </span>
+          </p>
+        @endif
       </div>
-    </flux:modal>
-  @endif
+
+      <form wire:submit="storeTask" class="space-y-4">
+        <flux:field>
+          <flux:label>Nama Tugas</flux:label>
+          <flux:input wire:model="newTaskTitle" placeholder="Apa yang perlu dikerjakan?" autofocus />
+          <flux:error name="newTaskTitle" />
+        </flux:field>
+
+        <div class="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+          <flux:button variant="ghost" class="w-full sm:w-auto"
+            @click="$flux.modal('cal-create-task').close()">
+            Batal
+          </flux:button>
+          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">
+            Tambah Tugas
+          </flux:button>
+        </div>
+      </form>
+    </div>
+  </flux:modal>
+
+  {{-- Task Detail Modal --}}
+  <flux:modal name="task-detail-calendar" wire:model="showTaskDetail" :closable="false" @close="$wire.closeTaskDetail()"
+    @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('task-detail-calendar').close()"
+    class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+    <div class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
+      <div wire:loading wire:target="openTaskDetail"
+        class="absolute inset-0 z-50 bg-white px-1 dark:bg-zinc-900">
+        @include('livewire.project.partials.task-detail-skeleton')
+      </div>
+      @if ($selectedTaskId)
+        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'cal-detail-' . $selectedTaskId" />
+      @endif
+    </div>
+  </flux:modal>
 </div>

@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Socialite\Contracts\User as ContractsUser;
 use Laravel\Socialite\Facades\Socialite;
 
 class GoogleAuthController extends Controller
@@ -65,7 +68,7 @@ class GoogleAuthController extends Controller
     /**
      * Handle authenticated user linking a Google account to their profile.
      */
-    private function handleLinking(int $linkingUserId, \Laravel\Socialite\Contracts\User $googleUser)
+    private function handleLinking(int $linkingUserId, ContractsUser $googleUser)
     {
         if (! auth()->check() || (int) auth()->id() !== $linkingUserId) {
             Log::warning('Google link rejected: session user mismatch', [
@@ -92,7 +95,7 @@ class GoogleAuthController extends Controller
 
         $user->update([
             'google_id' => $googleUser->getId(),
-            'avatar' => $googleUser->getAvatar(),
+            'avatar' => $this->storeGoogleAvatar($googleUser),
         ]);
 
         return redirect()->route('profile.edit')->with('status', 'google-linked');
@@ -101,7 +104,7 @@ class GoogleAuthController extends Controller
     /**
      * Handle login / registration via Google.
      */
-    private function handleLogin(\Laravel\Socialite\Contracts\User $googleUser)
+    private function handleLogin(ContractsUser $googleUser)
     {
         $user = User::where('google_id', $googleUser->getId())->first();
 
@@ -122,11 +125,13 @@ class GoogleAuthController extends Controller
                 'name' => $googleUser->getName() ?? 'Google User',
                 'email' => $googleUser->getEmail(),
                 'google_id' => $googleUser->getId(),
-                'avatar' => $googleUser->getAvatar(),
+                'avatar' => $this->storeGoogleAvatar($googleUser),
                 'role' => 'guest',
                 'position' => null,
                 'email_verified_at' => now(),
             ]);
+        } elseif (! $user->avatar || str_contains((string) $user->avatar, 'googleusercontent.com')) {
+            $user->update(['avatar' => $this->storeGoogleAvatar($googleUser)]);
         }
 
         if (is_null($user->email_verified_at)) {
@@ -142,9 +147,45 @@ class GoogleAuthController extends Controller
     }
 
     /**
+     * Download the Google profile photo and store it locally.
+     * Returns the local public URL, or null on failure.
+     */
+    private function storeGoogleAvatar(ContractsUser $googleUser): ?string
+    {
+        $url = $googleUser->getAvatar();
+
+        if (! $url) {
+            return null;
+        }
+
+        // Request a larger photo (400px instead of the default 96px)
+        $url = preg_replace('/=s\d+-c$/', '=s400-c', $url);
+
+        try {
+            $response = Http::timeout(10)->get($url);
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $filename = 'avatars/google_'.$googleUser->getId().'.jpg';
+            Storage::disk('public')->put($filename, $response->body());
+
+            return Storage::disk('public')->url($filename);
+        } catch (\Exception $e) {
+            Log::warning('Failed to download Google avatar', [
+                'google_id' => $googleUser->getId(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Confirm Google asserts the email is verified.
      */
-    private function isVerifiedGoogleEmail(\Laravel\Socialite\Contracts\User $googleUser): bool
+    private function isVerifiedGoogleEmail(ContractsUser $googleUser): bool
     {
         $raw = $googleUser->getRaw();
 

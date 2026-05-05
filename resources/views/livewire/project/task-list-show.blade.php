@@ -219,7 +219,7 @@
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')
 
-  @if ($showTaskDetail && $selectedTaskId)
+  @if ($selectedTaskId)
     <flux:modal wire:model="showTaskDetail"
       class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
       <div class="max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:h-[calc(100dvh-4rem)]">

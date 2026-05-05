@@ -13,7 +13,6 @@ return [
                 ['name' => 'Dashboard', 'icon' => 'squares-2x2', 'url' => '/dashboard?module=project', 'active' => 'dashboard', 'badge' => null],
                 ['name' => 'Workload', 'icon' => 'chart-bar-square', 'url' => '/project-management/workload', 'active' => 'project-management/workload*', 'badge' => null],
                 ['name' => 'General', 'icon' => 'star', 'url' => '/project-management/general-taskboard', 'active' => 'project-management/general-taskboard*', 'badge' => null],
-                ['name' => 'Spaces', 'icon' => 'rectangle-stack', 'url' => '/project-management/spaces', 'active' => 'project-management/spaces*', 'badge' => null],
                 ['name' => 'My Tasks', 'icon' => 'clipboard-document-check', 'url' => '/project-management/my-tasks', 'active' => 'project-management/my-tasks*', 'badge' => null],
             ],
         ],

@@ -54,9 +54,6 @@
           </div>
 
           @if ($currentModuleKey === 'project' && auth()->check())
-            <div class="mt-2 px-3 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              Workspace
-            </div>
             <livewire:project.sidebar-spaces />
           @endif
 
@@ -82,7 +79,6 @@
         @foreach ($modules as $key => $module)
           @php
             $allowedPositions = $module['allowed_positions'] ?? [];
-            // Logika disederhanakan agar lebih mudah dibaca
             $hasModuleAccess =
                 auth()->check() &&
                 (empty($allowedPositions) ||

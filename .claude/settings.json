@@ -12,7 +12,10 @@
       "Bash(php -l app/Models/Project/TaskAttachment.php)",
       "Bash(php -l database/migrations/2026_04_23_021748_add_is_link_to_task_attachments.php)",
       "Bash(xargs basename *)",
-      "Bash(php -l resources/views/livewire/project/task-detail.blade.php)"
+      "Bash(php -l resources/views/livewire/project/task-detail.blade.php)",
+      "Bash(grep -o 'modal-show\\\\|modal-close\\\\|modalShow\\\\|Flux\\\\.modal\\\\|fluxModal\\\\|$flux\\\\.' e:/laragon/www/erp_im/vendor/livewire/flux/dist/flux.min.js)",
+      "Bash(grep -o \"modal-show[^\\\\\"]*\\\\|handleShow[^{]*\\\\|\\\\\"name\\\\\"[^,]*modal\" e:/laragon/www/erp_im/vendor/livewire/flux/dist/flux.min.js)",
+      "Bash(del \"e:\\\\laragon\\\\www\\\\erp_im\\\\app\\\\Events\\\\TaskUpdatedGlobal.php\")"
     ]
   }
 }

@@ -3,7 +3,6 @@
 namespace App\Livewire\Project;
 
 use App\Events\TaskListUpdated;
-use App\Events\TaskUpdatedGlobal;
 use App\Models\Project\Space;
 use App\Models\Project\Task;
 use App\Models\Project\TaskActivity;
@@ -68,8 +67,10 @@ class TaskBoard extends Component
     {
         return [
             "echo:task-list.{$this->taskList->id},TaskListUpdated" => 'onBroadcastUpdate',
+            "echo:task-list.{$this->taskList->id},TaskUpdated" => 'onBroadcastUpdate',
             'task-updated' => 'onTaskUpdated',
             'close-task-detail' => 'closeTaskDetail',
+            'task-deleted' => 'onTaskDeleted',
         ];
     }
 
@@ -86,8 +87,11 @@ class TaskBoard extends Component
 
     private function broadcastChange(): void
     {
-        TaskListUpdated::dispatch($this->taskList->id, auth()->id());
-        TaskUpdatedGlobal::dispatch($this->taskList->space->workspace_id, auth()->id());
+        TaskListUpdated::dispatch(
+            $this->taskList->id,
+            auth()->id(),
+            $this->taskList->space->workspace_id,
+        );
     }
 
     private function canManageBoard(): bool
@@ -304,7 +308,10 @@ class TaskBoard extends Component
 
     public function moveTask(int $taskId, int $newStatusId, array $orderedIds): void
     {
-        $task = Task::with(['assignees', 'status', 'taskList.space.workspace'])->findOrFail($taskId);
+        // Load assignees + status only; set taskList from the already-bound component property
+        // to avoid re-fetching taskList.space.workspace just for canBeManagedBy()
+        $task = Task::with(['assignees', 'status'])->findOrFail($taskId);
+        $task->setRelation('taskList', $this->taskList);
 
         if (! $task->canBeManagedBy(auth()->user())) {
             Flux::toast('Anda tidak memiliki izin untuk mengubah tugas ini.', variant: 'danger');
@@ -363,12 +370,12 @@ class TaskBoard extends Component
             $this->dispatch('task-status-updated-from-board', taskId: $task->id, statusId: $newStatusId);
         }
 
-        // Invalidate computed cache so next render reads fresh DB state
-        unset($this->statuses);
         $this->broadcastChange();
-        // Skip the morph for this request — the SortableJS DOM is already in the right place.
-        // Subsequent renders (filter change, broadcast from another user, etc.) will pull
-        // fresh data from the DB via the invalidated computed property above.
+
+        // SortableJS already moved the card to the correct position in the DOM.
+        // Re-rendering would cause a brief rollback when multiple drags happen quickly
+        // because Livewire's morph would overwrite Sortable's visual state mid-drag.
+        // Other users receive the update via broadcast and re-render on their side.
         $this->skipRender();
     }
 
@@ -415,10 +422,17 @@ class TaskBoard extends Component
         $this->broadcastChange();
     }
 
+    public function onTaskDeleted(int $taskId): void
+    {
+        if ($this->selectedTaskId === $taskId) {
+            $this->selectedTaskId = null;
+        }
+        $this->showTaskDetail = false;
+    }
+
     public function closeTaskDetail(): void
     {
         $this->showTaskDetail = false;
-        $this->selectedTaskId = null;
     }
 
     #[Computed]
@@ -434,8 +448,13 @@ class TaskBoard extends Component
         $statuses = $this->taskList->statuses()
             ->with(['tasks' => function ($q) use ($filterAssigneeId, $filterPriority, $filterLabelId) {
                 $q->whereNull('parent_id')
-                    ->with(['assignees', 'labels', 'subtasks'])
-                    ->withCount(['comments', 'attachments'])
+                    ->with(['assignees', 'labels'])
+                    ->withCount([
+                        'comments',
+                        'attachments',
+                        'subtasks',
+                        'subtasks as completed_subtasks_count' => fn ($q2) => $q2->where('is_completed', true),
+                    ])
                     ->orderBy('position');
 
                 if ($filterAssigneeId) {

@@ -4,6 +4,7 @@ namespace App\Models\Project;
 
 use App\Models\Concerns\GeneratesUuid;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -138,5 +139,11 @@ class Task extends Model
         }
 
         return false;
+    }
+
+    /** Exclude tasks whose status name is "note" (case-insensitive). */
+    public function scopeExcludeNotes(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('status', fn ($q) => $q->whereRaw('LOWER(name) = ?', ['note']));
     }
 }

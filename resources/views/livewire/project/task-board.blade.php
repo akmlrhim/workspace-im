@@ -74,15 +74,32 @@
     @pointerup="stopDrag" @pointercancel="stopDrag" @pointermove="doDrag">
     @foreach ($this->statuses as $status)
       @php
-        $overdueCount = $status->tasks
-            ->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->due_date->isToday())
-            ->count();
+        $overdueCount =
+            $status->type === 'closed'
+                ? 0
+                : $status->tasks
+                    ->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->due_date->isToday())
+                    ->count();
       @endphp
       <div wire:key="status-{{ $status->id }}"
-        class="kanban-col-wrapper flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-t-4 {{ $canManage ? 'cursor-grab' : '' }}"
+        class="kanban-col-wrapper group/col flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-t-4"
         style="border-top-color: {{ $status->color }}" data-column-id="{{ $status->id }}">
         <div class="flex items-center justify-between px-3 py-3">
-          <div class="flex items-center gap-2 min-w-0 flex-1">
+          <div class="flex items-center gap-1.5 min-w-0 flex-1">
+            {{-- Grip handle for column drag (visible on hover when canManage) --}}
+            @if ($canManage)
+              <div
+                class="kanban-col-handle mr-0.5 flex shrink-0 touch-none cursor-grab items-center opacity-0 transition-opacity group-hover/col:opacity-60 hover:!opacity-100 active:cursor-grabbing">
+                <svg class="size-3.5 text-zinc-400" viewBox="0 0 16 16" fill="currentColor">
+                  <circle cx="5.5" cy="3" r="1.3" />
+                  <circle cx="5.5" cy="8" r="1.3" />
+                  <circle cx="5.5" cy="13" r="1.3" />
+                  <circle cx="10.5" cy="3" r="1.3" />
+                  <circle cx="10.5" cy="8" r="1.3" />
+                  <circle cx="10.5" cy="13" r="1.3" />
+                </svg>
+              </div>
+            @endif
             <div class="h-2.5 w-2.5 shrink-0 rounded-full" style="background-color: {{ $status->color }}"></div>
 
             @if ($renamingColumnId === $status->id)
@@ -146,34 +163,45 @@
         </div>
 
         <div class="kanban-column flex min-h-[100px] flex-col gap-2 px-2 pb-2" data-status-id="{{ $status->id }}"
-          wire:key="col-status-{{ $status->id }}">
+          data-status-type="{{ $status->type }}" wire:key="col-status-{{ $status->id }}">
           @foreach ($status->tasks as $task)
             @php
               $dd = $task->due_date;
+              $isClosed = $status->type === 'closed';
               $isToday = $dd?->isToday();
               $isPast = $dd && $dd->isPast() && !$isToday;
               $isTomorrow = $dd?->isTomorrow();
-              $ddClass = $isPast
-                  ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400 font-semibold'
-                  : ($isToday
-                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400 font-semibold'
-                      : ($isTomorrow
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
-                          : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700/60 dark:text-zinc-300'));
-              $ddLabel = $dd
-                  ? ($isToday
-                      ? 'Hari ini'
-                      : ($isTomorrow
-                          ? 'Besok'
-                          : ($isPast
-                              ? (int) ceil($dd->diffInDays(now(), true)) . 'h lewat'
-                              : $dd->isoFormat('D MMM'))))
-                  : null;
+
+              if (!$dd) {
+                  $ddClass = '';
+                  $ddLabel = null;
+                  $ddIcon = 'clock';
+              } elseif ($isClosed) {
+                  $ddClass = 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400';
+                  $ddLabel = $dd->isoFormat('D MMM');
+                  $ddIcon = 'check-circle';
+              } elseif ($isPast) {
+                  $ddClass = 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400 font-semibold';
+                  $ddLabel = (int) ceil($dd->diffInDays(now(), true)) . 'h lewat';
+                  $ddIcon = 'clock';
+              } elseif ($isToday) {
+                  $ddClass = 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400 font-semibold';
+                  $ddLabel = 'Hari ini';
+                  $ddIcon = 'clock';
+              } elseif ($isTomorrow) {
+                  $ddClass = 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400';
+                  $ddLabel = 'Besok';
+                  $ddIcon = 'clock';
+              } else {
+                  $ddClass = 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700/60 dark:text-zinc-300';
+                  $ddLabel = $dd->isoFormat('D MMM');
+                  $ddIcon = 'clock';
+              }
             @endphp
             <div wire:key="task-{{ $task->id }}"
               class="task-card group/card relative cursor-pointer overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-zinc-300 {{ $task->can_drag ? 'active:cursor-grabbing active:shadow-lg active:ring-2 active:ring-indigo-400/30' : 'task-locked' }} dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-zinc-600"
               data-task-id="{{ $task->id }}" data-can-drag="{{ $task->can_drag ? '1' : '0' }}"
-              @click="if (!_isDraggingTask && !$event.target.closest('[data-no-drag]')) $wire.openTaskDetail({{ $task->id }})">
+              @click="if (!_isDraggingTask && !$event.target.closest('[data-no-drag]')) { $flux.modal('task-detail-board').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); } }">
 
               <div class="absolute inset-y-0 left-0 w-1" style="background-color: {{ $task->priority_color }}"
                 title="Prioritas: {{ ucfirst($task->priority) }}"></div>
@@ -200,10 +228,10 @@
                       </span>
                     @endif
 
-                    @if ($task->subtasks->isNotEmpty())
+                    @if ($task->subtasks_count > 0)
                       <span class="flex items-center gap-0.5 text-[10px]" title="Subtask">
                         <flux:icon name="bars-3-bottom-left" class="size-3.5" />
-                        {{ $task->subtasks->where('is_completed', true)->count() }}/{{ $task->subtasks->count() }}
+                        {{ $task->completed_subtasks_count }}/{{ $task->subtasks_count }}
                       </span>
                     @endif
 
@@ -222,10 +250,10 @@
                     @endif
 
                     @if ($dd)
-                      <span
+                      <span data-due-badge data-open-class="{{ $ddClass }}"
                         class="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] {{ $ddClass }}"
                         title="Tenggat {{ $dd->format('d M Y') }}">
-                        <flux:icon name="clock" class="size-3" />
+                        <flux:icon name="{{ $ddIcon }}" class="size-3" />
                         {{ $ddLabel }}
                       </span>
                     @endif
@@ -313,14 +341,20 @@
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')
 
-  @if ($showTaskDetail && $selectedTaskId)
-    <flux:modal wire:model="showTaskDetail"
-      class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-      <div class="max-h-[85vh] overflow-y-auto px-1 -mx-1 max-sm:max-h-none max-sm:h-[calc(100dvh-4rem)]">
-        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'board-detail-' . $selectedTaskId" />
+  <flux:modal name="task-detail-board" wire:model="showTaskDetail" :closable="false"
+    @close="$wire.closeTaskDetail()"
+    @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('task-detail-board').close()"
+    class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+    <div
+      class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto px-1 -mx-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
+      <div wire:loading wire:target="openTaskDetail" class="absolute inset-0 z-50 bg-white px-1 dark:bg-zinc-900">
+        @include('livewire.project.partials.task-detail-skeleton')
       </div>
-    </flux:modal>
-  @endif
+      @if ($selectedTaskId)
+        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'board-detail-' . $selectedTaskId" />
+      @endif
+    </div>
+  </flux:modal>
 
   <flux:modal wire:model="showDeleteColumnConfirm" class="w-full max-w-sm">
     <div class="space-y-4 text-center">
@@ -343,27 +377,51 @@
 @script
   <script>
     Alpine.data('kanbanBoard', (canManage = true) => ({
-      _sortableInstances: [],
+      // Keyed by column DOM element → SortableInstance
+      _taskSortables: new Map(),
       _columnSortable: null,
       _hookCleanup: null,
+      _taskDebounce: null,
+      _colDebounce: null,
       _dragFrame: null,
-      _initDebounce: null,
       _isDraggingTask: false,
       _canManage: canManage,
+      // Columns that need reinit after current drag ends (queued from broadcasts)
+      _pendingReinit: [],
 
+      // Board pan-scroll state
       isDown: false,
       startX: 0,
       scrollLeft: 0,
 
+      // ─── Lifecycle ─────────────────────────────────────────
       init() {
         this.$nextTick(() => this._initAll());
 
+        // Smart reinit: only affect the column(s) that Livewire morphed.
+        // Skip reinit if a drag is active — would destroy Sortable mid-drag
+        // and cause the card to snap back. Queue it for after drag ends instead.
         this._hookCleanup = Livewire.hook('morph.updated', ({
           el
         }) => {
-          if (el?.classList?.contains('kanban-column') || el?.classList?.contains('kanban-col-wrapper')) {
-            clearTimeout(this._initDebounce);
-            this._initDebounce = setTimeout(() => this.$nextTick(() => this._initAll()), 50);
+          if (el?.classList?.contains('kanban-column')) {
+            clearTimeout(this._taskDebounce);
+            this._taskDebounce = setTimeout(() => {
+              if (this._isDraggingTask) {
+                this._pendingReinit.push(el);
+                return;
+              }
+              this.$nextTick(() => this._reinitTaskSortable(el));
+            }, 30);
+          } else if (el?.classList?.contains('kanban-col-wrapper')) {
+            clearTimeout(this._colDebounce);
+            this._colDebounce = setTimeout(() => {
+              this.$nextTick(() => {
+                this._columnSortable?.destroy();
+                this._columnSortable = null;
+                this._initColumnSortable();
+              });
+            }, 30);
           }
         });
 
@@ -373,55 +431,130 @@
       },
 
       destroy() {
-        this._destroyAll();
-        clearTimeout(this._initDebounce);
+        this._taskSortables.forEach(s => s?.destroy());
+        this._taskSortables.clear();
+        this._columnSortable?.destroy();
+        this._columnSortable = null;
+        clearTimeout(this._taskDebounce);
+        clearTimeout(this._colDebounce);
+        if (this._dragFrame) cancelAnimationFrame(this._dragFrame);
         if (typeof this._hookCleanup === 'function') this._hookCleanup();
       },
 
-      _destroyAll() {
-        this._sortableInstances.forEach(s => s?.destroy());
-        this._sortableInstances = [];
-        this._columnSortable?.destroy();
-        this._columnSortable = null;
-        document.querySelectorAll('.kanban-column').forEach(col => {
-          col._sortableInstance = null;
-        });
-      },
-
+      // ─── Init ──────────────────────────────────────────────
       _initAll() {
         if (typeof window.Sortable === 'undefined') {
           setTimeout(() => this._initAll(), 50);
           return;
         }
-        this._destroyAll();
-        this._initTaskSortables();
+        this._taskSortables.forEach(s => s?.destroy());
+        this._taskSortables.clear();
+        this._columnSortable?.destroy();
+        this._columnSortable = null;
+
+        this.$el.querySelectorAll('.kanban-column').forEach(col => {
+          this._createTaskSortable(col);
+        });
         this._initColumnSortable();
       },
 
+      // ─── Task sortable ─────────────────────────────────────
+      _createTaskSortable(columnEl) {
+        // Destroy stale instance for this column if any
+        const stale = this._taskSortables.get(columnEl);
+        if (stale) {
+          stale.destroy();
+          this._taskSortables.delete(columnEl);
+        }
+
+        const instance = new window.Sortable(columnEl, {
+          group: 'kanban-tasks',
+          animation: 150,
+          easing: 'cubic-bezier(0.2, 0, 0, 1)',
+          ghostClass: 'kanban-ghost',
+          chosenClass: 'kanban-chosen',
+          dragClass: 'kanban-drag',
+          draggable: '.task-card',
+          filter: '.task-locked',
+          preventOnFilter: true,
+          scroll: true,
+          scrollSensitivity: 60,
+          scrollSpeed: 10,
+          bubbleScroll: true,
+          swapThreshold: 0.65,
+          delay: 150,
+          delayOnTouchOnly: true,
+          touchStartThreshold: 3,
+          forceFallback: false,
+
+          onChoose: (evt) => {
+            evt.item.style.willChange = 'transform, box-shadow';
+          },
+          onStart: (evt) => {
+            document.body.classList.add('is-dragging');
+            this._isDraggingTask = true;
+          },
+          onEnd: (evt) => {
+            document.body.classList.remove('is-dragging');
+            evt.item.style.willChange = '';
+
+            const taskId = parseInt(evt.item.dataset.taskId);
+            const newStatusId = parseInt(evt.to.dataset.statusId);
+            const destType = evt.to.dataset.statusType ?? '';
+            const orderedIds = Array.from(evt.to.querySelectorAll('.task-card'))
+              .map(el => parseInt(el.dataset.taskId));
+
+            this._updateColumnCounts(evt.from, evt.to);
+            this._updateDueBadge(evt.item, destType);
+            this.$wire.moveTask(taskId, newStatusId, orderedIds);
+
+            setTimeout(() => {
+              this._isDraggingTask = false;
+              if (this._pendingReinit.length) {
+                const pending = this._pendingReinit.splice(0);
+                this.$nextTick(() => pending.forEach(el => this._reinitTaskSortable(el)));
+              }
+            }, 150);
+          },
+        });
+
+        this._taskSortables.set(columnEl, instance);
+        return instance;
+      },
+
+      _reinitTaskSortable(columnEl) {
+        this._createTaskSortable(columnEl);
+      },
+
+      // column sortable 
       _initColumnSortable() {
         if (!this._canManage) return;
         const board = this.$el;
         if (!board) return;
 
         this._columnSortable = new window.Sortable(board, {
-          animation: 200,
-          easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+          animation: 220,
+          easing: 'cubic-bezier(0.2, 0, 0, 1)',
           draggable: '.kanban-col-wrapper',
-          handle: '.kanban-col-wrapper',
+          handle: '.kanban-col-handle',
           ghostClass: 'kanban-col-ghost',
           chosenClass: 'kanban-col-chosen',
           dragClass: 'kanban-col-drag',
           direction: 'horizontal',
-          delay: 250,
-          delayOnTouchOnly: true,
-          touchStartThreshold: 10,
-          filter: 'input, select, textarea, button, a, .task-card',
-          preventOnFilter: false,
+          delay: 80,
+          delayOnTouchOnly: false,
+          touchStartThreshold: 8,
           swapThreshold: 0.5,
-          forceFallback: false,
+          scroll: true,
+          scrollSensitivity: 120,
+          scrollSpeed: 14,
           fallbackOnBody: true,
-          onStart: () => document.body.classList.add('is-dragging-column'),
-          onEnd: (evt) => {
+          forceFallback: false,
+
+          onStart: () => {
+            document.body.classList.add('is-dragging-column');
+          },
+          onEnd: () => {
             document.body.classList.remove('is-dragging-column');
             const ids = Array.from(board.querySelectorAll('.kanban-col-wrapper'))
               .map(el => parseInt(el.dataset.columnId))
@@ -431,70 +564,31 @@
         });
       },
 
-      _initTaskSortables() {
-        document.querySelectorAll('.kanban-column').forEach(column => {
-          const instance = new window.Sortable(column, {
-            group: 'kanban-tasks',
-            animation: 200,
-            easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
-            ghostClass: 'kanban-ghost',
-            chosenClass: 'kanban-chosen',
-            dragClass: 'kanban-drag',
-            draggable: '.task-card',
-            fallbackOnBody: true,
-            swapThreshold: 0.65,
-            delay: 250,
-            delayOnTouchOnly: true,
-            touchStartThreshold: 10,
-            filter: 'button, a, input, select, textarea, .task-locked',
-            preventOnFilter: false,
-            forceFallback: false, // <-- was true, caused ghost card glitch
-            onStart: (evt) => {
-              document.body.classList.add('is-dragging');
-              this._isDraggingTask = true;
-              evt.item.style.transform = 'rotate(2deg)';
-            },
-            onEnd: (evt) => {
-              document.body.classList.remove('is-dragging');
-              evt.item.style.transform = '';
-              const taskId = parseInt(evt.item.dataset.taskId);
-              const newStatusId = parseInt(evt.to.dataset.statusId);
-              const orderedIds = Array.from(evt.to.querySelectorAll('.task-card'))
-                .map(el => parseInt(el.dataset.taskId));
 
-              // Update column count badges immediately (optimistic UI)
-              this._updateColumnCounts(evt.from, evt.to);
+      _updateDueBadge(cardEl, destStatusType) {
+        const badge = cardEl.querySelector('[data-due-badge]');
+        if (!badge) return;
 
-              this.$wire.moveTask(taskId, newStatusId, orderedIds);
-              // Reset after click event has fired to prevent opening detail after drag
-              setTimeout(() => {
-                this._isDraggingTask = false;
-              }, 100);
-            },
-          });
+        const closedClass = 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400';
+        const openClass = badge.dataset.openClass || '';
 
-          column._sortableInstance = instance;
-          this._sortableInstances.push(instance);
-        });
+        const base = 'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] ';
+        badge.setAttribute('class', base + (destStatusType === 'closed' ? closedClass : openClass));
       },
 
       _updateColumnCounts(fromCol, toCol) {
-        // Update the task count badge in column headers after drag
         [fromCol, toCol].forEach(col => {
           if (!col) return;
-          const wrapper = col.closest('.kanban-col-wrapper');
-          if (!wrapper) return;
-          const badge = wrapper.querySelector('[data-task-count]');
-          if (badge) {
-            badge.textContent = col.querySelectorAll('.task-card').length;
-          }
+          const badge = col.closest('.kanban-col-wrapper')?.querySelector('[data-task-count]');
+          if (badge) badge.textContent = col.querySelectorAll('.task-card').length;
         });
       },
 
       startDrag(e) {
-        // Only mouse drag-to-pan — touch uses native momentum scroll.
         if (e.pointerType !== 'mouse' || e.button !== 0) return;
-        if (e.target.closest('.task-card') || e.target.closest('button') || e.target.closest('input')) return;
+        if (document.body.classList.contains('is-dragging-column')) return;
+        if (e.target.closest('.task-card') || e.target.closest('button') ||
+          e.target.closest('input') || e.target.closest('.kanban-col-handle')) return;
         this.isDown = true;
         this.startX = e.pageX - this.$el.offsetLeft;
         this.scrollLeft = this.$el.scrollLeft;
@@ -514,14 +608,12 @@
       doDrag(e) {
         if (!this.isDown) return;
         if (e.pointerType && e.pointerType !== 'mouse') return;
-
-        // Stop custom panning if Sortable is active or no mouse buttons are pressed (stuck drag check)
-        if (e.buttons === 0 || document.body.classList.contains('is-dragging') || document.body.classList.contains(
-            'is-dragging-column')) {
+        if (e.buttons === 0 ||
+          document.body.classList.contains('is-dragging') ||
+          document.body.classList.contains('is-dragging-column')) {
           this.stopDrag();
           return;
         }
-
         e.preventDefault();
         if (this._dragFrame) return;
         this._dragFrame = requestAnimationFrame(() => {
@@ -530,7 +622,6 @@
           this._dragFrame = null;
         });
       },
-
     }));
   </script>
 @endscript

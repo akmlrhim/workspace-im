@@ -15,7 +15,8 @@
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-<meta name="pusher-key" content="{{ config('broadcasting.connections.pusher.key') }}">
+{{-- Pusher WebSocket config — read at runtime by echo.js --}}
+<meta name="pusher-key"     content="{{ config('broadcasting.connections.pusher.key') }}">
 <meta name="pusher-cluster" content="{{ config('broadcasting.connections.pusher.options.cluster') }}">
 
 @fluxAppearance

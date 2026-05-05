@@ -50,17 +50,52 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
-            php artisan down || true
+            APP=/home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
+
+            PHP=$(command -v php8.3 2>/dev/null \
+              || command -v php83 2>/dev/null \
+              || command -v php 2>/dev/null)
+
+            echo "Menggunakan PHP: $PHP ($($PHP -r 'echo PHP_VERSION;'))"
+            cd $APP
+
+            $PHP artisan down || true
+
             git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
-            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
-            php artisan migrate --force
-            php artisan optimize:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan event:cache
-            php artisan view:cache
-            php artisan queue:restart || true
+
+            COMPOSER_MEMORY_LIMIT=-1 composer install \
+              --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+            $PHP artisan migrate --force
+            $PHP artisan optimize:clear
+
+            set_env() {
+              local KEY="$1" VAL="$2"
+              grep -q "^${KEY}=" .env \
+                && sed -i "s|^${KEY}=.*|${KEY}=${VAL}|" .env \
+                || echo "${KEY}=${VAL}" >> .env
+            }
+
+            set_env BROADCAST_CONNECTION pusher
+            set_env PUSHER_APP_ID       "${{ secrets.PUSHER_APP_ID }}"
+            set_env PUSHER_APP_KEY      "${{ secrets.PUSHER_APP_KEY }}"
+            set_env PUSHER_APP_SECRET   "${{ secrets.PUSHER_APP_SECRET }}"
+            set_env PUSHER_APP_CLUSTER  "${{ secrets.PUSHER_APP_CLUSTER }}"
+
+            $PHP artisan config:cache
+            $PHP artisan route:cache
+            $PHP artisan event:cache
+            $PHP artisan view:cache
+            $PHP artisan queue:restart || true
             chmod -R 775 storage bootstrap/cache
-            php artisan up
+
+            CRON_SCHEDULER="* * * * * cd $APP && $PHP artisan schedule:run >> /dev/null 2>&1"
+            (crontab -l 2>/dev/null | grep -qF "artisan schedule:run") \
+              || (crontab -l 2>/dev/null; echo "$CRON_SCHEDULER") | crontab -
+
+            CRON_QUEUE="* * * * * cd $APP && $PHP artisan queue:work --queue=emails,default --stop-when-empty --max-time=55 >> /dev/null 2>&1"
+            (crontab -l 2>/dev/null | grep -qF "queue:work") \
+              || (crontab -l 2>/dev/null; echo "$CRON_QUEUE") | crontab -
+
+            $PHP artisan up
             echo "Deploy sukses: $(date)"

@@ -74,13 +74,23 @@
               </div>
               <div class="space-y-0.5">
                 @foreach ($day['tasks']->take(3) as $task)
-                  <button wire:click="openTaskDetail({{ $task->id }})"
-                    class="flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] font-medium transition-all hover:opacity-80"
-                    style="background-color: {{ $task->status->color ?? '#6366f1' }}15; color: {{ $task->status->color ?? '#6366f1' }};"
+                  <button @click="$flux.modal('task-detail-mytasks').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
+                    class="group/task w-full rounded-md border bg-white/70 px-1.5 py-1 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm dark:bg-zinc-900/70"
+                    style="border-color: {{ $task->taskList->space->color ?? ($task->status->color ?? '#6366f1') }}55; border-left-width: 3px;"
                     title="{{ $task->title }} — {{ $task->taskList->space->name ?? '' }}">
-                    <div class="h-1.5 w-1.5 shrink-0 rounded-full"
-                      style="background-color: {{ $task->priority_color }}"></div>
-                    <span class="truncate">{{ $task->title }}</span>
+                    <span class="mb-0.5 flex min-w-0 items-center gap-1">
+                      <span class="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style="background-color: {{ $task->priority_color }}"></span>
+                      <span class="truncate text-[11px] font-semibold text-zinc-800 dark:text-zinc-100">
+                        {{ $task->title }}
+                      </span>
+                    </span>
+                    <span class="flex min-w-0 items-center gap-1 text-[9px] font-medium">
+                      <span class="max-w-full truncate rounded px-1 py-0.5 text-white"
+                        style="background-color: {{ $task->taskList->space->color ?? '#6366f1' }}">
+                        {{ $task->taskList->name ?? '-' }}
+                      </span>
+                    </span>
                   </button>
                 @endforeach
 
@@ -128,14 +138,16 @@
               @if ($hasTasks)
                 <div class="mt-2 space-y-1 pl-9">
                   @foreach ($day['tasks'] as $task)
-                    <button wire:click="openTaskDetail({{ $task->id }})"
-                      class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                      style="color: {{ $task->status->color ?? '#6366f1' }};">
+                    <button @click="$flux.modal('task-detail-mytasks').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
+                      class="flex w-full items-center gap-2 rounded-md border-l-2 px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      style="border-left-color: {{ $task->taskList->space->color ?? '#6366f1' }}; color: {{ $task->status->color ?? '#6366f1' }};">
                       <div class="h-2 w-2 shrink-0 rounded-full"
                         style="background-color: {{ $task->priority_color }}"></div>
-                      <span class="truncate">{{ $task->title }}</span>
-                      <span class="ml-auto shrink-0 text-[10px] text-zinc-400 dark:text-zinc-500">
-                        {{ $task->taskList->space->name ?? '' }}
+                      <span class="min-w-0 flex-1">
+                        <span class="block truncate">{{ $task->title }}</span>
+                        <span class="block truncate text-[10px] text-zinc-400 dark:text-zinc-500">
+                          {{ $task->taskList->space->name ?? '-' }} / {{ $task->taskList->name ?? '-' }}
+                        </span>
                       </span>
                     </button>
                   @endforeach
@@ -181,6 +193,9 @@
             @php
               $isOverdue = !$isClosedType && $task->due_date && $task->due_date->isPast();
               $isDueToday = !$isClosedType && $task->due_date && $task->due_date->isToday();
+              $daysOverdue = $isOverdue
+                  ? (int) ceil($task->due_date->copy()->startOfDay()->diffInDays(now()->startOfDay(), true))
+                  : null;
             @endphp
 
             <div wire:key="task-{{ $task->id }}"
@@ -197,7 +212,7 @@
                 </div>
 
                 <div class="min-w-0 flex-1">
-                  <button wire:click="openTaskDetail({{ $task->id }})"
+                  <button @click="$flux.modal('task-detail-mytasks').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
                     class="block w-full cursor-pointer truncate text-left text-sm font-semibold transition-colors
                       {{ $isClosedType ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400' }}">
                     {{ $task->title }}
@@ -239,23 +254,20 @@
                 @if ($task->due_date)
                   <div
                     class="hidden shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium sm:flex
-                    @if ($isOverdue) bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400
+                    @if ($isClosedType) bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400
+                    @elseif ($isOverdue) bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400
                     @elseif ($isDueToday) bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400
                     @else bg-zinc-50 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 @endif">
-                    @if ($isOverdue)
+                    @if ($isClosedType)
+                      <flux:icon name="check-circle" class="size-3" />
+                    @elseif ($isOverdue)
                       <flux:icon name="exclamation-circle" class="size-3" />
                     @elseif ($isDueToday)
                       <flux:icon name="clock" class="size-3" />
                     @else
                       <flux:icon name="calendar" class="size-3" />
                     @endif
-                    @if ($isOverdue)
-                      {{ now()->diffInDays($task->due_date) }}h lalu
-                    @elseif ($isDueToday)
-                      Hari ini
-                    @else
-                      {{ $task->due_date->format('d M') }}
-                    @endif
+                    {{ $task->due_date->format('d M') }}
                   </div>
                 @endif
               </div>
@@ -274,12 +286,14 @@
                 @if ($task->due_date)
                   <span
                     class="flex items-center gap-1 text-[10px] font-medium
-                    @if ($isOverdue) text-red-500
+                    @if ($isClosedType) text-green-500 dark:text-green-400
+                    @elseif ($isOverdue) text-red-500
                     @elseif ($isDueToday) text-amber-500
                     @else text-zinc-400 dark:text-zinc-500 @endif">
-                    @if ($isOverdue)
-                      <flux:icon name="exclamation-circle" class="size-3" />
-                      {{ now()->diffInDays($task->due_date) }}h lalu
+                    @if ($isClosedType)
+                      <flux:icon name="check-circle" class="size-3" /> {{ $task->due_date->format('d M') }}
+                    @elseif ($isOverdue)
+                      <flux:icon name="exclamation-circle" class="size-3" /> {{ $daysOverdue }}h lalu
                     @elseif ($isDueToday)
                       <flux:icon name="clock" class="size-3" /> Hari ini
                     @else
@@ -321,7 +335,7 @@
             <div wire:key="task-ns-{{ $task->id }}"
               class="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
               <div class="min-w-0 flex-1">
-                <button wire:click="openTaskDetail({{ $task->id }})"
+                <button @click="$flux.modal('task-detail-mytasks').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
                   class="block w-full cursor-pointer truncate text-left text-sm font-semibold text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400">
                   {{ $task->title }}
                 </button>
@@ -334,12 +348,17 @@
 
   @endif
 
-  @if ($showTaskDetail && $selectedTaskId)
-    <flux:modal wire:model="showTaskDetail"
-      class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-      <div class="max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:h-[calc(100dvh-4rem)]">
-        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'my-detail-' . $selectedTaskId" />
+  <flux:modal name="task-detail-mytasks" wire:model="showTaskDetail" :closable="false" @close="$wire.closeTaskDetail()"
+    @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('task-detail-mytasks').close()"
+    class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
+    <div class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
+      <div wire:loading wire:target="openTaskDetail"
+        class="absolute inset-0 z-50 bg-white px-1 dark:bg-zinc-900">
+        @include('livewire.project.partials.task-detail-skeleton')
       </div>
-    </flux:modal>
-  @endif
+      @if ($selectedTaskId)
+        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'my-detail-' . $selectedTaskId" />
+      @endif
+    </div>
+  </flux:modal>
 </div>
