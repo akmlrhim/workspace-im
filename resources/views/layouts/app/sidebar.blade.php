@@ -99,7 +99,7 @@
 
   {{ $slot }}
 
-  <flux:toast />
+  <flux:toast position="bottom end" expanded />
 
   @fluxScripts
 

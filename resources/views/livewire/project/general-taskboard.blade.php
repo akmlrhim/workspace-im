@@ -234,16 +234,32 @@
 
               <div class="space-y-0.5">
                 @foreach ($day['tasks'] as $task)
-                  <button @click="$flux.modal('gen-task-detail').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
+                  <button
+                    @click="$flux.modal('gen-task-detail').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
                     class="w-full rounded-md border-l-[3px] bg-white/80 px-1.5 py-1 text-left shadow-sm transition hover:shadow-md dark:bg-zinc-800/80"
                     style="border-left-color: {{ $task->taskList->space->color ?? '#6366f1' }}"
                     title="{{ $task->title }} — {{ $task->taskList->space->name ?? '' }} / {{ $task->taskList->name ?? '' }}">
                     <div class="flex min-w-0 items-center gap-1">
+                      @php
+                        $calDone = $task->status?->type === 'closed';
+                        $calOver = !$calDone && $task->due_date?->isPast();
+                      @endphp
                       <span class="h-1.5 w-1.5 shrink-0 rounded-full"
                         style="background-color: {{ $task->priority_color }}"></span>
-                      <span class="truncate text-[11px] font-semibold text-zinc-800 dark:text-zinc-100">
+                      <span class="min-w-0 flex-1 truncate text-[11px] font-semibold text-zinc-800 dark:text-zinc-100">
                         {{ $task->title }}
                       </span>
+                      @if ($calOver)
+                        <span
+                          class="ml-auto shrink-0 rounded px-1 py-0.5 text-[9px] font-bold bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400">
+                          {{ $task->due_date->format('d M') }}
+                        </span>
+                      @elseif ($calDone)
+                        <span
+                          class="ml-auto shrink-0 rounded px-1 py-0.5 text-[9px] font-bold bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">
+                          {{ $task->due_date->format('d M') }}
+                        </span>
+                      @endif
                     </div>
                     <span class="mt-0.5 block truncate rounded px-1 py-0.5 text-[9px] font-medium text-white"
                       style="background-color: {{ $task->taskList->space->color ?? '#6366f1' }}">
@@ -291,9 +307,14 @@
               @if ($hasTasks)
                 <div class="mt-2 space-y-1 pl-9">
                   @foreach ($day['tasks'] as $task)
-                    <button @click="$flux.modal('gen-task-detail').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
+                    <button
+                      @click="$flux.modal('gen-task-detail').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
                       class="flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-1.5 text-left text-xs font-medium transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
                       style="border-left-color: {{ $task->taskList->space->color ?? '#6366f1' }}">
+                      @php
+                        $calDone = $task->status?->type === 'closed';
+                        $calOver = !$calDone && $task->due_date?->isPast();
+                      @endphp
                       <span class="h-2 w-2 shrink-0 rounded-full"
                         style="background-color: {{ $task->priority_color }}"></span>
                       <div class="min-w-0 flex-1">
@@ -302,6 +323,17 @@
                           {{ $task->taskList->space->name ?? '-' }} / {{ $task->taskList->name ?? '-' }}
                         </span>
                       </div>
+                      @if ($calOver)
+                        <span
+                          class="ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400">
+                          {{ $task->due_date->isoFormat('D MMM') }}
+                        </span>
+                      @elseif ($calDone)
+                        <span
+                          class="ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">
+                          {{ $task->due_date->isoFormat('D MMM') }}
+                        </span>
+                      @endif
                     </button>
                   @endforeach
                 </div>
@@ -454,16 +486,23 @@
   </flux:modal>
 
   {{-- Task Detail Modal (from calendar) --}}
-  <flux:modal name="gen-task-detail" wire:model="showTaskDetail" :closable="false" @close="$wire.closeTaskDetail()"
+  <flux:modal name="gen-task-detail" wire:model="showTaskDetail" :closable="false"
+    @close="$wire.closeTaskDetail()"
     @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('gen-task-detail').close()"
     class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-    <div class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto px-1 -mx-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
-      <div wire:loading wire:target="openTaskDetail"
-        class="absolute inset-0 z-50 bg-white px-1 dark:bg-zinc-900">
+    <div
+      class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto px-1 -mx-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
+      <div wire:loading wire:target="openTaskDetail" class="absolute inset-0 z-50 bg-white dark:bg-zinc-900">
         @include('livewire.project.partials.task-detail-skeleton')
       </div>
       @if ($selectedTaskId)
         <livewire:project.task-detail :taskId="$selectedTaskId" :key="'gen-detail-' . $selectedTaskId" />
+      @else
+        <div wire:loading.remove wire:target="openTaskDetail" class="flex min-h-[60vh] items-center justify-center">
+          <div
+            class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400">
+          </div>
+        </div>
       @endif
     </div>
   </flux:modal>

@@ -73,14 +73,6 @@
     x-data="kanbanBoard({{ $canManage ? 'true' : 'false' }})" x-init="init()" @pointerdown="startDrag" @pointerleave="stopDrag"
     @pointerup="stopDrag" @pointercancel="stopDrag" @pointermove="doDrag">
     @foreach ($this->statuses as $status)
-      @php
-        $overdueCount =
-            $status->type === 'closed'
-                ? 0
-                : $status->tasks
-                    ->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->due_date->isToday())
-                    ->count();
-      @endphp
       <div wire:key="status-{{ $status->id }}"
         class="kanban-col-wrapper group/col flex w-72 shrink-0 flex-col rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-t-4"
         style="border-top-color: {{ $status->color }}" data-column-id="{{ $status->id }}">
@@ -120,14 +112,6 @@
                 class="rounded-md bg-zinc-200 px-1.5 py-0.5 text-xs font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
                 {{ $status->tasks->count() }}
               </span>
-              @if ($overdueCount > 0)
-                <span
-                  class="inline-flex items-center gap-0.5 rounded-md bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-500/15 dark:text-red-400"
-                  title="{{ $overdueCount }} tugas lewat tenggat">
-                  <flux:icon name="exclamation-triangle" class="size-3" />
-                  {{ $overdueCount }}
-                </span>
-              @endif
             @endif
           </div>
 
@@ -182,7 +166,7 @@
                   $ddIcon = 'check-circle';
               } elseif ($isPast) {
                   $ddClass = 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400 font-semibold';
-                  $ddLabel = (int) ceil($dd->diffInDays(now(), true)) . 'h lewat';
+                  $ddLabel = $dd->isoFormat('D MMM');
                   $ddIcon = 'clock';
               } elseif ($isToday) {
                   $ddClass = 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400 font-semibold';
@@ -250,11 +234,15 @@
                     @endif
 
                     @if ($dd)
-                      <span data-due-badge data-open-class="{{ $ddClass }}"
+                      <span
+                        data-due-badge
+                        data-open-class="{{ $ddClass }}"
+                        data-open-label="{{ $ddLabel }}"
+                        data-closed-label="{{ $dd->isoFormat('D MMM') }}"
                         class="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] {{ $ddClass }}"
                         title="Tenggat {{ $dd->format('d M Y') }}">
                         <flux:icon name="{{ $ddIcon }}" class="size-3" />
-                        {{ $ddLabel }}
+                        <span data-due-label>{{ $ddLabel }}</span>
                       </span>
                     @endif
                   </div>
@@ -347,11 +335,17 @@
     class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
     <div
       class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto px-1 -mx-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
-      <div wire:loading wire:target="openTaskDetail" class="absolute inset-0 z-50 bg-white px-1 dark:bg-zinc-900">
+      <div wire:loading wire:target="openTaskDetail"
+        class="absolute inset-0 z-50 bg-white dark:bg-zinc-900">
         @include('livewire.project.partials.task-detail-skeleton')
       </div>
       @if ($selectedTaskId)
         <livewire:project.task-detail :taskId="$selectedTaskId" :key="'board-detail-' . $selectedTaskId" />
+      @else
+        {{-- Fallback: visible skeleton while server hasn't responded yet --}}
+        <div wire:loading.remove wire:target="openTaskDetail" class="flex min-h-[60vh] items-center justify-center">
+          <div class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400"></div>
+        </div>
       @endif
     </div>
   </flux:modal>
@@ -569,11 +563,20 @@
         const badge = cardEl.querySelector('[data-due-badge]');
         if (!badge) return;
 
+        const isClosed    = destStatusType === 'closed';
         const closedClass = 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400';
-        const openClass = badge.dataset.openClass || '';
+        const openClass   = badge.dataset.openClass || '';
+        const base        = 'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] ';
 
-        const base = 'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] ';
-        badge.setAttribute('class', base + (destStatusType === 'closed' ? closedClass : openClass));
+        badge.setAttribute('class', base + (isClosed ? closedClass : openClass));
+
+        // Also update the label text so "Hari ini"/"Besok" becomes the actual date when closed
+        const labelEl = badge.querySelector('[data-due-label]');
+        if (labelEl) {
+          labelEl.textContent = isClosed
+            ? (badge.dataset.closedLabel || labelEl.textContent)
+            : (badge.dataset.openLabel  || labelEl.textContent);
+        }
       },
 
       _updateColumnCounts(fromCol, toCol) {

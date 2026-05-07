@@ -99,8 +99,7 @@
 
           <flux:modal.close>
             <flux:button icon="x-mark" size="sm" variant="ghost"
-              class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!"
-              title="Tutup" />
+              class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!" title="Tutup" />
           </flux:modal.close>
         </div>
       </div>
@@ -568,7 +567,12 @@
                           class="rounded-md border px-1.5 py-0.5 text-[11px] font-medium tracking-wide {{ $badgeClass }}">
                           {{ $item->due_date->format('d M') }}
                           @if ($item->is_completed)
-                            ✓
+                            <svg class="inline size-3 shrink-0 text-green-500 dark:text-green-400" viewBox="0 0 16 16"
+                              fill="currentColor" aria-hidden="true">
+                              <path fill-rule="evenodd"
+                                d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"
+                                clip-rule="evenodd" />
+                            </svg>
                           @endif
                         </span>
                       @endif

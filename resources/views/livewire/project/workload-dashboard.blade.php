@@ -2,7 +2,7 @@
   {{-- ─── Header ──────────────────────────────────────────── --}}
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <flux:heading size="xl">Beban Kerja & Traffic</flux:heading>
+      <flux:heading size="xl">Workload & Traffic</flux:heading>
     </div>
     <div class="flex items-center gap-2">
       <flux:input onclick="this.showPicker()" type="month" wire:model.live="selectedMonth" size="sm" icon="calendar"
@@ -199,8 +199,13 @@
                 @endif
                 @if ($groupDone)
                   <span
-                    class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
-                    ✓ Selesai
+                    class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                    <svg class="size-2.5 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd"
+                        d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"
+                        clip-rule="evenodd" />
+                    </svg>
+                    Selesai
                   </span>
                 @endif
               </div>
@@ -484,8 +489,14 @@
                         {{ $member['user']->name }}
                         @if ($allDone)
                           <span
-                            class="ml-1 inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
-                            ✓ Clear
+                            class="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                            <svg class="size-2.5 shrink-0" viewBox="0 0 16 16" fill="currentColor"
+                              aria-hidden="true">
+                              <path fill-rule="evenodd"
+                                d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"
+                                clip-rule="evenodd" />
+                            </svg>
+                            Clear
                           </span>
                         @endif
                       </div>
