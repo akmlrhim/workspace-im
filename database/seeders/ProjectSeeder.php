@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Project\Folder;
 use App\Models\Project\Space;
 use App\Models\Project\Task;
 use App\Models\Project\TaskActivity;
@@ -142,12 +141,7 @@ class ProjectSeeder extends Seeder
 
         $this->command->line('  → Seeding space: Proyek');
 
-        $folderQ2 = Folder::firstOrCreate(
-            ['space_id' => $space->id, 'name' => 'Proyek Q2 2026'],
-            ['position' => 0]
-        );
-
-        $web = $this->makeList($space, 'Website Redesign', 0, $folderQ2->id);
+        $web = $this->makeList($space, 'Website Redesign', 0);
         $web->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $webStatus = $web->statuses()->orderBy('position')->get();
 
@@ -165,7 +159,7 @@ class ProjectSeeder extends Seeder
         ]);
 
         // ── List: Mobile App Development ───────────────────────
-        $mobile = $this->makeList($space, 'Mobile App Development', 1, $folderQ2->id);
+        $mobile = $this->makeList($space, 'Mobile App Development', 1);
         $mobile->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $mobileStatus = $mobile->statuses()->orderBy('position')->get();
 
@@ -294,11 +288,11 @@ class ProjectSeeder extends Seeder
     //  HELPERS
     // ──────────────────────────────────────────────────────────
 
-    private function makeList(Space $space, string $name, int $position, ?int $folderId = null): TaskList
+    private function makeList(Space $space, string $name, int $position): TaskList
     {
         $list = TaskList::firstOrCreate(
             ['space_id' => $space->id, 'name' => $name],
-            ['position' => $position, 'folder_id' => $folderId]
+            ['position' => $position]
         );
 
         if ($list->statuses()->count() === 0) {

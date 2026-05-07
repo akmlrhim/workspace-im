@@ -14,16 +14,11 @@ class TaskList extends Model
 {
     use HasUuid;
 
-    protected $fillable = ['space_id', 'folder_id', 'name', 'position'];
+    protected $fillable = ['space_id', 'name', 'position'];
 
     public function space(): BelongsTo
     {
         return $this->belongsTo(Space::class);
-    }
-
-    public function folder(): BelongsTo
-    {
-        return $this->belongsTo(Folder::class);
     }
 
     public function statuses(): HasMany

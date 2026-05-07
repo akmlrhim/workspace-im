@@ -100,3 +100,24 @@ test('accessible spaces scope grants administrators access to every space but re
     expect(Space::accessibleBy($manager->id)->count())->toBe(0);
     expect(Space::accessibleBy($involvedManager->id)->count())->toBe(1);
 });
+
+test('list can be moved between spaces', function () {
+    $owner = User::factory()->create(['role' => 'member']);
+    $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
+
+    $spaceA = $workspace->spaces()->create(['name' => 'Space A', 'position' => 0]);
+    $spaceB = $workspace->spaces()->create(['name' => 'Space B', 'position' => 1]);
+
+    $listToMove = $spaceA->lists()->create(['name' => 'List A', 'position' => 0]);
+    $existingInTarget = $spaceB->lists()->create(['name' => 'List B', 'position' => 0]);
+
+    $targetPosition = ($spaceB->lists()->max('position') ?? -1) + 1;
+
+    $listToMove->update([
+        'space_id' => $spaceB->id,
+        'position' => $targetPosition,
+    ]);
+
+    expect($listToMove->fresh()->space_id)->toBe($spaceB->id);
+    expect($listToMove->fresh()->position)->toBeGreaterThan($existingInTarget->position);
+});

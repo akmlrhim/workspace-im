@@ -30,19 +30,9 @@ class Space extends Model
         return $this->belongsTo(Workspace::class);
     }
 
-    public function folders(): HasMany
-    {
-        return $this->hasMany(Folder::class)->orderBy('position');
-    }
-
     public function lists(): HasMany
     {
         return $this->hasMany(TaskList::class)->orderBy('position');
-    }
-
-    public function listsWithoutFolder(): HasMany
-    {
-        return $this->hasMany(TaskList::class)->whereNull('folder_id')->orderBy('position');
     }
 
     /**

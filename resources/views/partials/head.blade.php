@@ -5,8 +5,11 @@
   {{ filled($title ?? null) ? $title . ' - ' . config('app.name', 'Laravel') : config('app.name', 'Laravel') }}
 </title>
 
-<link rel="icon" href="/logo_original.webp" type="image/webp">
-<link rel="apple-touch-icon" href="/logo_original.webp">
+<link rel="icon" href="/favicon/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon/favicon-96x96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png">
+<link rel="manifest" href="/favicon/site.webmanifest">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

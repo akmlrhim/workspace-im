@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg"
+﻿<svg xmlns="http://www.w3.org/2000/svg"
   {{ $attributes->merge(['class' => 'brightness-100 dark:brightness-0 transition-all']) }}
   xmlns:xlink="http://www.w3.org/1999/xlink" width="1972" height="1388" viewBox="0 0 1972 1388">
   <image

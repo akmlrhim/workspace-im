@@ -15,7 +15,8 @@
       "Bash(php -l resources/views/livewire/project/task-detail.blade.php)",
       "Bash(grep -o 'modal-show\\\\|modal-close\\\\|modalShow\\\\|Flux\\\\.modal\\\\|fluxModal\\\\|$flux\\\\.' e:/laragon/www/erp_im/vendor/livewire/flux/dist/flux.min.js)",
       "Bash(grep -o \"modal-show[^\\\\\"]*\\\\|handleShow[^{]*\\\\|\\\\\"name\\\\\"[^,]*modal\" e:/laragon/www/erp_im/vendor/livewire/flux/dist/flux.min.js)",
-      "Bash(del \"e:\\\\laragon\\\\www\\\\erp_im\\\\app\\\\Events\\\\TaskUpdatedGlobal.php\")"
+      "Bash(del \"e:\\\\laragon\\\\www\\\\erp_im\\\\app\\\\Events\\\\TaskUpdatedGlobal.php\")",
+      "Bash(Get-Content \"e:\\\\laragon\\\\www\\\\erp_im\\\\resources\\\\views\\\\components\\\\app-logo-icon.blade.php\" -TotalCount 5)"
     ]
   }
 }
