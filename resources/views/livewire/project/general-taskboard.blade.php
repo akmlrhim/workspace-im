@@ -229,23 +229,14 @@
                     <div class="flex min-w-0 items-center gap-1">
                       @php
                         $calDone = $task->status?->type === 'closed';
-                        $calOver = !$calDone && $task->due_date?->isPast();
                       @endphp
                       <span class="h-1.5 w-1.5 shrink-0 rounded-full"
                         style="background-color: {{ $task->priority_color }}"></span>
                       <span class="min-w-0 flex-1 truncate text-[11px] font-semibold text-zinc-800 dark:text-zinc-100">
                         {{ $task->title }}
                       </span>
-                      @if ($calOver)
-                        <span
-                          class="ml-auto shrink-0 rounded px-1 py-0.5 text-[9px] font-bold bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400">
-                          {{ $task->due_date->format('d M') }}
-                        </span>
-                      @elseif ($calDone)
-                        <span
-                          class="ml-auto shrink-0 rounded px-1 py-0.5 text-[9px] font-bold bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">
-                          {{ $task->due_date->format('d M') }}
-                        </span>
+                      @if ($calDone)
+                        <flux:icon name="check-circle" class="size-4 font-bold text-green-600 dark:text-green-400" />
                       @endif
                     </div>
                     <span class="mt-0.5 block truncate rounded px-1 py-0.5 text-[9px] font-medium text-white"
@@ -300,7 +291,6 @@
                       style="border-left-color: {{ $task->taskList->space->color ?? '#6366f1' }}">
                       @php
                         $calDone = $task->status?->type === 'closed';
-                        $calOver = !$calDone && $task->due_date?->isPast();
                       @endphp
                       <span class="h-2 w-2 shrink-0 rounded-full"
                         style="background-color: {{ $task->priority_color }}"></span>
@@ -310,16 +300,9 @@
                           {{ $task->taskList->space->name ?? '-' }} / {{ $task->taskList->name ?? '-' }}
                         </span>
                       </div>
-                      @if ($calOver)
-                        <span
-                          class="ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400">
-                          {{ $task->due_date->isoFormat('D MMM') }}
-                        </span>
-                      @elseif ($calDone)
-                        <span
-                          class="ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">
-                          {{ $task->due_date->isoFormat('D MMM') }}
-                        </span>
+
+                      @if ($calDone)
+                        <flux:icon name="check-circle" class="size-4 font-bold text-green-600 dark:text-green-400" />
                       @endif
                     </button>
                   @endforeach
