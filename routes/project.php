@@ -3,7 +3,6 @@
 use App\Http\Middleware\CheckModuleAccess;
 use App\Livewire\Project\GeneralTaskboard;
 use App\Livewire\Project\MyTasks;
-use App\Livewire\Project\SpaceShow;
 use App\Livewire\Project\TaskBoard;
 use App\Livewire\Project\TaskCalendar;
 use App\Livewire\Project\TaskGantt;
@@ -14,8 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified', CheckModuleAccess::class . ':project'])->prefix('project-management')->name('project-management.')->group(function () {
 	Route::redirect('/', '/project-management/general-taskboard');
 
-	Route::redirect('/spaces', '/project-management/general-taskboard')->name('index');
-	Route::get('/spaces/{space}', SpaceShow::class)->name('spaces.show');
+	Route::redirect('/general', '/project-management/general-taskboard')->name('index');
 
 	Route::get('/spaces/{space}/lists/{taskList}', TaskListShow::class)->name('lists.show');
 
