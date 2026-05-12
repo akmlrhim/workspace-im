@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,11 +9,21 @@
   <link rel="icon" href="/favicon/favicon.ico" sizes="32x32">
   <link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png">
   <link rel="manifest" href="/favicon/site.webmanifest">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
+
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
       --bg: #ffffff;
@@ -21,6 +32,7 @@
       --subtle: #a1a1aa;
       --accent: #6366f1;
     }
+
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #09090b;
@@ -30,9 +42,10 @@
       }
     }
 
-    html, body {
+    html,
+    body {
       height: 100%;
-      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
@@ -73,7 +86,12 @@
       margin-bottom: 2rem;
     }
 
-    .actions { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
+    .actions {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
     a.link {
       font-size: .875rem;
@@ -83,7 +101,10 @@
       border-bottom: 1px solid transparent;
       transition: border-color .15s;
     }
-    a.link:hover { border-color: var(--accent); }
+
+    a.link:hover {
+      border-color: var(--accent);
+    }
 
     a.link-muted {
       font-size: .875rem;
@@ -93,7 +114,11 @@
       border-bottom: 1px solid transparent;
       transition: color .15s, border-color .15s;
     }
-    a.link-muted:hover { color: var(--muted); border-color: var(--muted); }
+
+    a.link-muted:hover {
+      color: var(--muted);
+      border-color: var(--muted);
+    }
 
     footer {
       position: fixed;
@@ -103,6 +128,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="code">@yield('code', '?')</div>
   <p class="title">@yield('title', 'Terjadi Kesalahan')</p>
@@ -110,4 +136,5 @@
   <div class="actions">@yield('actions')</div>
   <footer>{{ config('app.name') }}</footer>
 </body>
+
 </html>

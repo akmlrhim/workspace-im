@@ -5,6 +5,7 @@ namespace App\Livewire\Project;
 use App\Models\Project\Task;
 use App\Models\Project\Workspace;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -13,209 +14,214 @@ use Livewire\Component;
 #[Title('My Tasks')]
 class MyTasks extends Component
 {
-    public string $filterPriority = '';
+	public string $filterPriority = '';
 
-    public ?int $selectedTaskId = null;
+	public ?int $selectedTaskId = null;
 
-    public bool $showTaskDetail = false;
+	public bool $showTaskDetail = false;
 
-    public ?int $workspaceId = null;
+	public ?int $workspaceId = null;
 
-    public string $view = 'list';
+	public string $view = 'list';
 
-    public int $currentYear;
+	public int $currentYear;
 
-    public int $currentMonth;
+	public int $currentMonth;
 
-    public function mount(): void
-    {
-        $this->workspaceId = Workspace::where('owner_id', auth()->id())->value('id');
-        $this->currentYear = now()->year;
-        $this->currentMonth = now()->month;
-    }
+	public function mount(): void
+	{
+		// Resolve via membership so all users on the same shared workspace
+		// land on the same broadcast channel, not each their own workspace.
+		$this->workspaceId = Workspace::whereHas('members', fn($q) => $q->where('user_id', auth()->id()))
+			->orderBy('id')
+			->value('id');
 
-    /** @return array<string, string> */
-    public function getListeners(): array
-    {
-        $listeners = [
-            'close-task-detail' => 'closeTaskDetail',
-            'task-updated' => 'onTaskUpdated',
-            'task-deleted' => 'onTaskDeleted',
-        ];
+		$this->currentYear = now()->year;
+		$this->currentMonth = now()->month;
+	}
 
-        if ($this->workspaceId) {
-            $listeners["echo:workspace.{$this->workspaceId},TaskListUpdated"] = 'onBroadcastUpdate';
-            $listeners["echo:workspace.{$this->workspaceId},TaskUpdated"] = 'onBroadcastUpdate';
-        }
+	/** @return array<string, string> */
+	public function getListeners(): array
+	{
+		$listeners = [
+			'close-task-detail' => 'closeTaskDetail',
+			'task-updated' => 'onTaskUpdated',
+			'task-deleted' => 'onTaskDeleted',
+		];
 
-        return $listeners;
-    }
+		if ($this->workspaceId) {
+			$listeners["echo:workspace.{$this->workspaceId},TaskListUpdated"] = 'onBroadcastUpdate';
+			$listeners["echo:workspace.{$this->workspaceId},TaskUpdated"] = 'onBroadcastUpdate';
+		}
 
-    public function onBroadcastUpdate(array $event): void
-    {
-        if (($event['triggeredBy'] ?? null) == auth()->id()) {
-            $this->skipRender();
+		return $listeners;
+	}
 
-            return;
-        }
-    }
+	public function onBroadcastUpdate(array $event): void
+	{
+		if (($event['triggeredBy'] ?? null) == auth()->id()) {
+			$this->skipRender();
 
-    public function switchView(string $view): void
-    {
-        if (in_array($view, ['list', 'calendar'], true)) {
-            $this->view = $view;
-        }
-    }
+			return;
+		}
+	}
 
-    public function previousMonth(): void
-    {
-        $date = Carbon::create($this->currentYear, $this->currentMonth, 1)->subMonth();
-        $this->currentYear = $date->year;
-        $this->currentMonth = $date->month;
-    }
+	public function switchView(string $view): void
+	{
+		if (in_array($view, ['list', 'calendar'], true)) {
+			$this->view = $view;
+		}
+	}
 
-    public function nextMonth(): void
-    {
-        $date = Carbon::create($this->currentYear, $this->currentMonth, 1)->addMonth();
-        $this->currentYear = $date->year;
-        $this->currentMonth = $date->month;
-    }
+	public function previousMonth(): void
+	{
+		$date = Carbon::create($this->currentYear, $this->currentMonth, 1)->subMonth();
+		$this->currentYear = $date->year;
+		$this->currentMonth = $date->month;
+	}
 
-    public function goToToday(): void
-    {
-        $this->currentYear = now()->year;
-        $this->currentMonth = now()->month;
-    }
+	public function nextMonth(): void
+	{
+		$date = Carbon::create($this->currentYear, $this->currentMonth, 1)->addMonth();
+		$this->currentYear = $date->year;
+		$this->currentMonth = $date->month;
+	}
 
-    public function openTaskDetail(int $taskId): void
-    {
-        $this->selectedTaskId = $taskId;
-        $this->showTaskDetail = true;
-    }
+	public function goToToday(): void
+	{
+		$this->currentYear = now()->year;
+		$this->currentMonth = now()->month;
+	}
 
-    public function onTaskDeleted(int $taskId): void
-    {
-        if ($this->selectedTaskId === $taskId) {
-            $this->selectedTaskId = null;
-        }
-        $this->showTaskDetail = false;
-    }
+	public function openTaskDetail(int $taskId): void
+	{
+		$this->selectedTaskId = $taskId;
+		$this->showTaskDetail = true;
+	}
 
-    public function closeTaskDetail(): void
-    {
-        $this->showTaskDetail = false;
-    }
+	public function onTaskDeleted(int $taskId): void
+	{
+		if ($this->selectedTaskId === $taskId) {
+			$this->selectedTaskId = null;
+		}
+		$this->showTaskDetail = false;
+	}
 
-    public function onTaskUpdated(): void
-    {
-        // Re-render
-    }
+	public function closeTaskDetail(): void
+	{
+		$this->showTaskDetail = false;
+	}
 
-    public function render()
-    {
-        $userId = auth()->id();
+	public function onTaskUpdated(): void
+	{
+		// Re-render
+	}
 
-        $baseQuery = Task::where(function ($q) use ($userId) {
-            $q->where('assigned_to', $userId)
-                ->orWhereHas('assignees', fn ($sub) => $sub->where('user_id', $userId));
-        })
-            ->excludeNotes()
-            ->with(['status', 'taskList.space', 'assignees'])
-            ->whereNull('parent_id');
+	public function render()
+	{
+		$userId = auth()->id();
 
-        if ($this->filterPriority) {
-            $baseQuery->where('priority', $this->filterPriority);
-        }
+		$baseQuery = Task::where(function ($q) use ($userId) {
+			$q->where('assigned_to', $userId)
+				->orWhereHas('assignees', fn($sub) => $sub->where('user_id', $userId));
+		})
+			->excludeNotes()
+			->with(['status', 'taskList.space', 'assignees'])
+			->whereNull('parent_id');
 
-        if ($this->view === 'calendar') {
-            return $this->renderCalendar($baseQuery);
-        }
+		if ($this->filterPriority) {
+			$baseQuery->where('priority', $this->filterPriority);
+		}
 
-        return $this->renderList($baseQuery);
-    }
+		if ($this->view === 'calendar') {
+			return $this->renderCalendar($baseQuery);
+		}
 
-    private function renderList($baseQuery)
-    {
-        $tasks = $baseQuery
-            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC')
-            ->get();
+		return $this->renderList($baseQuery);
+	}
 
-        $typeOrder = ['open' => 0, 'active' => 1, 'closed' => 2];
+	private function renderList(Builder $baseQuery)
+	{
+		$tasks = $baseQuery
+			->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC')
+			->get();
 
-        $grouped = $tasks
-            ->filter(fn ($t) => $t->status !== null)
-            ->groupBy(fn ($t) => mb_strtolower(trim($t->status->name)))
-            ->map(function ($statusTasks, $key) {
-                $firstStatus = $statusTasks->first()->status;
+		$typeOrder = ['open' => 0, 'active' => 1, 'closed' => 2];
 
-                return [
-                    'status' => (object) [
-                        'id' => $key,
-                        'name' => $firstStatus->name,
-                        'color' => $firstStatus->color,
-                        'type' => $firstStatus->type,
-                    ],
-                    'tasks' => $statusTasks->values(),
-                ];
-            })
-            ->sortBy(fn ($group) => sprintf(
-                '%d-%s',
-                $typeOrder[$group['status']->type] ?? 99,
-                mb_strtolower($group['status']->name),
-            ))
-            ->values();
+		$grouped = $tasks
+			->filter(fn($t) => $t->status !== null)
+			->groupBy(fn($t) => mb_strtolower(trim($t->status->name)))
+			->map(function ($statusTasks, $key) {
+				$firstStatus = $statusTasks->first()->status;
 
-        $ungrouped = $tasks->filter(fn ($t) => $t->status === null)->values();
+				return [
+					'status' => (object) [
+						'id' => $key,
+						'name' => $firstStatus->name,
+						'color' => $firstStatus->color,
+						'type' => $firstStatus->type,
+					],
+					'tasks' => $statusTasks->values(),
+				];
+			})
+			->sortBy(fn($group) => sprintf(
+				'%d-%s',
+				$typeOrder[$group['status']->type] ?? 99,
+				mb_strtolower($group['status']->name),
+			))
+			->values();
 
-        return view('livewire.project.my-tasks', [
-            'grouped' => $grouped,
-            'ungrouped' => $ungrouped,
-            'totalCount' => $tasks->count(),
-            'weeks' => [],
-            'monthLabel' => '',
-        ]);
-    }
+		$ungrouped = $tasks->filter(fn($t) => $t->status === null)->values();
 
-    private function renderCalendar($baseQuery)
-    {
-        $monthStart = Carbon::create($this->currentYear, $this->currentMonth, 1);
-        $monthEnd = $monthStart->copy()->endOfMonth();
-        $calendarStart = $monthStart->copy()->startOfWeek(Carbon::MONDAY);
-        $calendarEnd = $monthEnd->copy()->endOfWeek(Carbon::SUNDAY);
+		return view('livewire.project.my-tasks', [
+			'grouped' => $grouped,
+			'ungrouped' => $ungrouped,
+			'totalCount' => $tasks->count(),
+			'weeks' => [],
+			'monthLabel' => '',
+		]);
+	}
 
-        $totalCount = (clone $baseQuery)->count();
+	private function renderCalendar(Builder $baseQuery)
+	{
+		$monthStart = Carbon::create($this->currentYear, $this->currentMonth, 1);
+		$monthEnd = $monthStart->copy()->endOfMonth();
+		$calendarStart = $monthStart->copy()->startOfWeek(Carbon::MONDAY);
+		$calendarEnd = $monthEnd->copy()->endOfWeek(Carbon::SUNDAY);
 
-        $tasksByDay = (clone $baseQuery)
-            ->whereNotNull('due_date')
-            ->whereBetween('due_date', [$calendarStart, $calendarEnd])
-            ->orderBy('due_date')
-            ->get()
-            ->groupBy(fn ($t) => $t->due_date->format('Y-m-d'));
+		$totalCount = (clone $baseQuery)->count();
 
-        $weeks = [];
-        $currentDay = $calendarStart->copy();
+		$tasksByDay = (clone $baseQuery)
+			->whereNotNull('due_date')
+			->whereBetween('due_date', [$calendarStart, $calendarEnd])
+			->orderBy('due_date')
+			->get()
+			->groupBy(fn($t) => $t->due_date->format('Y-m-d'));
 
-        while ($currentDay <= $calendarEnd) {
-            $week = [];
-            for ($i = 0; $i < 7; $i++) {
-                $dayStr = $currentDay->format('Y-m-d');
-                $week[] = [
-                    'date' => $currentDay->copy(),
-                    'isCurrentMonth' => $currentDay->month === $this->currentMonth,
-                    'isToday' => $currentDay->isToday(),
-                    'tasks' => $tasksByDay->get($dayStr, collect()),
-                ];
-                $currentDay->addDay();
-            }
-            $weeks[] = $week;
-        }
+		$weeks = [];
+		$currentDay = $calendarStart->copy();
 
-        return view('livewire.project.my-tasks', [
-            'grouped' => collect(),
-            'ungrouped' => collect(),
-            'totalCount' => $totalCount,
-            'weeks' => $weeks,
-            'monthLabel' => $monthStart->format('F Y'),
-        ]);
-    }
+		while ($currentDay <= $calendarEnd) {
+			$week = [];
+			for ($i = 0; $i < 7; $i++) {
+				$dayStr = $currentDay->format('Y-m-d');
+				$week[] = [
+					'date' => $currentDay->copy(),
+					'isCurrentMonth' => $currentDay->month === $this->currentMonth,
+					'isToday' => $currentDay->isToday(),
+					'tasks' => $tasksByDay->get($dayStr, collect()),
+				];
+				$currentDay->addDay();
+			}
+			$weeks[] = $week;
+		}
+
+		return view('livewire.project.my-tasks', [
+			'grouped' => collect(),
+			'ungrouped' => collect(),
+			'totalCount' => $totalCount,
+			'weeks' => $weeks,
+			'monthLabel' => $monthStart->format('F Y'),
+		]);
+	}
 }

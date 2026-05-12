@@ -20,8 +20,9 @@ class TrackLastVisitedUrl
         if (
             $request->isMethod('GET')
             && ! $request->ajax()
-            && ! $request->is('login', 'register', 'logout', 'two-factor-challenge', 'password/*', 'email/*')
+            && ! $request->is('login', 'register', 'logout', 'two-factor-challenge', 'password/*', 'email/*', 'sw.js', 'storage/*', 'favicon/*', 'build/*')
             && $response->isSuccessful()
+            && str_contains($response->headers->get('Content-Type', ''), 'text/html')
         ) {
             session(['last_visited_url' => $request->fullUrl()]);
         }

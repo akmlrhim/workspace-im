@@ -1,18 +1,30 @@
-<div class="flex items-center rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 dark:border-zinc-700 dark:bg-zinc-800">
-  <a href="{{ route('project-management.lists.board', [$space, $taskList]) }}" wire:navigate title="Board"
-    class="rounded-md px-2 py-1.5 sm:px-2.5 text-xs font-medium transition-all {{ ($active ?? '') === 'board' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
-    <flux:icon name="view-columns" class="inline size-3.5 sm:mr-0.5" /><span class="hidden sm:inline"> Board</span>
-  </a>
-  <a href="{{ route('project-management.lists.show', [$space, $taskList]) }}" wire:navigate title="List"
-    class="rounded-md px-2 py-1.5 sm:px-2.5 text-xs font-medium transition-all {{ ($active ?? '') === 'list' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
-    <flux:icon name="queue-list" class="inline size-3.5 sm:mr-0.5" /><span class="hidden sm:inline"> List</span>
-  </a>
-  <a href="{{ route('project-management.lists.gantt', [$space, $taskList]) }}" wire:navigate title="Gantt"
-    class="rounded-md px-2 py-1.5 sm:px-2.5 text-xs font-medium transition-all {{ ($active ?? '') === 'gantt' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
-    <flux:icon name="chart-bar" class="inline size-3.5 sm:mr-0.5" /><span class="hidden sm:inline"> Gantt</span>
-  </a>
-  <a href="{{ route('project-management.lists.calendar', [$space, $taskList]) }}" wire:navigate title="Calendar"
-    class="rounded-md px-2 py-1.5 sm:px-2.5 text-xs font-medium transition-all {{ ($active ?? '') === 'calendar' ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
-    <flux:icon name="calendar-days" class="inline size-3.5 sm:mr-0.5" /><span class="hidden sm:inline"> Calendar</span>
-  </a>
+@php $active = $active ?? ''; @endphp
+<div class="overflow-x-auto border-b border-zinc-200 dark:border-zinc-700 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+  <div class="flex min-w-max">
+    <a href="{{ route('project-management.lists.board', [$space, $taskList]) }}" wire:navigate
+      class="flex shrink-0 items-center gap-1.5 pb-3 pr-6 text-sm font-medium border-b-2 -mb-px transition-colors {{ $active === 'board' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+      <flux:icon name="view-columns" class="size-4" />
+      Board
+    </a>
+    <a href="{{ route('project-management.lists.show', [$space, $taskList]) }}" wire:navigate
+      class="flex shrink-0 items-center gap-1.5 pb-3 pr-6 text-sm font-medium border-b-2 -mb-px transition-colors {{ $active === 'list' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+      <flux:icon name="queue-list" class="size-4" />
+      List
+    </a>
+    <a href="{{ route('project-management.lists.gantt', [$space, $taskList]) }}" wire:navigate
+      class="flex shrink-0 items-center gap-1.5 pb-3 pr-6 text-sm font-medium border-b-2 -mb-px transition-colors {{ $active === 'gantt' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+      <flux:icon name="chart-bar" class="size-4" />
+      Gantt
+    </a>
+    <a href="{{ route('project-management.lists.calendar', [$space, $taskList]) }}" wire:navigate
+      class="flex shrink-0 items-center gap-1.5 pb-3 pr-6 text-sm font-medium border-b-2 -mb-px transition-colors {{ $active === 'calendar' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+      <flux:icon name="calendar-days" class="size-4" />
+      Kalender
+    </a>
+    <a href="{{ route('project-management.lists.daily', [$space, $taskList]) }}" wire:navigate
+      class="flex shrink-0 items-center gap-1.5 pb-3 text-sm font-medium border-b-2 -mb-px transition-colors {{ $active === 'daily' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+      <flux:icon name="clipboard-document-check" class="size-4" />
+      Daily Task
+    </a>
+  </div>
 </div>

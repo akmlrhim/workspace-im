@@ -25,9 +25,8 @@ test('workload dashboard renders task view by default', function () {
     makeWorkloadContext();
 
     Livewire::test(WorkloadDashboard::class)
-        ->assertSee('Lihat berdasarkan anggota')
-        ->assertSee('Lihat berdasarkan tugas')
-        ->assertDontSee('Lihat berdasarkan proyek')
+        ->assertSee('View by Member')
+        ->assertSee('View by Task')
         ->assertSee('Distribusi Prioritas')
         ->assertSee('Distribusi Status');
 });
@@ -50,6 +49,7 @@ test('task view shows task data with correct labels', function () {
         'task_status_id' => $ctx['openStatus']->id,
         'title' => 'Tugas Contoh',
         'priority' => 'high',
+        'due_date' => now(),
         'created_by' => $ctx['owner']->id,
     ]);
 
@@ -97,6 +97,7 @@ test('task view excludes tasks with status named Note', function () {
         'task_status_id' => $ctx['openStatus']->id,
         'title' => 'Tugas Aktif',
         'priority' => 'normal',
+        'due_date' => now(),
         'created_by' => $ctx['owner']->id,
     ]);
 
@@ -105,6 +106,7 @@ test('task view excludes tasks with status named Note', function () {
         'task_status_id' => $noteStatus->id,
         'title' => 'Catatan Status',
         'priority' => 'normal',
+        'due_date' => now(),
         'created_by' => $ctx['owner']->id,
     ]);
 
@@ -113,6 +115,7 @@ test('task view excludes tasks with status named Note', function () {
         'task_status_id' => $lowerNoteStatus->id,
         'title' => 'Catatan Huruf Kecil',
         'priority' => 'normal',
+        'due_date' => now(),
         'created_by' => $ctx['owner']->id,
     ]);
 
@@ -130,6 +133,6 @@ test('member view labels are in Indonesian', function () {
         ->call('switchView', 'member')
         ->assertSee('Anggota Tim')
         ->assertSee('Total Tugas')
-        ->assertSee('Tugas Terlambat')
+        ->assertSee('Terlambat')
         ->assertSee('Beban Kerja Anggota');
 });

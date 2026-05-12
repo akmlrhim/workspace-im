@@ -4,7 +4,7 @@
 
     @foreach ($sidebarSpaces as $sidebarSpace)
       @php
-        $spacePath = 'project-management/spaces/' . $sidebarSpace->uuid;
+        $spacePath = 'spaces/' . $sidebarSpace->uuid;
       @endphp
 
       <flux:sidebar.group expandable :expanded="true" wire:key="sidebar-space-{{ $sidebarSpace->id }}">

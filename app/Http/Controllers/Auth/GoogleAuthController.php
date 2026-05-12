@@ -143,7 +143,7 @@ class GoogleAuthController extends Controller
 
         $lastUrl = session()->pull('last_visited_url');
 
-        return redirect()->intended($lastUrl ?: route('dashboard'));
+        return redirect()->intended($lastUrl ?: route('project-management.general-taskboard'));
     }
 
     /**

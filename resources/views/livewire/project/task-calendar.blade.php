@@ -1,12 +1,10 @@
 <div>
   <div class="mb-6">
     @include('livewire.project.partials.breadcrumb')
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between mb-4">
       <h1 class="hidden text-2xl font-bold text-zinc-900 dark:text-white lg:block">{{ $taskList->name }}</h1>
-      <div class="flex items-center gap-2">
-        @include('livewire.project.partials.view-toggle', ['active' => 'calendar'])
-      </div>
     </div>
+    @include('livewire.project.partials.view-toggle', ['active' => 'calendar'])
   </div>
 
   <div class="mb-4 flex items-center justify-between">
@@ -44,16 +42,16 @@
             <div class="mb-1 flex items-center justify-between">
               <span
                 class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium
-                {{ $day['isToday'] ? 'bg-indigo-600 text-white' : '' }}
-                {{ !$day['isCurrentMonth'] ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-700 dark:text-zinc-300' }}">
+                {{ $day['isToday'] ? 'bg-black text-white' : '' }}
+                {{ !$day['isCurrentMonth'] ? 'text-black dark:text-white' : '' }}">
                 {{ $day['date']->day }}
               </span>
 
               @if ($day['isCurrentMonth'])
                 <button @click="$flux.modal('cal-create-task').show(); $wire.openCreateTask('{{ $dateStr }}')"
-                  class="flex h-5 w-5 items-center justify-center rounded-md text-zinc-300 opacity-0 transition hover:bg-indigo-100 hover:text-indigo-600 group-hover/cell:opacity-100 dark:text-zinc-600 dark:hover:bg-indigo-900/40 dark:hover:text-indigo-400"
+                  class="cursor-pointer flex h-6 w-6 items-center justify-center rounded-md transition-all duration-150 bg-indigo-50 text-indigo-500 dark:bg-gray-900/30 dark:text-indigo-400 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-500 dark:hover:text-white"
                   title="Tambah tugas pada {{ $day['date']->isoFormat('D MMM') }}">
-                  <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
                 </button>
@@ -144,8 +142,9 @@
                   </span>
                 @endif
                 <button @click="$flux.modal('cal-create-task').show(); $wire.openCreateTask('{{ $dateStr }}')"
-                  class="flex h-6 w-6 items-center justify-center rounded-md text-zinc-400 transition hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400">
-                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  class="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-50 text-indigo-500 transition-colors hover:bg-indigo-500 hover:text-white active:bg-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-500 dark:hover:text-white"
+                  title="Tambah tugas pada {{ $day['date']->isoFormat('D MMM') }}">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
                 </button>
@@ -194,7 +193,6 @@
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')
 
-  {{-- Quick Create Task Modal --}}
   <flux:modal name="cal-create-task" wire:model="showCreateTask" class="w-full max-w-sm">
     <div class="space-y-5">
       <div>

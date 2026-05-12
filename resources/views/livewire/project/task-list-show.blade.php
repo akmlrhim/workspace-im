@@ -2,19 +2,15 @@
   <div class="mb-6">
     @include('livewire.project.partials.breadcrumb')
 
-    <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="mt-3 flex items-center justify-between gap-3 mb-4">
       <h1 class="hidden lg:block lg:text-2xl font-bold text-zinc-900 dark:text-white">{{ $taskList->name }}</h1>
 
-      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-        <div class="w-full sm:w-auto">
-          @include('livewire.project.partials.view-toggle', ['active' => 'list'])
-        </div>
-        <flux:button icon="plus" variant="primary" size="sm" class="w-full justify-center sm:w-auto"
-          wire:click="$dispatch('open-create-task-form')">
-          Tambah Task
-        </flux:button>
-      </div>
+      <flux:button icon="plus" variant="primary" size="sm" class="shrink-0"
+        wire:click="$dispatch('open-create-task-form')">
+        Tambah Task
+      </flux:button>
     </div>
+    @include('livewire.project.partials.view-toggle', ['active' => 'list'])
   </div>
 
   <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">

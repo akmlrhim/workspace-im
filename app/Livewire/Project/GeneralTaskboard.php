@@ -3,6 +3,8 @@
 namespace App\Livewire\Project;
 
 use App\Events\SpaceUpdated;
+use App\Livewire\Forms\SpaceForm;
+use App\Livewire\Forms\TaskListForm;
 use App\Models\Project\Space;
 use App\Models\Project\Task;
 use App\Models\Project\TaskList;
@@ -29,18 +31,12 @@ class GeneralTaskboard extends Component
 	// ─── Space creation ────────────────────────────────────────
 	public bool $showCreateSpace = false;
 
-	public string $spaceName = '';
-
-	public string $spaceColor = '#6366f1';
-
-	public string $spaceIcon = 'folder';
+	public SpaceForm $createSpaceForm;
 
 	// ─── List creation ─────────────────────────────────────────
 	public bool $showCreateList = false;
 
-	public string $listName = '';
-
-	public ?int $listSpaceId = null;
+	public TaskListForm $createListForm;
 
 	// ─── Edit space ────────────────────────────────────────────
 	public bool $showEditSpace = false;
@@ -86,7 +82,12 @@ class GeneralTaskboard extends Component
 	{
 		$user = auth()->user();
 
-		$workspace = Workspace::where('owner_id', $user->id)->first();
+		// Find the workspace the user belongs to (member or owner).
+		// Prefer the oldest workspace (lowest id) so all members of the
+		// same shared workspace end up on the same broadcast channel.
+		$workspace = Workspace::whereHas('members', fn($q) => $q->where('user_id', $user->id))
+			->orderBy('id')
+			->first();
 
 		if (! $workspace) {
 			$workspace = Workspace::create([
@@ -130,6 +131,8 @@ class GeneralTaskboard extends Component
 
 			return;
 		}
+
+		unset($this->listSpaces, $this->calendarData, $this->spaces);
 	}
 
 	private function broadcastChange(): void
@@ -165,6 +168,7 @@ class GeneralTaskboard extends Component
 			'icon' => $this->editSpaceIcon,
 		]);
 
+		unset($this->listSpaces, $this->spaces);
 		$this->reset(['editingSpaceId', 'editSpaceName', 'showEditSpace']);
 		$this->editSpaceColor = '#6366f1';
 		$this->editSpaceIcon = 'folder';
@@ -183,6 +187,7 @@ class GeneralTaskboard extends Component
 
 		Space::findOrFail($spaceId)->delete();
 
+		unset($this->listSpaces, $this->spaces);
 		$this->skipRender();
 		$this->dispatch('sidebar-updated');
 		$this->broadcastChange();
@@ -191,28 +196,20 @@ class GeneralTaskboard extends Component
 
 	public function createSpace(): void
 	{
+		$this->createSpaceForm->validate();
+
 		$workspace = Workspace::findOrFail($this->workspaceId);
 
-		$this->validate([
-			'spaceName' => 'required|min:2|max:100|unique:spaces,name',
-			'spaceColor' => 'required|string',
-		], [
-			'spaceName.required' => 'Nama space wajib diisi.',
-			'spaceName.min' => 'Nama space minimal 2 karakter.',
-			'spaceName.max' => 'Nama space maksimal 100 karakter.',
-			'spaceName.unique' => 'Nama space sudah digunakan.',
-		]);
-
 		$workspace->spaces()->create([
-			'name' => trim($this->spaceName),
-			'color' => $this->spaceColor,
-			'icon' => $this->spaceIcon,
+			'name' => trim($this->createSpaceForm->name),
+			'color' => $this->createSpaceForm->color,
+			'icon' => $this->createSpaceForm->icon,
 			'position' => (Space::max('position') ?? -1) + 1,
 		]);
 
-		$this->reset(['spaceName', 'showCreateSpace']);
-		$this->spaceColor = '#6366f1';
-		$this->spaceIcon = 'folder';
+		unset($this->listSpaces, $this->spaces);
+		$this->createSpaceForm->reset();
+		$this->showCreateSpace = false;
 		$this->dispatch('sidebar-updated');
 		$this->broadcastChange();
 		Flux::toast('Space berhasil dibuat.', variant: 'success');
@@ -222,26 +219,21 @@ class GeneralTaskboard extends Component
 
 	public function createList(): void
 	{
-		$this->validate([
-			'listName' => 'required|min:2|max:100',
-			'listSpaceId' => 'required|exists:spaces,id',
-		], [
-			'listName.required' => 'Nama list wajib diisi.',
-			'listName.min' => 'Nama list minimal 2 karakter.',
-			'listSpaceId.required' => 'Pilih space terlebih dahulu.',
-		]);
+		$this->createListForm->validate();
 
-		$space = Space::findOrFail($this->listSpaceId);
+		$space = Space::findOrFail($this->createListForm->spaceId);
 
 		$list = $space->lists()->create([
-			'name' => trim($this->listName),
+			'name' => trim($this->createListForm->name),
 			'position' => ($space->lists()->max('position') ?? -1) + 1,
 		]);
 
 		$list->createDefaultStatuses();
 		$list->members()->attach(auth()->id());
 
-		$this->reset(['listName', 'listSpaceId', 'showCreateList']);
+		unset($this->listSpaces);
+		$this->createListForm->reset();
+		$this->showCreateList = false;
 		$this->dispatch('sidebar-updated');
 		$this->broadcastChange();
 		Flux::toast('List berhasil dibuat.', variant: 'success');
@@ -315,6 +307,7 @@ class GeneralTaskboard extends Component
 		}
 
 		$list->update($updates);
+		unset($this->listSpaces);
 		$this->reset(['editingListId', 'editListName', 'editListSpaceId', 'showEditList']);
 		$this->dispatch('sidebar-updated');
 		$this->broadcastChange();
@@ -331,8 +324,19 @@ class GeneralTaskboard extends Component
 
 		$list = TaskList::with(['members', 'tasks', 'space'])->findOrFail($this->managingListId);
 
-		$removedIds = array_diff($list->members->pluck('id')->toArray(), $this->listMemberIds);
-		$list->members()->sync($this->listMemberIds);
+		// Whitelist: only sync IDs that belong to confirmed workspace members.
+		// Prevents submitting arbitrary user IDs from the browser.
+		$workspaceMemberIds = WorkspaceMember::where('workspace_id', $this->workspaceId)
+			->pluck('user_id');
+
+		$validIds = collect($this->listMemberIds)
+			->map(fn($id) => (int) $id)
+			->intersect($workspaceMemberIds)
+			->values()
+			->toArray();
+
+		$removedIds = array_diff($list->members->pluck('id')->toArray(), $validIds);
+		$list->members()->sync($validIds);
 
 		if (! empty($removedIds)) {
 			foreach ($list->tasks as $task) {
@@ -340,6 +344,7 @@ class GeneralTaskboard extends Component
 			}
 		}
 
+		unset($this->listSpaces);
 		$this->reset(['managingListId', 'listMemberIds', 'showManageMembers']);
 		$this->broadcastChange();
 		Flux::toast('Anggota list berhasil diperbarui.', variant: 'success');
@@ -402,7 +407,25 @@ class GeneralTaskboard extends Component
 		$this->showTaskDetail = false;
 	}
 
-	// ─── Computed ──────────────────────────────────────────────
+    // ─── Computed ──────────────────────────────────────────────
+
+	/** Spaces with lists — used by the "lists" tab only. */
+	#[Computed]
+	public function listSpaces()
+	{
+		return Space::with([
+			'lists' => function ($q) {
+				$q->with('members')
+					->withCount(['tasks' => fn($q2) => $q2->excludeNotes()])
+					->when($this->search, fn($q2) => $q2->where('name', 'like', "%{$this->search}%"))
+					->orderBy('position');
+			},
+		])
+			->orderBy('position')
+			->get();
+	}
+
+	/** Bare spaces (no lists) — used by the calendar space-filter pills. */
 	#[Computed]
 	public function spaces()
 	{
@@ -411,6 +434,55 @@ class GeneralTaskboard extends Component
 			->get();
 	}
 
+	/** Calendar grid + tasks — used by the "calendar" tab only. */
+	#[Computed]
+	public function calendarData(): array
+	{
+		$monthStart = Carbon::create($this->calYear, $this->calMonth, 1);
+		$monthEnd = $monthStart->copy()->endOfMonth();
+		$selectedIds = $this->calSelectedSpaceIds;
+
+		$calTasks = Task::with(['status', 'taskList.space', 'assignees'])
+			->whereNull('parent_id')
+			->whereNotNull('due_date')
+			->whereBetween('due_date', [$monthStart, $monthEnd])
+			->whereHas('taskList.space', function ($q) use ($selectedIds) {
+				$q->accessibleBy(auth()->id());
+				if (! empty($selectedIds)) {
+					$q->whereIn('id', $selectedIds);
+				}
+			})
+			->orderBy('due_date')
+			->limit(500)
+			->get()
+			->groupBy(fn($task) => $task->due_date->format('Y-m-d'));
+
+		$cur = $monthStart->copy()->startOfWeek(Carbon::MONDAY);
+		$calEnd = $monthEnd->copy()->endOfWeek(Carbon::SUNDAY);
+		$weeks = [];
+
+		while ($cur <= $calEnd) {
+			$week = [];
+			for ($i = 0; $i < 7; $i++) {
+				$ds = $cur->format('Y-m-d');
+				$week[] = [
+					'date' => $cur->copy(),
+					'isCurrentMonth' => $cur->month === $this->calMonth,
+					'isToday' => $cur->isToday(),
+					'tasks' => $calTasks->get($ds, collect()),
+				];
+				$cur->addDay();
+			}
+			$weeks[] = $week;
+		}
+
+		return [
+			'weeks' => $weeks,
+			'label' => $monthStart->isoFormat('MMMM Y'),
+		];
+	}
+
+	/** All system users for the manage-members modal. Always fresh — no session cache. */
 	#[Computed]
 	public function allUsers()
 	{
@@ -419,70 +491,24 @@ class GeneralTaskboard extends Component
 
 	public function render()
 	{
-		$spaces = collect();
-		$weeks = [];
-		$calMonthLabel = '';
-
 		if ($this->activeTab === 'lists') {
-			$spaces = Space::with([
-				'lists' => function ($q) {
-					$q->with('members')
-						->withCount(['tasks' => fn($q2) => $q2->excludeNotes()])
-						->when($this->search, fn($q2) => $q2->where('name', 'like', "%{$this->search}%"))
-						->orderBy('position');
-				},
-			])
-				->orderBy('position')
-				->get();
+			$spaces = $this->listSpaces;
 
-			$totalLists = $spaces->sum(fn($sp) => $sp->lists->count());
-		} else {
-			$totalLists = TaskList::count();
-
-			$monthStart = Carbon::create($this->calYear, $this->calMonth, 1);
-			$monthEnd = $monthStart->copy()->endOfMonth();
-
-			$calTasks = Task::with(['status', 'taskList.space', 'assignees'])
-				->whereNull('parent_id')
-				->whereNotNull('due_date')
-				->whereBetween('due_date', [$monthStart, $monthEnd])
-				->whereHas('taskList.space', function ($q) {
-					$q->accessibleBy(auth()->id());
-					if (! empty($this->calSelectedSpaceIds)) {
-						$q->whereIn('id', $this->calSelectedSpaceIds);
-					}
-				})
-				->orderBy('due_date')
-				->get()
-				->groupBy(fn($task) => $task->due_date->format('Y-m-d'));
-
-			$calStart = $monthStart->copy()->startOfWeek(Carbon::MONDAY);
-			$calEnd = $monthEnd->copy()->endOfWeek(Carbon::SUNDAY);
-			$cur = $calStart->copy();
-
-			while ($cur <= $calEnd) {
-				$week = [];
-				for ($i = 0; $i < 7; $i++) {
-					$ds = $cur->format('Y-m-d');
-					$week[] = [
-						'date' => $cur->copy(),
-						'isCurrentMonth' => $cur->month === $this->calMonth,
-						'isToday' => $cur->isToday(),
-						'tasks' => $calTasks->get($ds, collect()),
-					];
-					$cur->addDay();
-				}
-				$weeks[] = $week;
-			}
-
-			$calMonthLabel = $monthStart->isoFormat('MMMM Y');
+			return view('livewire.project.general-taskboard', [
+				'spaces' => $spaces,
+				'totalLists' => $spaces->sum(fn($sp) => $sp->lists->count()),
+				'weeks' => [],
+				'calMonthLabel' => '',
+			]);
 		}
 
+		$cal = $this->calendarData;
+
 		return view('livewire.project.general-taskboard', [
-			'spaces' => $spaces,
-			'totalLists' => $totalLists,
-			'weeks' => $weeks,
-			'calMonthLabel' => $calMonthLabel,
+			'spaces' => collect(),
+			'totalLists' => TaskList::count(),
+			'weeks' => $cal['weeks'],
+			'calMonthLabel' => $cal['label'],
 		]);
 	}
 }

@@ -48,6 +48,6 @@ class CheckModuleAccess
             session()->flash('toast', ['message' => $message, 'variant' => 'danger']);
         }
 
-        return redirect()->route('dashboard');
+        return redirect()->route('profile.edit');
     }
 }

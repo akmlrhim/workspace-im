@@ -19,7 +19,7 @@ test('users can authenticate using the login screen', function () {
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect('/general-taskboard');
 
     $this->assertAuthenticated();
 });
@@ -73,7 +73,7 @@ test('users are redirected to last visited url after login', function () {
     $this->assertAuthenticated();
 });
 
-test('users are redirected to dashboard when no last visited url', function () {
+test('users are redirected to general taskboard when no last visited url', function () {
     $user = User::factory()->create();
 
     $response = $this->post(route('login.store'), [
@@ -83,7 +83,7 @@ test('users are redirected to dashboard when no last visited url', function () {
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect('/general-taskboard');
 
     $this->assertAuthenticated();
 });

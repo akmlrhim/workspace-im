@@ -2,14 +2,12 @@
   <div class="mb-6">
     @include('livewire.project.partials.breadcrumb')
 
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between mb-4">
       <h1 class="hidden lg:block text-2xl font-bold text-zinc-900 dark:text-white">
         {{ $taskList->name }}
       </h1>
-      <div class="flex items-center gap-2">
-        @include('livewire.project.partials.view-toggle', ['active' => 'gantt'])
-      </div>
     </div>
+    @include('livewire.project.partials.view-toggle', ['active' => 'gantt'])
   </div>
   <div class="mb-4 flex items-center justify-between">
     <div class="flex items-center gap-2">

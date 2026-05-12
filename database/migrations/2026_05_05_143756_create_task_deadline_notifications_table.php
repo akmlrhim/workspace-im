@@ -15,7 +15,6 @@ return new class extends Migration
             $table->date('due_date');
             $table->timestamp('notified_at')->useCurrent();
 
-            // One notification per task + user + due_date — re-notifies when the deadline moves
             $table->unique(['task_id', 'user_id', 'due_date']);
         });
     }

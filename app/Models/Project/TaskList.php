@@ -31,6 +31,11 @@ class TaskList extends Model
         return $this->hasMany(Task::class)->orderBy('position');
     }
 
+    public function dailyTasks(): HasMany
+    {
+        return $this->hasMany(DailyTask::class)->orderBy('position');
+    }
+
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'task_list_user')->withTimestamps();

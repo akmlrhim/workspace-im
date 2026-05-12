@@ -8,21 +8,15 @@
 <body class="h-dvh bg-white dark:bg-zinc-800 antialiased overflow-hidden">
   @php
     $modules = config('erp.modules', []);
-    $path = request()->path();
     $isGuestUser = auth()->check() && auth()->user()->isGuest();
 
-    $currentModuleKey = request()->query('module');
-
-    if (!$currentModuleKey) {
-        foreach ($modules as $key => $module) {
-            $modulePath = ltrim($module['url'], '/');
-            if ($path === $modulePath || str_starts_with($path, $modulePath . '/')) {
-                $currentModuleKey = $key;
-                break;
-            }
-        }
+    // Detect active module by route name prefix — more reliable than URL matching.
+    $currentModuleKey = null;
+    if (request()->routeIs('project-management.*')) {
+        $currentModuleKey = 'project';
+    } elseif (request()->routeIs('users.*')) {
+        $currentModuleKey = 'users';
     }
-
     $currentModuleKey ??= $isGuestUser ? null : 'project';
     $currentModule = $currentModuleKey ? $modules[$currentModuleKey] ?? null : null;
   @endphp
@@ -31,7 +25,7 @@
     class="flex flex-col border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 sticky top-0 h-dvh data-flux-sidebar-on-mobile:z-50! data-flux-sidebar-on-mobile:bg-zinc-50! dark:data-flux-sidebar-on-mobile:bg-zinc-900!">
 
     <flux:sidebar.header class="flex items-center justify-between pb-4">
-      <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+      <x-app-logo :sidebar="true" href="{{ route('project-management.general-taskboard') }}" wire:navigate />
       <flux:sidebar.collapse />
     </flux:sidebar.header>
 
@@ -39,9 +33,9 @@
       <flux:sidebar.nav>
 
         @if ($isGuestUser)
-          <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->is('dashboard')"
+          <flux:sidebar.item icon="squares-2x2" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')"
             wire:navigate>
-            {{ __('Dashboard') }}
+            {{ __('Profil Saya') }}
           </flux:sidebar.item>
         @elseif ($currentModule)
           <div class="mb-4">

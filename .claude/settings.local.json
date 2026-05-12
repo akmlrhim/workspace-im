@@ -22,7 +22,19 @@
       "Bash(/e/laragon/bin/php/php-8.3.9-nts-Win32-vs16-x64/php.exe artisan:*)",
       "Bash(/e/laragon/bin/php/php-8.3.9-nts-Win32-vs16-x64/php.exe vendor/bin/pint --dirty --format agent)",
       "Bash(ls -la .env*)",
-      "Bash(xargs wc:*)"
+      "Bash(xargs wc:*)",
+      "Bash(vendor/bin/pint app/Livewire/Project/DailyTaskPanel.php app/Models/Project/DailyTask.php app/Models/Project/DailyTaskLog.php --format agent)",
+      "Bash(php -l E:/laragon/www/erp_im/app/Livewire/Project/DailyTaskPanel.php)",
+      "Bash(php -l E:/laragon/www/erp_im/app/Models/Project/DailyTask.php)",
+      "Bash(php -l E:/laragon/www/erp_im/app/Models/Project/DailyTaskLog.php)",
+      "Bash(php -l E:/laragon/www/erp_im/app/Mail/DailyTaskReminder.php)",
+      "Bash(php -l E:/laragon/www/erp_im/app/Console/Commands/SendDailyTaskReminders.php)",
+      "Bash(vendor/bin/pint app/Livewire/Project/DailyTaskView.php routes/project.php --format agent)",
+      "Bash(vendor/bin/pint app/Livewire/Project/DailyTaskView.php --format agent)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
 }

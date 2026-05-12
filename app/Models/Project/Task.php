@@ -9,14 +9,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Task extends Model
 {
     use GeneratesUuid;
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Task $task) {
+            $task->attachments()
+                ->where('is_link', false)
+                ->whereNotNull('path')
+                ->pluck('path')
+                ->each(fn (string $path) => Storage::disk('public')->delete($path));
+        });
+    }
+
     protected $fillable = [
-        'task_list_id', 'task_status_id', 'parent_id', 'title', 'description',
-        'priority', 'assigned_to', 'due_date', 'position', 'created_by', 'is_completed',
+        'task_list_id',
+        'task_status_id',
+        'parent_id',
+        'title',
+        'description',
+        'priority',
+        'assigned_to',
+        'due_date',
+        'position',
+        'created_by',
+        'is_completed',
     ];
 
     protected function casts(): array

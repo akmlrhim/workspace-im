@@ -8,6 +8,7 @@ use App\Models\Project\TaskDeadlineNotification;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 #[Signature('tasks:send-deadline-reminders {--test : Bypass all checks, resend to all assignees of due tasks} {--to= : Override recipient email (--test only)}')]
@@ -66,13 +67,15 @@ class SendTaskDeadlineReminders extends Command
                         continue;
                     }
 
-                    $record = TaskDeadlineNotification::firstOrCreate([
+                    // Check without creating — the record is only created AFTER a
+                    // successful send so that a failed attempt can be retried next run.
+                    $alreadySent = TaskDeadlineNotification::where([
                         'task_id' => $task->id,
                         'user_id' => $user->id,
                         'due_date' => $task->due_date->toDateString(),
-                    ]);
+                    ])->exists();
 
-                    if (! $record->wasRecentlyCreated) {
+                    if ($alreadySent) {
                         $this->line("    – Skip {$user->email} — already notified.");
                         $skipped++;
 
@@ -84,10 +87,26 @@ class SendTaskDeadlineReminders extends Command
 
                 try {
                     Mail::to($recipient)->send(new TaskDeadlineReminder($task, $user));
+
+                    // Record only after a confirmed send so failures are retried.
+                    if (! $isTest) {
+                        TaskDeadlineNotification::create([
+                            'task_id' => $task->id,
+                            'user_id' => $user->id,
+                            'due_date' => $task->due_date->toDateString(),
+                        ]);
+                    }
+
                     $this->info("    ✓ Sent → {$recipient->email}");
                     $sent++;
                 } catch (\Throwable $e) {
                     $this->error("    ✗ Failed → {$recipient->email}: {$e->getMessage()}");
+                    Log::error('Deadline reminder failed', [
+                        'task_id' => $task->id,
+                        'user_id' => $user->id,
+                        'email' => $recipient->email,
+                        'error' => $e->getMessage(),
+                    ]);
                     $skipped++;
                 }
             }

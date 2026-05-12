@@ -1,5 +1,4 @@
 <div x-data="{ deletingSpaceId: null, deletingSpaceName: '', deletedSpaceIds: [] }">
-  {{-- ─── Header ──────────────────────────────────────────── --}}
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <flux:heading size="xl">General Taskboard</flux:heading>
@@ -328,17 +327,17 @@
       <form wire:submit="createSpace" class="space-y-4">
         <flux:field>
           <flux:label>Nama Space</flux:label>
-          <flux:input wire:model="spaceName" placeholder="Contoh: Design, Engineering, Marketing..." autofocus />
-          <flux:error name="spaceName" />
+          <flux:input wire:model="createSpaceForm.name" placeholder="Contoh: Design, Engineering, Marketing..." autofocus />
+          <flux:error name="createSpaceForm.name" />
         </flux:field>
 
         <div>
           <flux:label class="mb-2">Warna</flux:label>
           <div class="flex flex-wrap gap-2">
             @foreach (['#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6'] as $color)
-              <button type="button" @click="$wire.spaceColor = '{{ $color }}'"
+              <button type="button" @click="$wire.createSpaceForm.color = '{{ $color }}'"
                 class="h-8 w-8 rounded-full transition-all hover:scale-110"
-                :class="$wire.spaceColor === '{{ $color }}' ?
+                :class="$wire.createSpaceForm.color === '{{ $color }}' ?
                     'ring-2 ring-offset-2 ring-zinc-900 scale-110 dark:ring-white dark:ring-offset-zinc-900' : ''"
                 style="background-color: {{ $color }}"></button>
             @endforeach
@@ -349,10 +348,10 @@
           <flux:label class="mb-2">Ikon</flux:label>
           <div class="flex flex-wrap gap-1.5">
             @foreach (['folder', 'squares-2x2', 'briefcase', 'rocket-launch', 'star', 'bolt', 'fire', 'globe-alt', 'heart', 'cube'] as $icon)
-              <button type="button" @click="$wire.spaceIcon = '{{ $icon }}'"
+              <button type="button" @click="$wire.createSpaceForm.icon = '{{ $icon }}'"
                 class="flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
-                :class="$wire.spaceIcon === '{{ $icon }}' ?
-                    'border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' :
+                :class="$wire.createSpaceForm.icon === '{{ $icon }}' ?
+                    'border-zinc-900 bg-zinc-100 text-zinc-900 dark:border-zinc-400 dark:bg-zinc-700 dark:text-white' :
                     'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'">
                 <flux:icon name="{{ $icon }}" class="size-4" />
               </button>
@@ -382,18 +381,18 @@
       <form wire:submit="createList" class="space-y-4">
         <flux:field>
           <flux:label>Nama List</flux:label>
-          <flux:input wire:model="listName" placeholder="Contoh: Sprint 1, Backlog, Q1 Tasks..." autofocus />
-          <flux:error name="listName" />
+          <flux:input wire:model="createListForm.name" placeholder="Contoh: Sprint 1, Backlog, Q1 Tasks..." autofocus />
+          <flux:error name="createListForm.name" />
         </flux:field>
 
         <flux:field>
           <flux:label>Space</flux:label>
-          <flux:select wire:model="listSpaceId" placeholder="Pilih space...">
+          <flux:select wire:model="createListForm.spaceId" placeholder="Pilih space...">
             @foreach ($this->spaces as $sp)
               <flux:select.option value="{{ $sp->id }}">{{ $sp->name }}</flux:select.option>
             @endforeach
           </flux:select>
-          <flux:error name="listSpaceId" />
+          <flux:error name="createListForm.spaceId" />
         </flux:field>
 
         <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">

@@ -34,24 +34,32 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['super_user', 'administrator']) || (int) $this->id === (int) self::min('id');
+        return in_array($this->role, ['super_user', 'administrator']) || $this->isFirstUser();
     }
 
     public function isSuperUser(): bool
     {
-        return $this->role === 'super_user' || (int) $this->id === (int) self::min('id');
+        return $this->role === 'super_user' || $this->isFirstUser();
     }
 
     public function canManageAllProjects(): bool
     {
-        return in_array($this->role, ['super_user', 'administrator'])
-            || (int) $this->id === (int) self::min('id');
+        return in_array($this->role, ['super_user', 'administrator']) || $this->isFirstUser();
     }
 
     public function canManageLists(): bool
     {
-        return in_array($this->role, ['super_user', 'administrator'])
-            || (int) $this->id === (int) self::min('id');
+        return in_array($this->role, ['super_user', 'administrator']) || $this->isFirstUser();
+    }
+
+    /**
+     * Check if this is the first registered user (fallback super-admin).
+     * Uses once() to run the SELECT MIN(id) query at most once per request,
+     * regardless of how many times the role-check methods are called.
+     */
+    private function isFirstUser(): bool
+    {
+        return (int) $this->id === once(fn (): int => (int) static::query()->min('id'));
     }
 
     public function isManager(): bool

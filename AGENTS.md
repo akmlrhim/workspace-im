@@ -1,3 +1,52 @@
+# Project Overview
+
+This is an **ERP Project Management** application (erp_im) — a task & project management system for teams, similar to ClickUp/Asana. The app is in Indonesian/Bahasa context (`config/erp.php`).
+
+## Domain Model Hierarchy
+
+```
+Workspace (owned by User)
+  └── WorkspaceMember (users in workspace)
+  └── Space (project/space within workspace)
+        └── TaskList (list/board within a space)
+              └── Task (can have parent_id for subtasks)
+                    ├── TaskStatus
+                    ├── TaskLabel (many-to-many)
+                    ├── TaskChecklist → TaskChecklistItem
+                    ├── TaskComment
+                    ├── TaskAttachment
+                    ├── TimeTracking
+                    └── TaskActivity (audit log)
+```
+
+## Key Architectural Patterns
+
+- **All Project models use `GeneratesUuid` trait** — auto-generates `uuid` column on create. Routes use Eloquent model binding by `id`, not `uuid`.
+- **Module system** — access is controlled via `CheckModuleAccess` middleware and `config/erp.php`. Current modules: `project`, `users`.
+- **Email transport** — uses Brevo API via `App\Mail\BrevoApiTransport` (not standard SMTP).
+- **Real-time** — `TaskUpdated`, `TaskListUpdated`, `SpaceUpdated` events broadcast via Laravel Echo.
+- **Google OAuth** — `GoogleAuthController` handles login + account linking/unlinking via Socialite.
+- **Livewire views** — project pages are full-page Livewire components (no separate controllers).
+
+## Route Naming Convention
+
+All project routes are prefixed `project-management.` and require `auth`, `verified`, and `CheckModuleAccess:project` middleware. Example: `route('project-management.lists.board', [$space, $taskList])`.
+
+## Views Structure
+
+- `resources/views/livewire/project/` — Livewire blade templates for project management
+- `resources/views/layouts/app/` — app shell (header, sidebar)
+- `resources/views/livewire/auth/` — auth pages (Fortify-driven)
+
+## Running the App
+
+- Dev: `composer run dev` (starts Vite + server together)
+- Build: `npm run build`
+- Test: `php artisan test --compact`
+- Format: `vendor/bin/pint --dirty`
+
+---
+
 <laravel-boost-guidelines>
 === foundation rules ===
 

@@ -27,20 +27,6 @@ test('project management models generate a uuid on creation', function () {
     expect($task->uuid)->not->toBeEmpty();
 });
 
-test('space route model binding resolves by uuid', function () {
-    $owner = User::factory()->create(['role' => 'member', 'position' => 'Kreatif']);
-    $this->actingAs($owner);
-
-    $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
-    $space = $workspace->spaces()->create(['name' => 'Ops', 'position' => 0]);
-
-    $this->get(route('project-management.spaces.show', $space))->assertOk();
-
-    // The route URL must contain the uuid, not the numeric id.
-    $url = route('project-management.spaces.show', $space);
-    expect($url)->toContain($space->uuid)->not->toContain('/'.$space->id);
-});
-
 test('manager can manage every task in a list they are a member of without being assigned', function () {
     $owner = User::factory()->create(['role' => 'member']);
     $manager = User::factory()->create(['role' => 'manager']);

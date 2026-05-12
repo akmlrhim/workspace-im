@@ -1,16 +1,14 @@
 <div>
   <div class="mb-4">
     @include('livewire.project.partials.breadcrumb')
-    <div class="flex items-center justify-between gap-3">
+    <div class="flex items-center justify-between gap-3 mb-4">
       <h1 class="hidden lg:block text-2xl font-bold text-zinc-900 dark:text-white">
         {{ $taskList->name }}
       </h1>
-      <div class="flex items-center gap-2">
-        @include('livewire.project.partials.view-toggle', ['active' => 'board'])
-      </div>
     </div>
+    @include('livewire.project.partials.view-toggle', ['active' => 'board'])
 
-    <div class="mt-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700/60 dark:bg-zinc-800/40">
+    <div class="mt-4 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700/60 dark:bg-zinc-800/40">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
 
         <div class="flex items-center justify-between sm:w-auto">
@@ -94,25 +92,11 @@
             @endif
             <div class="h-2.5 w-2.5 shrink-0 rounded-full" style="background-color: {{ $status->color }}"></div>
 
-            @if ($renamingColumnId === $status->id)
-              <form wire:submit="saveColumnRename" class="flex items-center gap-1 min-w-0 flex-1">
-                <flux:input wire:model="renamingColumnName"
-                  class="w-full !px-1.5 !py-0.5 text-sm font-semibold !rounded" autofocus
-                  @keydown.escape="$wire.cancelColumnRename()" />
-                <button type="submit" class="p-0.5 text-emerald-500 hover:text-emerald-600">
-                  <flux:icon name="check" class="size-3.5" />
-                </button>
-                <button type="button" wire:click="cancelColumnRename" class="p-0.5 text-zinc-400 hover:text-zinc-600">
-                  <flux:icon name="x-mark" class="size-3.5" />
-                </button>
-              </form>
-            @else
               <span class="truncate text-sm font-semibold text-zinc-700 dark:text-zinc-300">{{ $status->name }}</span>
               <span data-task-count
                 class="rounded-md bg-zinc-200 px-1.5 py-0.5 text-xs font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
                 {{ $status->tasks->count() }}
               </span>
-            @endif
           </div>
 
           @if ($canManage)
@@ -296,14 +280,20 @@
         @if ($showNewColumnInput)
           <div
             class="rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-3 dark:border-indigo-500/40 dark:bg-indigo-900/10">
-            <form wire:submit="addColumn" class="space-y-3">
-              <flux:input wire:model="newColumnName" placeholder="Nama kolom..." size="sm" autofocus />
+            <form
+              x-data="{ newColor: '{{ $newColumn->color }}' }"
+              x-init="$wire.$watch('newColumn.color', v => newColor = v)"
+              @submit.prevent="$wire.newColumn.color = newColor; $wire.addColumn()"
+              class="space-y-3">
+              <flux:input wire:model="newColumn.name" placeholder="Nama kolom..." size="sm" autofocus />
+              <flux:error name="newColumn.name" class="text-xs" />
               <div class="flex items-center gap-2">
                 <span class="text-xs text-zinc-500 dark:text-zinc-400">Warna:</span>
                 <div class="flex gap-1">
                   @foreach (['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] as $color)
-                    <button type="button" @click="$wire.set('newColumnColor', '{{ $color }}')"
-                      class="h-5 w-5 rounded-full border-2 transition-transform hover:scale-110 {{ $newColumnColor === $color ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent' }}"
+                    <button type="button" @click="newColor = '{{ $color }}'"
+                      class="h-5 w-5 rounded-full border-2 transition-transform hover:scale-110"
+                      :class="newColor === '{{ $color }}' ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent'"
                       style="background-color: {{ $color }}"></button>
                   @endforeach
                 </div>
@@ -366,10 +356,79 @@
       </div>
     </div>
   </flux:modal>
+
+  <flux:modal wire:model="showRenameColumnModal" class="w-full max-w-sm">
+    <div
+      x-data="{ color: '{{ $renamingColumnColor }}', saving: false }"
+      x-init="
+        $wire.$watch('renamingColumnColor', v => color = v);
+        $wire.$watch('showRenameColumnModal', open => {
+          if (open) $nextTick(() => $el.querySelector('input')?.focus());
+          else saving = false;
+        });
+      "
+    >
+      <form
+        @submit.prevent="if (saving) return; saving = true; $wire.renamingColumnColor = color; $wire.saveColumnRename().finally(() => saving = false)"
+        class="space-y-5"
+      >
+        <flux:heading size="lg">Ubah Kolom</flux:heading>
+
+        <flux:input
+          wire:model.blur="renamingColumnName"
+          label="Nama Kolom"
+          placeholder="Nama kolom..."
+          @keydown.escape="$wire.cancelColumnRename()"
+        />
+
+        <div>
+          <flux:label>Warna</flux:label>
+          <div class="mt-2 flex flex-wrap gap-2">
+            @foreach (['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] as $color)
+              <button
+                type="button"
+                @click="color = '{{ $color }}'"
+                title="{{ $color }}"
+                class="h-7 w-7 rounded-full border-[3px] transition-transform hover:scale-110"
+                :class="color === '{{ $color }}' ? 'border-zinc-900 scale-110 dark:border-white' : 'border-transparent'"
+                style="background-color: {{ $color }}"
+              ></button>
+            @endforeach
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-1">
+          <flux:button variant="ghost" type="button" wire:click="cancelColumnRename">Batal</flux:button>
+          <flux:button variant="primary" type="submit">
+            <span x-show="!saving">Simpan</span>
+            <span x-show="saving" x-cloak class="flex items-center gap-1.5">
+              <svg class="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Menyimpan...
+            </span>
+          </flux:button>
+        </div>
+      </form>
+    </div>
+  </flux:modal>
 </div>
 
 @script
   <script>
+    // SortableJS has an internal bug where it accesses lastElementChild on a null
+    // element during dragover on empty/morphed columns. Our _pendingFullReinit guard
+    // prevents the functional bug; this suppressor silences the console noise.
+    window.addEventListener('error', (e) => {
+      if (
+        e.message?.includes('lastElementChild') &&
+        e.filename?.includes('sortablejs')
+      ) {
+        e.preventDefault();
+      }
+    }, true);
+
     Alpine.data('kanbanBoard', (canManage = true) => ({
       // Keyed by column DOM element → SortableInstance
       _taskSortables: new Map(),
@@ -382,6 +441,8 @@
       _canManage: canManage,
       // Columns that need reinit after current drag ends (queued from broadcasts)
       _pendingReinit: [],
+      // Set when a kanban-col-wrapper morphed during drag — needs full reinit after drag
+      _pendingFullReinit: false,
 
       // Board pan-scroll state
       isDown: false,
@@ -410,6 +471,13 @@
           } else if (el?.classList?.contains('kanban-col-wrapper')) {
             clearTimeout(this._colDebounce);
             this._colDebounce = setTimeout(() => {
+              if (this._isDraggingTask) {
+                // Never destroy Sortable while a drag is active — this.el would
+                // become null and the in-flight dragover event would crash.
+                // Queue a full reinit to run after onEnd fires.
+                this._pendingFullReinit = true;
+                return;
+              }
               this.$nextTick(() => {
                 this._columnSortable?.destroy();
                 this._columnSortable = null;
@@ -471,6 +539,7 @@
           draggable: '.task-card',
           filter: '.task-locked',
           preventOnFilter: true,
+          emptyInsertThreshold: 8,
           scroll: true,
           scrollSensitivity: 60,
           scrollSpeed: 10,
@@ -504,7 +573,12 @@
 
             setTimeout(() => {
               this._isDraggingTask = false;
-              if (this._pendingReinit.length) {
+              if (this._pendingFullReinit) {
+                // Column structure changed during drag — do a full board reinit.
+                this._pendingFullReinit = false;
+                this._pendingReinit = [];
+                this.$nextTick(() => this._initAll());
+              } else if (this._pendingReinit.length) {
                 const pending = this._pendingReinit.splice(0);
                 this.$nextTick(() => pending.forEach(el => this._reinitTaskSortable(el)));
               }

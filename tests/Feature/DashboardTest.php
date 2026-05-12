@@ -2,15 +2,15 @@
 
 use App\Models\User;
 
-test('guests are redirected to the login page', function () {
-    $response = $this->get(route('dashboard'));
+test('unauthenticated users are redirected to login', function () {
+    $response = $this->get(route('project-management.general-taskboard'));
     $response->assertRedirect(route('login'));
 });
 
-test('authenticated users can visit the dashboard', function () {
-    $user = User::factory()->create();
+test('authenticated users with access can visit the general taskboard', function () {
+    $user = User::factory()->create(['role' => 'member', 'position' => 'Developer']);
     $this->actingAs($user);
 
-    $response = $this->get(route('dashboard'));
+    $response = $this->get(route('project-management.general-taskboard'));
     $response->assertOk();
 });

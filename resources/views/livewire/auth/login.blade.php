@@ -25,7 +25,7 @@
         <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@gmail.com"
           autofocus autocomplete="email"
           class="block w-full rounded-xl border px-4 py-3 text-sm shadow-sm outline-none transition hover:border-zinc-300 dark:hover:border-zinc-600 focus:ring-2
-            {{ $errors->has('email') ? 'border-red-400 bg-red-50 text-zinc-900 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500/60 dark:bg-red-900/20 dark:text-zinc-100' : 'border-zinc-200 bg-white text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500' }}" />
+            {{ $errors->has('email') ? 'border-red-400 bg-red-50 text-zinc-900 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500/60 dark:bg-red-900/20 dark:text-zinc-100' : 'border-zinc-200 bg-white text-zinc-900 placeholder-zinc-400 focus:border-zinc-900 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-400 dark:focus:ring-zinc-400/10' }}" />
         @error('email')
           <p class="flex items-center gap-1 text-xs text-red-600">
             <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -43,7 +43,7 @@
           <label for="password" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Password</label>
           @if (Route::has('password.request'))
             <a href="{{ route('password.request') }}" wire:navigate
-              class="text-xs font-medium text-indigo-600 transition hover:text-indigo-500">
+              class="text-xs font-medium text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white">
               Lupa password?
             </a>
           @endif
@@ -52,7 +52,7 @@
           <input id="password" name="password" :type="show ? 'text' : 'password'" placeholder="••••••••"
             autocomplete="current-password"
             class="block w-full rounded-xl border px-4 py-3 pr-12 text-sm shadow-sm outline-none transition hover:border-zinc-300 dark:hover:border-zinc-600 focus:ring-2
-              {{ $errors->has('password') ? 'border-red-400 bg-red-50 text-zinc-900 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500/60 dark:bg-red-900/20 dark:text-zinc-100' : 'border-zinc-200 bg-white text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500' }}" />
+              {{ $errors->has('password') ? 'border-red-400 bg-red-50 text-zinc-900 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500/60 dark:bg-red-900/20 dark:text-zinc-100' : 'border-zinc-200 bg-white text-zinc-900 placeholder-zinc-400 focus:border-zinc-900 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-400 dark:focus:ring-zinc-400/10' }}" />
           <button type="button" tabindex="-1" @click="show = !show"
             class="absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400 transition hover:text-zinc-600">
             <svg x-show="!show" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -82,14 +82,14 @@
       {{-- Remember me --}}
       <div class="flex items-center gap-2.5">
         <input id="remember" name="remember" type="checkbox" {{ old('remember') ? 'checked' : '' }}
-          class="h-4 w-4 cursor-pointer rounded border-zinc-300 accent-indigo-600" />
+          class="h-4 w-4 cursor-pointer rounded border-zinc-300 accent-zinc-900 dark:accent-white" />
         <label for="remember" class="cursor-pointer select-none text-sm text-zinc-600 dark:text-zinc-400">Ingat
           saya</label>
       </div>
 
       {{-- Submit --}}
       <button type="submit" data-test="login-button"
-        class="flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 active:scale-[0.98] cursor-pointer">
+        class="flex w-full items-center justify-center rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 active:scale-[0.98] cursor-pointer dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus:ring-white dark:focus:ring-offset-zinc-950">
         Masuk
       </button>
     </form>
@@ -103,7 +103,7 @@
 
     {{-- Google --}}
     <a href="{{ route('auth.google') }}"
-      class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-700/60">
+      class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-300/50 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-700/60">
       <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path fill="#4285F4"
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -122,7 +122,7 @@
       <p class="text-center text-sm text-zinc-500 dark:text-zinc-400">
         Belum punya akun?
         <a href="{{ route('register') }}" wire:navigate
-          class="font-medium text-indigo-600 transition hover:text-indigo-500">
+          class="font-medium text-zinc-900 transition hover:text-zinc-600 dark:text-white dark:hover:text-zinc-300">
           Daftar sekarang
         </a>
       </p>

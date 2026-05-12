@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Space extends Model
@@ -21,6 +22,18 @@ class Space extends Model
         static::creating(function (Space $space) {
             if (empty($space->slug)) {
                 $space->slug = Str::slug($space->name);
+            }
+        });
+
+        static::deleting(function (Space $space) {
+            $paths = TaskAttachment::query()
+                ->whereHas('task.taskList', fn ($q) => $q->where('space_id', $space->id))
+                ->where('is_link', false)
+                ->whereNotNull('path')
+                ->pluck('path');
+
+            if ($paths->isNotEmpty()) {
+                Storage::disk('public')->delete($paths->all());
             }
         });
     }
