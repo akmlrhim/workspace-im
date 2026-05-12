@@ -672,11 +672,10 @@ class TaskDetail extends Component
 			return;
 		}
 
-		// Scope to the current task — authorization is already handled by
-		// authorizeManageTask(), so any team member who can manage the task
-		// may delete its attachments regardless of who uploaded them.
 		$attachment = TaskAttachment::where('id', $attachmentId)
 			->where('task_id', $this->taskId)
+			->whereNull('task_comment_id')
+			->whereNull('task_checklist_item_id')
 			->firstOrFail();
 
 		if (! $attachment->is_link && $attachment->path) {
