@@ -53,6 +53,7 @@ jobs:
             set -e
 
             APP=/home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
+            DOMAIN=https://workspace.impostmedia.com
 
             PHP=$(command -v php8.3 2>/dev/null \
               || command -v php83 2>/dev/null \
@@ -63,8 +64,7 @@ jobs:
 
             $PHP artisan down --retry=15 || true
 
-            # Pastikan kode server selalu bersih sesuai main,
-            # menghindari kegagalan silent ketika git pull conflict.
+            # Paksa server = remote, aman dari conflict / perubahan lokal
             git fetch https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
             git reset --hard FETCH_HEAD
 
@@ -72,9 +72,9 @@ jobs:
               --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
             $PHP artisan migrate --force
+            $PHP artisan storage:link || true
 
-            # Set env vars SEBELUM clear cache agar config:cache langsung
-            # memakai nilai terbaru, bukan nilai dari deploy sebelumnya.
+            # Set env vars SEBELUM clear cache agar config:cache langsung pakai nilai terbaru
             set_env() {
               local KEY="$1" VAL="$2"
               grep -q "^${KEY}=" .env \
@@ -96,6 +96,14 @@ jobs:
 
             $PHP artisan queue:restart || true
             chmod -R 775 storage bootstrap/cache
+
+            # Clear OPcache FPM di Hostinger shared hosting.
+            # CLI php dan FPM punya OPcache terpisah — satu-satunya cara reset FPM
+            # adalah via HTTP request ke file PHP langsung (bypass Laravel routing).
+            OPCACHE_FILE="$APP/public/opcache_$(date +%s).php"
+            echo '<?php if (function_exists("opcache_reset")) opcache_reset(); ?>' > "$OPCACHE_FILE"
+            curl -sf --max-time 10 "$DOMAIN/$(basename $OPCACHE_FILE)" || true
+            rm -f "$OPCACHE_FILE"
 
             CRON_SCHEDULER="* * * * * cd $APP && $PHP artisan schedule:run >> /dev/null 2>&1"
             (crontab -l 2>/dev/null | grep -qF "artisan schedule:run") \
