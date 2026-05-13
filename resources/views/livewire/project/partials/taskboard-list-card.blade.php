@@ -1,4 +1,4 @@
-<div wire:key="list-{{ $list->id }}" x-data="{ listName: @js($list->name), memberIds: @js($list->members->pluck('id')->values()->all()) }"
+<div wire:key="list-{{ $list->id }}"
   class="group relative flex flex-col rounded-xl border border-zinc-200 bg-white p-4 transition-all duration-200 hover:border-indigo-300 hover:shadow-md dark:border-zinc-700/80 dark:bg-zinc-800/50 dark:hover:border-indigo-500/50 dark:hover:bg-zinc-800">
 
   <div class="flex items-start justify-between gap-4">
@@ -20,13 +20,14 @@
 
     @if (auth()->user()->canManageLists())
       <div class="relative z-20 flex shrink-0 items-center gap-1">
-        <button type="button" @click.prevent="$wire.openManageMembers({{ $list->id }})"
+        <button type="button"
+          @click.prevent="$flux.modal('manage-members-modal').show(); $wire.openManageMembers({{ $list->id }})"
           class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
           title="Kelola Anggota List">
           <flux:icon name="users" class="size-4" />
         </button>
         <button type="button"
-          @click.prevent="$wire.editingListId = {{ $list->id }}; $wire.editListName = listName; $wire.editListSpaceId = {{ $list->space_id }}; $wire.showEditList = true; $flux.modal('edit-list-modal').show()"
+          @click.prevent="$wire.editingListId = {{ $list->id }}; $wire.editListName = @js($list->name); $wire.editListSpaceId = {{ $list->space_id }}; $wire.showEditList = true; $flux.modal('edit-list-modal').show()"
           class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-blue-600 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-zinc-700 dark:hover:text-blue-400"
           title="Edit list">
           <flux:icon name="pencil-square" class="size-4" />

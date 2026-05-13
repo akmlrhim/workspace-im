@@ -461,21 +461,29 @@
       </div>
 
       <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
-        @foreach ($this->allUsers as $user)
-          <label wire:key="gtb-user-{{ $user->id }}"
-            class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
-            <input type="checkbox"
-              wire:model.live="listMemberIds"
-              value="{{ $user->id }}"
-              class="size-4 cursor-pointer rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-700 dark:checked:bg-indigo-500" />
-            <flux:avatar circle :name="$user->name" :initials="$user->initials()" :src="$user->avatar"
-              size="sm" />
-            <div class="min-w-0 flex-1">
-              <span class="block font-medium text-zinc-800 dark:text-zinc-200">{{ $user->name }}</span>
-              <span class="block truncate text-xs text-zinc-400">{{ $user->email }}</span>
-            </div>
-          </label>
-        @endforeach
+        <div wire:loading wire:target="openManageMembers"
+          class="flex min-h-[120px] items-center justify-center">
+          <div
+            class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400">
+          </div>
+        </div>
+        <div wire:loading.remove wire:target="openManageMembers">
+          @foreach ($this->allUsers as $user)
+            <label wire:key="gtb-user-{{ $user->id }}"
+              class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
+              <input type="checkbox"
+                wire:model.live="listMemberIds"
+                value="{{ $user->id }}"
+                class="size-4 cursor-pointer rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-700 dark:checked:bg-indigo-500" />
+              <flux:avatar circle :name="$user->name" :initials="$user->initials()" :src="$user->avatar"
+                size="sm" />
+              <div class="min-w-0 flex-1">
+                <span class="block font-medium text-zinc-800 dark:text-zinc-200">{{ $user->name }}</span>
+                <span class="block truncate text-xs text-zinc-400">{{ $user->email }}</span>
+              </div>
+            </label>
+          @endforeach
+        </div>
       </div>
 
       <div class="flex items-center justify-between">
