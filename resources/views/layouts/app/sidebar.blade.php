@@ -72,12 +72,14 @@
       <div class="flex items-center gap-1">
         @foreach ($modules as $key => $module)
           @php
+            $requiredRole    = $module['required_role'] ?? null;
             $allowedPositions = $module['allowed_positions'] ?? [];
-            $hasModuleAccess =
-                auth()->check() &&
-                (empty($allowedPositions) ||
-                    auth()->user()->isAdmin() ||
-                    in_array(auth()->user()->position, $allowedPositions));
+            $hasModuleAccess = auth()->check() && ! auth()->user()->isGuest() && match (true) {
+                $requiredRole !== null => auth()->user()->role === $requiredRole,
+                empty($allowedPositions) => true,
+                auth()->user()->isAdmin() => true,
+                default => in_array(auth()->user()->position, $allowedPositions),
+            };
           @endphp
 
           @if ($hasModuleAccess)
