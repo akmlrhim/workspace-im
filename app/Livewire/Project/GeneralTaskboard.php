@@ -22,478 +22,492 @@ use Livewire\Component;
 #[Title('General Taskboard')]
 class GeneralTaskboard extends Component
 {
-	public string $search = '';
+    public string $search = '';
 
-	public ?int $workspaceId = null;
+    public ?int $workspaceId = null;
 
-	public string $activeTab = 'lists';
+    public string $activeTab = 'lists';
 
-	// ─── Space creation ────────────────────────────────────────
-	public bool $showCreateSpace = false;
+    // ─── Space creation ────────────────────────────────────────
+    public bool $showCreateSpace = false;
 
-	public SpaceForm $createSpaceForm;
+    public SpaceForm $createSpaceForm;
 
-	// ─── List creation ─────────────────────────────────────────
-	public bool $showCreateList = false;
+    // ─── List creation ─────────────────────────────────────────
+    public bool $showCreateList = false;
 
-	public TaskListForm $createListForm;
+    public TaskListForm $createListForm;
 
-	// ─── Edit space ────────────────────────────────────────────
-	public bool $showEditSpace = false;
+    // ─── Edit space ────────────────────────────────────────────
+    public bool $showEditSpace = false;
 
-	public ?int $editingSpaceId = null;
+    public ?int $editingSpaceId = null;
 
-	public string $editSpaceName = '';
+    public string $editSpaceName = '';
 
-	public string $editSpaceColor = '#6366f1';
+    public string $editSpaceColor = '#6366f1';
 
-	public string $editSpaceIcon = 'folder';
+    public string $editSpaceIcon = 'folder';
 
-	// ─── Edit list ─────────────────────────────────────────────
-	public bool $showEditList = false;
+    // ─── Edit list ─────────────────────────────────────────────
+    public bool $showEditList = false;
 
-	public ?int $editingListId = null;
+    public ?int $editingListId = null;
 
-	public string $editListName = '';
+    public string $editListName = '';
 
-	public ?int $editListSpaceId = null;
+    public ?int $editListSpaceId = null;
 
-	// ─── Manage list members ───────────────────────────────────
-	public bool $showManageMembers = false;
+    // ─── Manage list members ───────────────────────────────────
+    public bool $showManageMembers = false;
 
-	public ?int $managingListId = null;
+    public ?int $managingListId = null;
 
-	public array $listMemberIds = [];
+    public array $listMemberIds = [];
 
-	// ─── Calendar ──────────────────────────────────────────────
-	public int $calYear;
+    // ─── Calendar ──────────────────────────────────────────────
+    public int $calYear;
 
-	public int $calMonth;
+    public int $calMonth;
 
-	/** Null = semua space ditampilkan */
-	public ?int $calSelectedSpaceId = null;
+    /** Null = semua space ditampilkan */
+    public ?int $calSelectedSpaceId = null;
 
-	// ─── Task detail (calendar) ────────────────────────────────
-	public ?int $selectedTaskId = null;
+    // ─── Task detail (calendar) ────────────────────────────────
+    public ?int $selectedTaskId = null;
 
-	public bool $showTaskDetail = false;
+    public bool $showTaskDetail = false;
 
-	public function mount(): void
-	{
-		$user = auth()->user();
+    public function mount(): void
+    {
+        $user = auth()->user();
 
-		// Find the workspace the user belongs to (member or owner).
-		// Prefer the oldest workspace (lowest id) so all members of the
-		// same shared workspace end up on the same broadcast channel.
-		$workspace = Workspace::whereHas('members', fn($q) => $q->where('user_id', $user->id))
-			->orderBy('id')
-			->first();
+        // Find the workspace the user belongs to (member or owner).
+        // Prefer the oldest workspace (lowest id) so all members of the
+        // same shared workspace end up on the same broadcast channel.
+        $workspace = Workspace::whereHas('members', fn ($q) => $q->where('user_id', $user->id))
+            ->orderBy('id')
+            ->first();
 
-		if (! $workspace) {
-			$workspace = Workspace::create([
-				'name' => $user->name . "'s Workspace",
-				'owner_id' => $user->id,
-			]);
+        if (! $workspace) {
+            $workspace = Workspace::create([
+                'name' => $user->name."'s Workspace",
+                'owner_id' => $user->id,
+            ]);
 
-			WorkspaceMember::create([
-				'workspace_id' => $workspace->id,
-				'user_id' => $user->id,
-				'role' => 'owner',
-			]);
-		}
+            WorkspaceMember::create([
+                'workspace_id' => $workspace->id,
+                'user_id' => $user->id,
+                'role' => 'owner',
+            ]);
+        }
 
-		$this->workspaceId = $workspace->id;
-		$this->calYear = now()->year;
-		$this->calMonth = now()->month;
-		$this->calSelectedSpaceId = Space::accessibleBy($user->id)->orderBy('position')->value('id');
-	}
+        $this->workspaceId = $workspace->id;
+        $this->calYear = now()->year;
+        $this->calMonth = now()->month;
+        $this->calSelectedSpaceId = Space::accessibleBy($user->id)->orderBy('position')->value('id');
+    }
 
-	/** @return array<string, string> */
-	public function getListeners(): array
-	{
-		$listeners = [
-			'close-task-detail' => 'closeTaskDetail',
-			'task-updated' => '$refresh',
-			'task-deleted' => 'onTaskDeleted',
-		];
+    /** @return array<string, string> */
+    public function getListeners(): array
+    {
+        $listeners = [
+            'close-task-detail' => 'closeTaskDetail',
+            'task-updated' => '$refresh',
+            'task-deleted' => 'onTaskDeleted',
+        ];
 
-		if ($this->workspaceId) {
-			$listeners["echo:workspace.{$this->workspaceId},SpaceUpdated"] = 'onBroadcastUpdate';
-			$listeners["echo:workspace.{$this->workspaceId},TaskListUpdated"] = 'onBroadcastUpdate';
-		}
+        if ($this->workspaceId) {
+            $listeners["echo:workspace.{$this->workspaceId},SpaceUpdated"] = 'onBroadcastUpdate';
+            $listeners["echo:workspace.{$this->workspaceId},TaskListUpdated"] = 'onBroadcastUpdate';
+        }
 
-		return $listeners;
-	}
-
-	public function onBroadcastUpdate(array $event): void
-	{
-		if (($event['triggeredBy'] ?? null) == auth()->id()) {
-			$this->skipRender();
-
-			return;
-		}
-
-		unset($this->listSpaces, $this->calendarData, $this->spaces);
-	}
-
-	private function broadcastChange(): void
-	{
-		SpaceUpdated::dispatch($this->workspaceId, auth()->id());
-	}
-
-	// ─── Space ─────────────────────────────────────────────────
-
-	public function updateSpace(): void
-	{
-		if (! auth()->user()->canManageLists()) {
-			Flux::toast('Hanya Administrator yang dapat mengelola space.', variant: 'danger');
-
-			return;
-		}
-
-		$space = Space::findOrFail($this->editingSpaceId);
-
-		$this->validate([
-			'editSpaceName' => 'required|min:2|max:100|unique:spaces,name,' . $this->editingSpaceId,
-			'editSpaceColor' => 'required|string',
-		], [
-			'editSpaceName.required' => 'Nama space wajib diisi.',
-			'editSpaceName.min' => 'Nama space minimal 2 karakter.',
-			'editSpaceName.max' => 'Nama space maksimal 100 karakter.',
-			'editSpaceName.unique' => 'Nama space sudah digunakan.',
-		]);
-
-		$space->update([
-			'name' => trim($this->editSpaceName),
-			'color' => $this->editSpaceColor,
-			'icon' => $this->editSpaceIcon,
-		]);
-
-		unset($this->listSpaces, $this->spaces);
-		$this->reset(['editingSpaceId', 'editSpaceName', 'showEditSpace']);
-		$this->editSpaceColor = '#6366f1';
-		$this->editSpaceIcon = 'folder';
-		$this->dispatch('sidebar-updated');
-		$this->broadcastChange();
-		Flux::toast('Space berhasil diperbarui.', variant: 'success');
-	}
-
-	public function deleteSpace(int $spaceId): void
-	{
-		if (! auth()->user()->canManageLists()) {
-			Flux::toast('Hanya Administrator yang dapat mengelola space.', variant: 'danger');
-
-			return;
-		}
-
-		Space::findOrFail($spaceId)->delete();
-
-		unset($this->listSpaces, $this->spaces);
-		$this->skipRender();
-		$this->dispatch('sidebar-updated');
-		$this->broadcastChange();
-		Flux::toast('Space berhasil dihapus.', variant: 'success');
-	}
-
-	public function createSpace(): void
-	{
-		$this->createSpaceForm->validate();
-
-		$workspace = Workspace::findOrFail($this->workspaceId);
-
-		$workspace->spaces()->create([
-			'name' => trim($this->createSpaceForm->name),
-			'color' => $this->createSpaceForm->color,
-			'icon' => $this->createSpaceForm->icon,
-			'position' => (Space::max('position') ?? -1) + 1,
-		]);
-
-		unset($this->listSpaces, $this->spaces);
-		$this->createSpaceForm->reset();
-		$this->showCreateSpace = false;
-		$this->dispatch('sidebar-updated');
-		$this->broadcastChange();
-		Flux::toast('Space berhasil dibuat.', variant: 'success');
-	}
-
-	// ─── List ──────────────────────────────────────────────────
-
-	public function createList(): void
-	{
-		$this->createListForm->validate();
-
-		$space = Space::findOrFail($this->createListForm->spaceId);
-
-		$list = $space->lists()->create([
-			'name' => trim($this->createListForm->name),
-			'position' => ($space->lists()->max('position') ?? -1) + 1,
-		]);
-
-		$list->createDefaultStatuses();
-		$list->members()->attach(auth()->id());
-
-		unset($this->listSpaces);
-		$this->createListForm->reset();
-		$this->showCreateList = false;
-		$this->dispatch('sidebar-updated');
-		$this->broadcastChange();
-		Flux::toast('List berhasil dibuat.', variant: 'success');
-	}
-
-	// ─── Edit list ─────────────────────────────────────────────
-
-	private function authorizeListManagement(): bool
-	{
-		if (auth()->user()->canManageLists()) {
-			return true;
-		}
-
-		Flux::toast('Hanya Administrator yang dapat mengelola list.', variant: 'danger');
-
-		return false;
-	}
-
-	public function openEditList(int $listId): void
-	{
-		if (! $this->authorizeListManagement()) {
-			return;
-		}
-
-		$list = TaskList::findOrFail($listId);
-		$this->editingListId = $list->id;
-		$this->editListName = $list->name;
-		$this->editListSpaceId = $list->space_id;
-		$this->showEditList = true;
-	}
-
-	public function openManageMembers(int $listId): void
-	{
-		if (! $this->authorizeListManagement()) {
-			return;
-		}
-
-		$list = TaskList::with('members')->findOrFail($listId);
-		$this->managingListId = $list->id;
-		$this->listMemberIds = $list->members->pluck('id')->toArray();
-		$this->showManageMembers = true;
-	}
-
-	public function updateList(): void
-	{
-		if (! $this->authorizeListManagement()) {
-			return;
-		}
-
-		$list = TaskList::findOrFail($this->editingListId);
-		$this->validate(
-			[
-				'editListName' => 'required|min:2|max:100|unique:task_lists,name,' . $this->editingListId . ',id,space_id,' . $this->editListSpaceId,
-				'editListSpaceId' => 'required|exists:spaces,id',
-			],
-			[
-				'editListName.required' => 'Nama list wajib diisi.',
-				'editListName.unique' => 'Nama list sudah digunakan di space tujuan.',
-				'editListSpaceId.required' => 'Pilih space tujuan terlebih dahulu.',
-			]
-		);
-
-		$targetSpace = Space::accessibleBy(auth()->id())->whereKey($this->editListSpaceId)->firstOrFail();
-		$updates = [
-			'name' => trim($this->editListName),
-			'space_id' => $targetSpace->id,
-		];
-
-		if ($list->space_id !== $targetSpace->id) {
-			$updates['position'] = ($targetSpace->lists()->max('position') ?? -1) + 1;
-		}
-
-		$list->update($updates);
-		unset($this->listSpaces);
-		$this->reset(['editingListId', 'editListName', 'editListSpaceId', 'showEditList']);
-		$this->dispatch('sidebar-updated');
-		$this->broadcastChange();
-		Flux::toast('List berhasil diperbarui.', variant: 'success');
-	}
-
-	// ─── Members ───────────────────────────────────────────────
-
-	public function saveMembers(): void
-	{
-		if (! $this->authorizeListManagement()) {
-			return;
-		}
-
-		$list = TaskList::with(['members', 'tasks', 'space'])->findOrFail($this->managingListId);
-
-		// Whitelist: only sync IDs that belong to confirmed workspace members.
-		// Prevents submitting arbitrary user IDs from the browser.
-		$workspaceMemberIds = WorkspaceMember::where('workspace_id', $this->workspaceId)
-			->pluck('user_id');
-
-		$validIds = collect($this->listMemberIds)
-			->map(fn($id) => (int) $id)
-			->intersect($workspaceMemberIds)
-			->values()
-			->toArray();
-
-		$removedIds = array_diff($list->members->pluck('id')->toArray(), $validIds);
-		$list->members()->sync($validIds);
-
-		if (! empty($removedIds)) {
-			foreach ($list->tasks as $task) {
-				$task->assignees()->detach($removedIds);
-			}
-		}
-
-		unset($this->listSpaces);
-		$this->reset(['managingListId', 'listMemberIds', 'showManageMembers']);
-		$this->broadcastChange();
-		Flux::toast('Anggota list berhasil diperbarui.', variant: 'success');
-	}
-
-	// ─── Calendar ──────────────────────────────────────────────
-
-	public function calPrevMonth(): void
-	{
-		$date = Carbon::create($this->calYear, $this->calMonth, 1)->subMonth();
-		$this->calYear = $date->year;
-		$this->calMonth = $date->month;
-	}
-
-	public function calNextMonth(): void
-	{
-		$date = Carbon::create($this->calYear, $this->calMonth, 1)->addMonth();
-		$this->calYear = $date->year;
-		$this->calMonth = $date->month;
-	}
-
-	public function calToday(): void
-	{
-		$this->calYear = now()->year;
-		$this->calMonth = now()->month;
-	}
-
-	public function openTaskDetail(int $taskId): void
-	{
-		$this->selectedTaskId = $taskId;
-		$this->showTaskDetail = true;
-	}
-
-	public function onTaskDeleted(int $taskId): void
-	{
-		if ($this->selectedTaskId === $taskId) {
-			$this->selectedTaskId = null;
-		}
-		$this->showTaskDetail = false;
-	}
-
-	public function closeTaskDetail(): void
-	{
-		$this->showTaskDetail = false;
-	}
+        return $listeners;
+    }
+
+    public function onBroadcastUpdate(array $event): void
+    {
+        if (($event['triggeredBy'] ?? null) == auth()->id()) {
+            $this->skipRender();
+
+            return;
+        }
+
+        unset($this->listSpaces, $this->calendarData, $this->spaces);
+    }
+
+    private function broadcastChange(): void
+    {
+        SpaceUpdated::dispatch($this->workspaceId, auth()->id());
+    }
+
+    // ─── Space ─────────────────────────────────────────────────
+
+    public function updateSpace(): void
+    {
+        if (! auth()->user()->canManageLists()) {
+            Flux::toast('Hanya Administrator yang dapat mengelola space.', variant: 'danger');
+
+            return;
+        }
+
+        if (! $this->editingSpaceId) {
+            return;
+        }
+
+        $space = Space::findOrFail($this->editingSpaceId);
+
+        $this->validate([
+            'editSpaceName' => 'required|min:2|max:100|unique:spaces,name,'.$this->editingSpaceId,
+            'editSpaceColor' => 'required|string',
+        ], [
+            'editSpaceName.required' => 'Nama space wajib diisi.',
+            'editSpaceName.min' => 'Nama space minimal 2 karakter.',
+            'editSpaceName.max' => 'Nama space maksimal 100 karakter.',
+            'editSpaceName.unique' => 'Nama space sudah digunakan.',
+        ]);
+
+        $space->update([
+            'name' => trim($this->editSpaceName),
+            'color' => $this->editSpaceColor,
+            'icon' => $this->editSpaceIcon,
+        ]);
+
+        unset($this->listSpaces, $this->spaces);
+        $this->reset(['editingSpaceId', 'editSpaceName', 'showEditSpace']);
+        $this->editSpaceColor = '#6366f1';
+        $this->editSpaceIcon = 'folder';
+        $this->dispatch('sidebar-updated');
+        $this->broadcastChange();
+        Flux::toast('Space berhasil diperbarui.', variant: 'success');
+    }
+
+    public function deleteSpace(int $spaceId): void
+    {
+        if (! auth()->user()->canManageLists()) {
+            Flux::toast('Hanya Administrator yang dapat mengelola space.', variant: 'danger');
+
+            return;
+        }
+
+        Space::accessibleBy(auth()->id())->findOrFail($spaceId)->delete();
+
+        unset($this->listSpaces, $this->spaces);
+        $this->skipRender();
+        $this->dispatch('sidebar-updated');
+        $this->broadcastChange();
+        Flux::toast('Space berhasil dihapus.', variant: 'success');
+    }
+
+    public function createSpace(): void
+    {
+        $this->createSpaceForm->validate();
+
+        $workspace = Workspace::findOrFail($this->workspaceId);
+
+        $workspace->spaces()->create([
+            'name' => trim($this->createSpaceForm->name),
+            'color' => $this->createSpaceForm->color,
+            'icon' => $this->createSpaceForm->icon,
+            'position' => (Space::max('position') ?? -1) + 1,
+        ]);
+
+        unset($this->listSpaces, $this->spaces);
+        $this->createSpaceForm->reset();
+        $this->showCreateSpace = false;
+        $this->dispatch('sidebar-updated');
+        $this->broadcastChange();
+        Flux::toast('Space berhasil dibuat.', variant: 'success');
+    }
+
+    // ─── List ──────────────────────────────────────────────────
+
+    public function createList(): void
+    {
+        $this->createListForm->validate();
+
+        $space = Space::findOrFail($this->createListForm->spaceId);
+
+        $list = $space->lists()->create([
+            'name' => trim($this->createListForm->name),
+            'position' => ($space->lists()->max('position') ?? -1) + 1,
+        ]);
+
+        $list->createDefaultStatuses();
+        $list->members()->attach(auth()->id());
+
+        unset($this->listSpaces);
+        $this->createListForm->reset();
+        $this->showCreateList = false;
+        $this->dispatch('sidebar-updated');
+        $this->broadcastChange();
+        Flux::toast('List berhasil dibuat.', variant: 'success');
+    }
+
+    // ─── Edit list ─────────────────────────────────────────────
+
+    private function authorizeListManagement(): bool
+    {
+        if (auth()->user()->canManageLists()) {
+            return true;
+        }
+
+        Flux::toast('Hanya Administrator yang dapat mengelola list.', variant: 'danger');
+
+        return false;
+    }
+
+    public function openEditList(int $listId): void
+    {
+        if (! $this->authorizeListManagement()) {
+            return;
+        }
+
+        $list = TaskList::findOrFail($listId);
+        $this->editingListId = $list->id;
+        $this->editListName = $list->name;
+        $this->editListSpaceId = $list->space_id;
+        $this->showEditList = true;
+    }
+
+    public function openManageMembers(int $listId): void
+    {
+        if (! $this->authorizeListManagement()) {
+            return;
+        }
+
+        $list = TaskList::with('members')->findOrFail($listId);
+        $this->managingListId = $list->id;
+        $this->listMemberIds = $list->members->pluck('id')->toArray();
+        $this->showManageMembers = true;
+    }
+
+    public function updateList(): void
+    {
+        if (! $this->authorizeListManagement()) {
+            return;
+        }
+
+        if (! $this->editingListId) {
+            return;
+        }
+
+        $list = TaskList::findOrFail($this->editingListId);
+        $this->validate(
+            [
+                'editListName' => 'required|min:2|max:100|unique:task_lists,name,'.$this->editingListId.',id,space_id,'.$this->editListSpaceId,
+                'editListSpaceId' => 'required|exists:spaces,id',
+            ],
+            [
+                'editListName.required' => 'Nama list wajib diisi.',
+                'editListName.unique' => 'Nama list sudah digunakan di space tujuan.',
+                'editListSpaceId.required' => 'Pilih space tujuan terlebih dahulu.',
+            ]
+        );
+
+        $targetSpace = Space::accessibleBy(auth()->id())->whereKey($this->editListSpaceId)->firstOrFail();
+        $updates = [
+            'name' => trim($this->editListName),
+            'space_id' => $targetSpace->id,
+        ];
+
+        if ($list->space_id !== $targetSpace->id) {
+            $updates['position'] = ($targetSpace->lists()->max('position') ?? -1) + 1;
+        }
+
+        $list->update($updates);
+        unset($this->listSpaces);
+        $this->reset(['editingListId', 'editListName', 'editListSpaceId', 'showEditList']);
+        $this->dispatch('sidebar-updated');
+        $this->broadcastChange();
+        Flux::toast('List berhasil diperbarui.', variant: 'success');
+    }
+
+    // ─── Members ───────────────────────────────────────────────
+
+    public function saveMembers(): void
+    {
+        if (! $this->authorizeListManagement()) {
+            return;
+        }
+
+        if (! $this->managingListId) {
+            return;
+        }
+
+        $list = TaskList::with(['members', 'tasks', 'space'])->findOrFail($this->managingListId);
+
+        // Whitelist: only sync IDs that belong to confirmed workspace members.
+        // Prevents submitting arbitrary user IDs from the browser.
+        $workspaceMemberIds = WorkspaceMember::where('workspace_id', $this->workspaceId)
+            ->pluck('user_id');
+
+        $validIds = collect($this->listMemberIds)
+            ->map(fn ($id) => (int) $id)
+            ->intersect($workspaceMemberIds)
+            ->values()
+            ->toArray();
+
+        $removedIds = array_diff($list->members->pluck('id')->toArray(), $validIds);
+        $list->members()->sync($validIds);
+
+        if (! empty($removedIds)) {
+            foreach ($list->tasks as $task) {
+                $task->assignees()->detach($removedIds);
+            }
+        }
+
+        unset($this->listSpaces);
+        $this->reset(['managingListId', 'listMemberIds', 'showManageMembers']);
+        $this->broadcastChange();
+        Flux::toast('Anggota list berhasil diperbarui.', variant: 'success');
+    }
+
+    // ─── Calendar ──────────────────────────────────────────────
+
+    public function calPrevMonth(): void
+    {
+        $date = Carbon::create($this->calYear, $this->calMonth, 1)->subMonth();
+        $this->calYear = $date->year;
+        $this->calMonth = $date->month;
+    }
+
+    public function calNextMonth(): void
+    {
+        $date = Carbon::create($this->calYear, $this->calMonth, 1)->addMonth();
+        $this->calYear = $date->year;
+        $this->calMonth = $date->month;
+    }
+
+    public function calToday(): void
+    {
+        $this->calYear = now()->year;
+        $this->calMonth = now()->month;
+    }
+
+    public function openTaskDetail(int $taskId): void
+    {
+        $this->selectedTaskId = $taskId;
+        $this->showTaskDetail = true;
+    }
+
+    public function onTaskDeleted(int $taskId): void
+    {
+        if ($this->selectedTaskId === $taskId) {
+            $this->selectedTaskId = null;
+        }
+        $this->showTaskDetail = false;
+    }
+
+    public function closeTaskDetail(): void
+    {
+        $this->showTaskDetail = false;
+    }
 
     // ─── Computed ──────────────────────────────────────────────
 
-	/** Spaces with lists — used by the "lists" tab only. */
-	#[Computed]
-	public function listSpaces()
-	{
-		return Space::with([
-			'lists' => function ($q) {
-				$q->with('members')
-					->withCount(['tasks' => fn($q2) => $q2->excludeNotes()])
-					->when($this->search, fn($q2) => $q2->where('name', 'like', "%{$this->search}%"))
-					->orderBy('position');
-			},
-		])
-			->orderBy('position')
-			->get();
-	}
+    /** Spaces with lists — used by the "lists" tab only. */
+    #[Computed]
+    public function listSpaces()
+    {
+        return Space::with([
+            'lists' => function ($q) {
+                $q->with('members')
+                    ->withCount(['tasks' => fn ($q2) => $q2->excludeNotes()])
+                    ->when($this->search, fn ($q2) => $q2->where('name', 'like', "%{$this->search}%"))
+                    ->orderBy('position');
+            },
+        ])
+            ->orderBy('position')
+            ->get();
+    }
 
-	/** Bare spaces (no lists) — used by the calendar space-filter pills. */
-	#[Computed]
-	public function spaces()
-	{
-		return Space::accessibleBy(auth()->id())
-			->orderBy('position')
-			->get();
-	}
+    /** Bare spaces (no lists) — used by the calendar space-filter pills. */
+    #[Computed]
+    public function spaces()
+    {
+        return Space::accessibleBy(auth()->id())
+            ->orderBy('position')
+            ->get();
+    }
 
-	/** Calendar grid + tasks — used by the "calendar" tab only. */
-	#[Computed]
-	public function calendarData(): array
-	{
-		$monthStart = Carbon::create($this->calYear, $this->calMonth, 1);
-		$monthEnd = $monthStart->copy()->endOfMonth();
-		$selectedId = $this->calSelectedSpaceId;
+    /** Calendar grid + tasks — used by the "calendar" tab only. */
+    #[Computed]
+    public function calendarData(): array
+    {
+        $monthStart = Carbon::create($this->calYear, $this->calMonth, 1);
+        $monthEnd = $monthStart->copy()->endOfMonth();
+        $selectedId = $this->calSelectedSpaceId;
 
-		$calTasks = Task::with(['status', 'taskList.space', 'assignees'])
-			->whereNull('parent_id')
-			->whereNotNull('due_date')
-			->whereBetween('due_date', [$monthStart, $monthEnd])
-			->whereHas('taskList.space', function ($q) use ($selectedId) {
-				$q->accessibleBy(auth()->id());
-				if ($selectedId !== null) {
-					$q->where('id', $selectedId);
-				}
-			})
-			->orderBy('due_date')
-			->limit(500)
-			->get()
-			->groupBy(fn($task) => $task->due_date->format('Y-m-d'));
+        $calTasks = Task::with(['status', 'taskList.space', 'assignees'])
+            ->whereNull('parent_id')
+            ->whereNotNull('due_date')
+            ->whereBetween('due_date', [$monthStart, $monthEnd])
+            ->whereHas('taskList.space', function ($q) use ($selectedId) {
+                $q->accessibleBy(auth()->id());
+                if ($selectedId !== null) {
+                    $q->where('id', $selectedId);
+                }
+            })
+            ->orderBy('due_date')
+            ->limit(500)
+            ->get()
+            ->groupBy(fn ($task) => $task->due_date->format('Y-m-d'));
 
-		$cur = $monthStart->copy()->startOfWeek(Carbon::MONDAY);
-		$calEnd = $monthEnd->copy()->endOfWeek(Carbon::SUNDAY);
-		$weeks = [];
+        $cur = $monthStart->copy()->startOfWeek(Carbon::MONDAY);
+        $calEnd = $monthEnd->copy()->endOfWeek(Carbon::SUNDAY);
+        $weeks = [];
 
-		while ($cur <= $calEnd) {
-			$week = [];
-			for ($i = 0; $i < 7; $i++) {
-				$ds = $cur->format('Y-m-d');
-				$week[] = [
-					'date' => $cur->copy(),
-					'isCurrentMonth' => $cur->month === $this->calMonth,
-					'isToday' => $cur->isToday(),
-					'tasks' => $calTasks->get($ds, collect()),
-				];
-				$cur->addDay();
-			}
-			$weeks[] = $week;
-		}
+        while ($cur <= $calEnd) {
+            $week = [];
+            for ($i = 0; $i < 7; $i++) {
+                $ds = $cur->format('Y-m-d');
+                $week[] = [
+                    'date' => $cur->copy(),
+                    'isCurrentMonth' => $cur->month === $this->calMonth,
+                    'isToday' => $cur->isToday(),
+                    'tasks' => $calTasks->get($ds, collect()),
+                ];
+                $cur->addDay();
+            }
+            $weeks[] = $week;
+        }
 
-		return [
-			'weeks' => $weeks,
-			'label' => $monthStart->isoFormat('MMMM Y'),
-		];
-	}
+        return [
+            'weeks' => $weeks,
+            'label' => $monthStart->isoFormat('MMMM Y'),
+        ];
+    }
 
-	/** All system users for the manage-members modal. Always fresh — no session cache. */
-	#[Computed]
-	public function allUsers()
-	{
-		return User::orderBy('name')->get();
-	}
+    /** Workspace members for the manage-members modal. Always fresh — no session cache. */
+    #[Computed]
+    public function allUsers()
+    {
+        return User::whereIn('id', WorkspaceMember::where('workspace_id', $this->workspaceId)->pluck('user_id'))
+            ->orderBy('name')
+            ->get();
+    }
 
-	public function render()
-	{
-		if ($this->activeTab === 'lists') {
-			$spaces = $this->listSpaces;
+    public function render()
+    {
+        if ($this->activeTab === 'lists') {
+            $spaces = $this->listSpaces;
 
-			return view('livewire.project.general-taskboard', [
-				'spaces' => $spaces,
-				'totalLists' => $spaces->sum(fn($sp) => $sp->lists->count()),
-				'weeks' => [],
-				'calMonthLabel' => '',
-			]);
-		}
+            return view('livewire.project.general-taskboard', [
+                'spaces' => $spaces,
+                'totalLists' => $spaces->sum(fn ($sp) => $sp->lists->count()),
+                'weeks' => [],
+                'calMonthLabel' => '',
+            ]);
+        }
 
-		$cal = $this->calendarData;
+        $cal = $this->calendarData;
 
-		return view('livewire.project.general-taskboard', [
-			'spaces' => collect(),
-			'totalLists' => TaskList::count(),
-			'weeks' => $cal['weeks'],
-			'calMonthLabel' => $cal['label'],
-		]);
-	}
+        return view('livewire.project.general-taskboard', [
+            'spaces' => collect(),
+            'totalLists' => TaskList::count(),
+            'weeks' => $cal['weeks'],
+            'calMonthLabel' => $cal['label'],
+        ]);
+    }
 }

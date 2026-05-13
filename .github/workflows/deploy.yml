@@ -50,8 +50,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e
-
             APP=/home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
 
             PHP=$(command -v php8.3 2>/dev/null \
@@ -61,19 +59,17 @@ jobs:
             echo "Menggunakan PHP: $PHP ($($PHP -r 'echo PHP_VERSION;'))"
             cd $APP
 
-            $PHP artisan down --retry=15 || true
+            $PHP artisan down || true
 
-            # Paksa server = remote, aman dari conflict / perubahan lokal
-            git fetch https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
+            git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
             git reset --hard FETCH_HEAD
 
             COMPOSER_MEMORY_LIMIT=-1 composer install \
               --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
             $PHP artisan migrate --force
-            $PHP artisan storage:link || true
+            $PHP artisan optimize:clear
 
-            # Set env vars SEBELUM clear cache agar config:cache langsung pakai nilai terbaru
             set_env() {
               local KEY="$1" VAL="$2"
               grep -q "^${KEY}=" .env \
@@ -87,22 +83,20 @@ jobs:
             set_env PUSHER_APP_SECRET   "${{ secrets.PUSHER_APP_SECRET }}"
             set_env PUSHER_APP_CLUSTER  "${{ secrets.PUSHER_APP_CLUSTER }}"
 
-            $PHP artisan optimize:clear
             $PHP artisan config:cache
             $PHP artisan route:cache
             $PHP artisan event:cache
             $PHP artisan view:cache
-
             $PHP artisan queue:restart || true
             chmod -R 775 storage bootstrap/cache
 
             CRON_SCHEDULER="* * * * * cd $APP && $PHP artisan schedule:run >> /dev/null 2>&1"
             (crontab -l 2>/dev/null | grep -qF "artisan schedule:run") \
-              || (crontab -l 2>/dev/null; echo "$CRON_SCHEDULER") | crontab - || true
+              || (crontab -l 2>/dev/null; echo "$CRON_SCHEDULER") | crontab -
 
             CRON_QUEUE="* * * * * cd $APP && $PHP artisan queue:work --queue=emails,default --stop-when-empty --max-time=55 >> /dev/null 2>&1"
             (crontab -l 2>/dev/null | grep -qF "queue:work") \
-              || (crontab -l 2>/dev/null; echo "$CRON_QUEUE") | crontab - || true
+              || (crontab -l 2>/dev/null; echo "$CRON_QUEUE") | crontab -
 
             $PHP artisan up
             echo "Deploy sukses: $(date)"
