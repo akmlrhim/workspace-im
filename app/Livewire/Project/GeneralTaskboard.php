@@ -479,13 +479,11 @@ class GeneralTaskboard extends Component
 		];
 	}
 
-	/** Workspace members for the manage-members modal. Always fresh — no session cache. */
+	/** All users for the manage-members modal. */
 	#[Computed]
 	public function allUsers()
 	{
-		return User::whereIn('id', WorkspaceMember::where('workspace_id', $this->workspaceId)->pluck('user_id'))
-			->orderBy('name')
-			->get();
+		return User::orderBy('name')->get();
 	}
 
 	public function render()
