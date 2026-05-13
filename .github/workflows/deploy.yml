@@ -50,6 +50,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
+            set -e
+
             APP=/home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
 
             PHP=$(command -v php8.3 2>/dev/null \
@@ -59,16 +61,20 @@ jobs:
             echo "Menggunakan PHP: $PHP ($($PHP -r 'echo PHP_VERSION;'))"
             cd $APP
 
-            $PHP artisan down || true
+            $PHP artisan down --retry=15 || true
 
-            git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
+            # Pastikan kode server selalu bersih sesuai main,
+            # menghindari kegagalan silent ketika git pull conflict.
+            git fetch https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
+            git reset --hard FETCH_HEAD
 
             COMPOSER_MEMORY_LIMIT=-1 composer install \
               --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
             $PHP artisan migrate --force
-            $PHP artisan optimize:clear
 
+            # Set env vars SEBELUM clear cache agar config:cache langsung
+            # memakai nilai terbaru, bukan nilai dari deploy sebelumnya.
             set_env() {
               local KEY="$1" VAL="$2"
               grep -q "^${KEY}=" .env \
@@ -82,10 +88,12 @@ jobs:
             set_env PUSHER_APP_SECRET   "${{ secrets.PUSHER_APP_SECRET }}"
             set_env PUSHER_APP_CLUSTER  "${{ secrets.PUSHER_APP_CLUSTER }}"
 
+            $PHP artisan optimize:clear
             $PHP artisan config:cache
             $PHP artisan route:cache
             $PHP artisan event:cache
             $PHP artisan view:cache
+
             $PHP artisan queue:restart || true
             chmod -R 775 storage bootstrap/cache
 
