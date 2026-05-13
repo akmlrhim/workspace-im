@@ -53,7 +53,6 @@ jobs:
             set -e
 
             APP=/home/u465920647/domains/impostmedia.com/public_html/workspace.impostmedia.com
-            DOMAIN=https://workspace.impostmedia.com
 
             PHP=$(command -v php8.3 2>/dev/null \
               || command -v php83 2>/dev/null \
@@ -97,21 +96,13 @@ jobs:
             $PHP artisan queue:restart || true
             chmod -R 775 storage bootstrap/cache
 
-            # Clear OPcache FPM di Hostinger shared hosting.
-            # CLI php dan FPM punya OPcache terpisah — satu-satunya cara reset FPM
-            # adalah via HTTP request ke file PHP langsung (bypass Laravel routing).
-            OPCACHE_FILE="$APP/public/opcache_$(date +%s).php"
-            echo '<?php if (function_exists("opcache_reset")) opcache_reset(); ?>' > "$OPCACHE_FILE"
-            curl -sf --max-time 10 "$DOMAIN/$(basename $OPCACHE_FILE)" || true
-            rm -f "$OPCACHE_FILE"
-
             CRON_SCHEDULER="* * * * * cd $APP && $PHP artisan schedule:run >> /dev/null 2>&1"
             (crontab -l 2>/dev/null | grep -qF "artisan schedule:run") \
-              || (crontab -l 2>/dev/null; echo "$CRON_SCHEDULER") | crontab -
+              || (crontab -l 2>/dev/null; echo "$CRON_SCHEDULER") | crontab - || true
 
             CRON_QUEUE="* * * * * cd $APP && $PHP artisan queue:work --queue=emails,default --stop-when-empty --max-time=55 >> /dev/null 2>&1"
             (crontab -l 2>/dev/null | grep -qF "queue:work") \
-              || (crontab -l 2>/dev/null; echo "$CRON_QUEUE") | crontab -
+              || (crontab -l 2>/dev/null; echo "$CRON_QUEUE") | crontab - || true
 
             $PHP artisan up
             echo "Deploy sukses: $(date)"
