@@ -35,15 +35,15 @@
           <div
             class="group/cell min-h-[130px] border-r border-zinc-100 p-1.5 last:border-r-0 dark:border-zinc-800
             {{ !$day['isCurrentMonth'] ? 'bg-zinc-50/50 dark:bg-zinc-900/30' : 'bg-white dark:bg-zinc-900' }}
-            {{ $day['date']->isWeekend() ? 'bg-zinc-50 dark:bg-zinc-800/20' : '' }}
-            {{ $day['isToday'] ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : '' }}"
+            {{ $day['date']->isWeekend() && !$day['isToday'] ? 'bg-zinc-50 dark:bg-zinc-800/20' : '' }}
+            {{ $day['isToday'] ? 'border-t-2 border-t-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' : '' }}"
             wire:key="cal-{{ $dateStr }}">
 
             <div class="mb-1 flex items-center justify-between">
               <span
-                class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium
-                {{ $day['isToday'] ? 'bg-black text-white' : '' }}
-                {{ !$day['isCurrentMonth'] ? 'text-black dark:text-white' : '' }}">
+                class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold
+                {{ $day['isToday'] ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-300 dark:shadow-indigo-900' : '' }}
+                {{ !$day['isCurrentMonth'] && !$day['isToday'] ? 'text-zinc-300 dark:text-zinc-600' : (!$day['isToday'] ? 'text-zinc-700 dark:text-zinc-300' : '') }}">
                 {{ $day['date']->day }}
               </span>
 
@@ -120,17 +120,17 @@
           @endphp
           <div
             class="rounded-xl border px-3 py-2.5 transition-colors
-            {{ $day['isToday'] ? 'border-indigo-300 bg-indigo-50/50 dark:border-indigo-700 dark:bg-indigo-900/10' : 'border-zinc-100 dark:border-zinc-800' }}"
+            {{ $day['isToday'] ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300 dark:border-indigo-600 dark:bg-indigo-950/40 dark:ring-indigo-700' : 'border-zinc-100 dark:border-zinc-800' }}"
             wire:key="cal-m-{{ $dateStr }}">
 
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span
                   class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold
-                  {{ $day['isToday'] ? 'bg-indigo-600 text-white' : 'text-zinc-700 dark:text-zinc-300' }}">
+                  {{ $day['isToday'] ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-300 dark:shadow-indigo-900' : 'text-zinc-700 dark:text-zinc-300' }}">
                   {{ $day['date']->day }}
                 </span>
-                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                <span class="text-xs font-medium {{ $day['isToday'] ? 'font-bold text-indigo-600 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400' }}">
                   {{ $day['date']->format('D') }}
                 </span>
               </div>

@@ -150,7 +150,7 @@
       <div class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60">
         @foreach (['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] as $idx => $dayName)
           <div
-            class="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400
+            class="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-white
             {{ $idx >= 5 ? 'bg-zinc-100/50 dark:bg-zinc-800/30' : '' }}">
             {{ $dayName }}
           </div>
@@ -163,15 +163,15 @@
             <div
               class="group/cell min-h-[130px] border-r border-zinc-100 p-1.5 transition-colors last:border-r-0 dark:border-zinc-800
               {{ !$day['isCurrentMonth'] ? 'bg-zinc-50/50 dark:bg-zinc-900/30' : 'bg-white dark:bg-zinc-900' }}
-              {{ $day['date']->isWeekend() ? 'bg-zinc-50 dark:bg-zinc-800/20' : '' }}
-              {{ $day['isToday'] ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : '' }}"
+              {{ $day['date']->isWeekend() && !$day['isToday'] ? 'bg-zinc-50 dark:bg-zinc-800/20' : '' }}
+              {{ $day['isToday'] ? 'border-t-2 border-t-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' : '' }}"
               wire:key="gcal-{{ $day['date']->format('Y-m-d') }}">
 
               <div class="mb-1 flex items-center justify-between">
                 <span
-                  class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium
-                  {{ $day['isToday'] ? 'bg-black text-white' : '' }}
-                  {{ !$day['isCurrentMonth'] ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-700 dark:text-zinc-300' }}">
+                  class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold
+                  {{ $day['isToday'] ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-300 dark:shadow-indigo-900' : '' }}
+                  {{ !$day['isCurrentMonth'] && !$day['isToday'] ? 'text-zinc-300 dark:text-zinc-600' : (!$day['isToday'] ? 'text-zinc-700 dark:text-zinc-300' : '') }}">
                   {{ $day['date']->day }}
                 </span>
 
@@ -220,17 +220,17 @@
             @php $hasTasks = $day['tasks']->isNotEmpty(); @endphp
             <div
               class="rounded-xl border px-3 py-2.5 transition-colors
-              {{ $day['isToday'] ? 'border-indigo-300 bg-indigo-50/50 dark:border-indigo-700 dark:bg-indigo-900/10' : 'border-zinc-100 dark:border-zinc-800' }}
-              {{ !$hasTasks ? 'opacity-50' : '' }}"
+              {{ $day['isToday'] ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300 dark:border-indigo-600 dark:bg-indigo-950/40 dark:ring-indigo-700' : 'border-zinc-100 dark:border-zinc-800' }}
+              {{ !$hasTasks && !$day['isToday'] ? 'opacity-50' : '' }}"
               wire:key="gcal-m-{{ $day['date']->format('Y-m-d') }}">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span
                     class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold
-                    {{ $day['isToday'] ? 'bg-indigo-600 text-white' : 'text-zinc-700 dark:text-zinc-300' }}">
+                    {{ $day['isToday'] ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-300 dark:shadow-indigo-900' : 'text-zinc-700 dark:text-zinc-300' }}">
                     {{ $day['date']->day }}
                   </span>
-                  <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500">
+                  <span class="text-xs font-medium {{ $day['isToday'] ? 'font-bold text-indigo-600 dark:text-indigo-400' : 'text-zinc-400 dark:text-zinc-500' }}">
                     {{ $day['date']->isoFormat('ddd') }}
                   </span>
                 </div>
@@ -461,8 +461,7 @@
       </div>
 
       <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
-        <div wire:loading wire:target="openManageMembers"
-          class="flex min-h-[120px] items-center justify-center">
+        <div wire:loading wire:target="openManageMembers" class="flex min-h-[120px] items-center justify-center">
           <div
             class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400">
           </div>
@@ -471,9 +470,7 @@
           @foreach ($this->allUsers as $user)
             <label wire:key="gtb-user-{{ $user->id }}"
               class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
-              <input type="checkbox"
-                wire:model.live="listMemberIds"
-                value="{{ $user->id }}"
+              <input type="checkbox" wire:model.live="listMemberIds" value="{{ $user->id }}"
                 class="size-4 cursor-pointer rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-700 dark:checked:bg-indigo-500" />
               <flux:avatar circle :name="$user->name" :initials="$user->initials()" :src="$user->avatar"
                 size="sm" />
