@@ -5,37 +5,93 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-	public function run(): void
-	{
-		User::factory()->create([
-			'name' => 'Super User',
-			'email' => 'superuser@erp.test',
-			'role' => 'super_user',
-			'email_verified_at' => Carbon::now(),
-		]);
+    public function run(): void
+    {
+        $now = Carbon::now();
+        $password = Hash::make('password');
 
-		User::factory()->create([
-			'name' => 'Administrator',
-			'email' => 'admin@erp.test',
-			'role' => 'administrator',
-			'email_verified_at' => Carbon::now(),
-		]);
+        $users = [
+            // ── Super User ──────────────────────────────────────────
+            [
+                'name' => 'Super User',
+                'email' => 'superuser@erp.test',
+                'role' => 'super_user',
+                'position' => 'CEO',
+            ],
 
-		User::factory()->create([
-			'name' => 'Manager',
-			'email' => 'manager@erp.test',
-			'role' => 'manager',
-			'email_verified_at' => Carbon::now(),
-		]);
+            // ── Administrator ────────────────────────────────────────
+            [
+                'name' => 'Administrator',
+                'email' => 'admin@erp.test',
+                'role' => 'administrator',
+                'position' => 'Admin Operasional',
+            ],
 
-		User::factory()->create([
-			'name' => 'Member',
-			'email' => 'member@erp.test',
-			'role' => 'member',
-			'email_verified_at' => Carbon::now(),
-		]);
-	}
+            // ── Manager ──────────────────────────────────────────────
+            [
+                'name' => 'Budi Santoso',
+                'email' => 'budi.santoso@erp.test',
+                'role' => 'manager',
+                'position' => 'HR',
+            ],
+            [
+                'name' => 'Siti Rahayu',
+                'email' => 'siti.rahayu@erp.test',
+                'role' => 'manager',
+                'position' => 'Finance',
+            ],
+
+            // ── Member ───────────────────────────────────────────────
+            [
+                'name' => 'Andi Firmansyah',
+                'email' => 'andi.firmansyah@erp.test',
+                'role' => 'member',
+                'position' => 'Web Developer',
+            ],
+            [
+                'name' => 'Dewi Kurniawati',
+                'email' => 'dewi.kurniawati@erp.test',
+                'role' => 'member',
+                'position' => 'Desain Grafis',
+            ],
+            [
+                'name' => 'Reza Pratama',
+                'email' => 'reza.pratama@erp.test',
+                'role' => 'member',
+                'position' => 'Video Editor',
+            ],
+            [
+                'name' => 'Nisa Amalia',
+                'email' => 'nisa.amalia@erp.test',
+                'role' => 'member',
+                'position' => 'Performance Marketer',
+            ],
+            [
+                'name' => 'Fajar Nugroho',
+                'email' => 'fajar.nugroho@erp.test',
+                'role' => 'member',
+                'position' => 'Advertiser',
+            ],
+            [
+                'name' => 'Maya Sari',
+                'email' => 'maya.sari@erp.test',
+                'role' => 'member',
+                'position' => 'SMS',
+            ],
+        ];
+
+        foreach ($users as $data) {
+            User::firstOrCreate(
+                ['email' => $data['email']],
+                array_merge($data, [
+                    'password' => $password,
+                    'email_verified_at' => $now,
+                ])
+            );
+        }
+    }
 }

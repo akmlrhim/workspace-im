@@ -337,16 +337,9 @@ class GeneralTaskboard extends Component
 
 		$list = TaskList::with(['members', 'tasks', 'space'])->findOrFail($this->managingListId);
 
-		// Whitelist: only sync IDs that belong to confirmed workspace members.
-		// Prevents submitting arbitrary user IDs from the browser.
-		$workspaceMemberIds = WorkspaceMember::where('workspace_id', $this->workspaceId)
-			->pluck('user_id');
-
-		$validIds = collect($this->listMemberIds)
-			->map(fn($id) => (int) $id)
-			->intersect($workspaceMemberIds)
-			->values()
-			->toArray();
+		// Validate against real user IDs in the DB only — prevents arbitrary ID injection.
+		$requestedIds = collect($this->listMemberIds)->map(fn($id) => (int) $id)->toArray();
+		$validIds = User::whereIn('id', $requestedIds)->pluck('id')->toArray();
 
 		$removedIds = array_diff($list->members->pluck('id')->toArray(), $validIds);
 		$list->members()->sync($validIds);
