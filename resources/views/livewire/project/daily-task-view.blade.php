@@ -204,7 +204,20 @@
     $pendingTasks = $this->dailyTasks->reject(fn($dt) => $dt->logs->first()?->is_completed);
     $completedTasks = $this->dailyTasks->filter(fn($dt) => (bool) $dt->logs->first()?->is_completed);
     $isToday = $this->isToday;
+    $dayNames = [1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu'];
+    $currentDayName = $dayNames[$this->selectedDayOfWeek] ?? '';
   @endphp
+
+  {{-- Day context header --}}
+  <div class="mb-5 flex items-center gap-2">
+    <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-700">
+      <flux:icon name="calendar-days" class="size-3.5" />
+      Task hari {{ $currentDayName }}
+    </span>
+    @if ($total === 0)
+      <span class="text-xs text-zinc-400 dark:text-zinc-500">Belum ada task untuk hari ini</span>
+    @endif
+  </div>
 
   {{-- Progress bar --}}
   @if ($total > 0)
@@ -256,39 +269,47 @@
 
         {{-- Card top: checkbox + menu --}}
         <div class="mb-3 flex items-center justify-between">
-          <button @click="v = true; $wire.toggleComplete({{ $dt->id }})" wire:loading.attr="disabled"
-            wire:target="toggleComplete({{ $dt->id }})"
-            class="group flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-zinc-100 active:bg-zinc-200 dark:hover:bg-zinc-800">
-            <div class="flex h-5 w-5 items-center justify-center rounded transition-all duration-150"
-              :class="v ? 'bg-emerald-500 text-white' :
-                  'border-2 border-zinc-300 group-hover:border-emerald-400 dark:border-zinc-600'">
-              <svg x-show="v" x-transition.opacity.duration.150ms class="h-3 w-3" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor" stroke-width="3">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+          @if ($canManage)
+            <button @click="v = true; $wire.toggleComplete({{ $dt->id }})" wire:loading.attr="disabled"
+              wire:target="toggleComplete({{ $dt->id }})"
+              class="group flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-zinc-100 active:bg-zinc-200 dark:hover:bg-zinc-800">
+              <div class="flex h-5 w-5 items-center justify-center rounded transition-all duration-150"
+                :class="v ? 'bg-emerald-500 text-white' :
+                    'border-2 border-zinc-300 group-hover:border-emerald-400 dark:border-zinc-600'">
+                <svg x-show="v" x-transition.opacity.duration.150ms class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </button>
+          @else
+            <div class="flex h-7 w-7 items-center justify-center">
+              <div class="h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
             </div>
-          </button>
+          @endif
 
-          <div x-show="!editing" class="flex items-center gap-0.5">
-            <flux:tooltip content="Catat alasan" position="top">
-              <flux:button variant="ghost" size="sm" icon="chat-bubble-left-ellipsis"
-                class="h-7 w-7 p-0 text-zinc-400 hover:text-amber-500"
-                wire:click="openReasonModal({{ $dt->id }})" wire:loading.attr="disabled"
-                wire:target="openReasonModal({{ $dt->id }})" />
-            </flux:tooltip>
-            @if ($dt->created_by === auth()->id())
-              <flux:dropdown position="bottom" align="end">
-                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"
-                  class="h-7 w-7 p-0 text-zinc-400" />
-                <flux:menu>
-                  <flux:menu.item icon="pencil-square" @click="openEdit()">Edit</flux:menu.item>
-                  <flux:menu.separator />
-                  <flux:menu.item variant="danger" icon="trash"
-                    @click="pendingDeleteId = {{ $dt->id }}; deleteModal = true">Hapus</flux:menu.item>
-                </flux:menu>
-              </flux:dropdown>
-            @endif
-          </div>
+          @if ($canManage)
+            <div x-show="!editing" class="flex items-center gap-0.5">
+              <flux:tooltip content="Catat alasan" position="top">
+                <flux:button variant="ghost" size="sm" icon="chat-bubble-left-ellipsis"
+                  class="h-7 w-7 p-0 text-zinc-400 hover:text-amber-500"
+                  wire:click="openReasonModal({{ $dt->id }})" wire:loading.attr="disabled"
+                  wire:target="openReasonModal({{ $dt->id }})" />
+              </flux:tooltip>
+              @if ($dt->created_by === auth()->id())
+                <flux:dropdown position="bottom" align="end">
+                  <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"
+                    class="h-7 w-7 p-0 text-zinc-400" />
+                  <flux:menu>
+                    <flux:menu.item icon="pencil-square" @click="openEdit()">Edit</flux:menu.item>
+                    <flux:menu.separator />
+                    <flux:menu.item variant="danger" icon="trash"
+                      @click="pendingDeleteId = {{ $dt->id }}; deleteModal = true">Hapus</flux:menu.item>
+                  </flux:menu>
+                </flux:dropdown>
+              @endif
+            </div>
+          @endif
         </div>
 
         <div x-show="editing" x-cloak class="flex-1 space-y-2">
@@ -357,11 +378,12 @@
       </div>
     </template>
 
-    {{-- Add card --}}
+    {{-- Add card (members only) --}}
+    @if ($canManage)
     <div>
       <div x-show="addForm" x-cloak
         class="flex flex-col rounded-xl border border-indigo-200 bg-white p-4 shadow-sm dark:border-indigo-800/50 dark:bg-zinc-900">
-        <p class="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">Task baru</p>
+        <p class="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">Task baru · <span class="text-indigo-600 dark:text-indigo-400">{{ $currentDayName }}</span></p>
         <div class="space-y-2">
           <input x-ref="addInput" x-model="addTitle" @keydown.enter.prevent="submitAdd()"
             @keydown.escape="closeAdd()" placeholder="Nama daily task..."
@@ -382,6 +404,7 @@
         <span class="text-sm font-medium">Tambah task</span>
       </button>
     </div>
+    @endif
   </div>
 
   {{-- Completed section --}}
@@ -424,20 +447,30 @@
 
             {{-- Card top: checkbox + menu --}}
             <div class="mb-3 flex items-center justify-between">
-              <button @click="v = false; $wire.toggleComplete({{ $dt->id }})" wire:loading.attr="disabled"
-                wire:target="toggleComplete({{ $dt->id }})"
-                class="group flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white dark:hover:bg-zinc-800">
-                <div class="flex h-5 w-5 items-center justify-center rounded transition-all duration-150"
-                  :class="v ? 'bg-emerald-500 text-white group-hover:bg-emerald-600' :
-                      'border-2 border-zinc-300 group-hover:border-emerald-400 dark:border-zinc-600'">
-                  <svg x-show="v" x-transition.opacity.duration.150ms class="h-3 w-3" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+              @if ($canManage)
+                <button @click="v = false; $wire.toggleComplete({{ $dt->id }})" wire:loading.attr="disabled"
+                  wire:target="toggleComplete({{ $dt->id }})"
+                  class="group flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white dark:hover:bg-zinc-800">
+                  <div class="flex h-5 w-5 items-center justify-center rounded transition-all duration-150"
+                    :class="v ? 'bg-emerald-500 text-white group-hover:bg-emerald-600' :
+                        'border-2 border-zinc-300 group-hover:border-emerald-400 dark:border-zinc-600'">
+                    <svg x-show="v" x-transition.opacity.duration.150ms class="h-3 w-3" fill="none"
+                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </button>
+              @else
+                <div class="flex h-7 w-7 items-center justify-center">
+                  <div class="flex h-5 w-5 items-center justify-center rounded bg-emerald-500 text-white">
+                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
                 </div>
-              </button>
+              @endif
 
-              @if ($dt->created_by === auth()->id())
+              @if ($canManage && $dt->created_by === auth()->id())
                 <div x-show="!editing">
                   <flux:dropdown position="bottom" align="end">
                     <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"

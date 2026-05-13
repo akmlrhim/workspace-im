@@ -20,6 +20,7 @@ class DailyTask extends Model
 		'description',
 		'is_active',
 		'position',
+		'day_of_week',
 	];
 
 	protected function casts(): array

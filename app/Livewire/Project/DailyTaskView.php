@@ -46,11 +46,17 @@ class DailyTaskView extends Component
 	}
 
 	#[Computed]
+	public function selectedDayOfWeek(): int
+	{
+		return Carbon::parse($this->selectedDate)->isoWeekday();
+	}
+
+	#[Computed]
 	public function dailyTasks(): Collection
 	{
 		return $this->taskList->dailyTasks()
 			->where('is_active', true)
-			->whereDate('created_at', '<=', $this->selectedDate)
+			->where('day_of_week', $this->selectedDayOfWeek)
 			->with([
 				'creator',
 				'logs' => fn($q) => $q->where('user_id', auth()->id())->where('date', $this->selectedDate),
@@ -82,13 +88,13 @@ class DailyTaskView extends Component
 			$this->selectedDate = today()->toDateString();
 		}
 
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
+		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
 	}
 
 	public function previousDay(): void
 	{
 		$this->selectedDate = Carbon::parse($this->selectedDate)->subDay()->toDateString();
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
+		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
 	}
 
 	public function nextDay(): void
@@ -98,29 +104,57 @@ class DailyTaskView extends Component
 		}
 
 		$this->selectedDate = Carbon::parse($this->selectedDate)->addDay()->toDateString();
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
+		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
 	}
 
 	public function goToToday(): void
 	{
 		$this->selectedDate = today()->toDateString();
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
+		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
+	}
+
+	private function canManage(): bool
+	{
+		$user = auth()->user();
+
+		if ($user->canManageAllProjects()) {
+			return true;
+		}
+
+		if ($user->isManager() && $this->taskList->isAccessibleBy($user)) {
+			return true;
+		}
+
+		if ($this->taskList->members()->where('users.id', $user->id)->exists()) {
+			return true;
+		}
+
+		return $this->taskList->tasks()->whereHas('assignees', fn($q) => $q->where('users.id', $user->id))->exists()
+			|| $this->taskList->tasks()->where('assigned_to', $user->id)->exists();
 	}
 
 	public function addDailyTask(string $title, string $description = ''): void
 	{
+		if (! $this->canManage()) {
+			Flux::toast('Anda tidak memiliki izin untuk mengubah ini.', variant: 'danger');
+
+			return;
+		}
+
 		$title = trim($title);
 		$description = trim($description);
 
 		abort_if($title === '' || strlen($title) > 255, 422);
 
-		$maxPosition = $this->taskList->dailyTasks()->max('position') ?? -1;
+		$dayOfWeek = $this->selectedDayOfWeek;
+		$maxPosition = $this->taskList->dailyTasks()->where('day_of_week', $dayOfWeek)->max('position') ?? -1;
 
 		$this->taskList->dailyTasks()->create([
 			'title' => $title,
 			'description' => $description ?: null,
 			'created_by' => auth()->id(),
 			'position' => $maxPosition + 1,
+			'day_of_week' => $dayOfWeek,
 		]);
 
 		unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
@@ -130,6 +164,12 @@ class DailyTaskView extends Component
 
 	public function saveEdit(int $id, string $title, string $description = ''): void
 	{
+		if (! $this->canManage()) {
+			Flux::toast('Anda tidak memiliki izin untuk mengubah ini.', variant: 'danger');
+
+			return;
+		}
+
 		$title = trim($title);
 		$description = trim($description);
 
@@ -151,6 +191,11 @@ class DailyTaskView extends Component
 
 	public function toggleComplete(int $dailyTaskId): void
 	{
+		if (! $this->canManage()) {
+			Flux::toast('Anda tidak memiliki izin untuk mengubah ini.', variant: 'danger');
+
+			return;
+		}
 
 		$log = DailyTaskLog::firstOrNew([
 			'daily_task_id' => $dailyTaskId,
@@ -175,6 +220,10 @@ class DailyTaskView extends Component
 
 	public function openReasonModal(int $dailyTaskId): void
 	{
+		if (! $this->canManage()) {
+			return;
+		}
+
 		$this->reasonModalFor = $dailyTaskId;
 		$this->reasonInputs[$dailyTaskId] = '';
 	}
@@ -208,6 +257,12 @@ class DailyTaskView extends Component
 
 	public function deleteDailyTask(int $id): void
 	{
+		if (! $this->canManage()) {
+			Flux::toast('Anda tidak memiliki izin untuk mengubah ini.', variant: 'danger');
+
+			return;
+		}
+
 		$dailyTask = $this->taskList->dailyTasks()->findOrFail($id);
 
 		abort_if($dailyTask->created_by !== auth()->id(), 403);
@@ -221,6 +276,8 @@ class DailyTaskView extends Component
 
 	public function render()
 	{
-		return view('livewire.project.daily-task-view');
+		return view('livewire.project.daily-task-view', [
+			'canManage' => $this->canManage(),
+		]);
 	}
 }
