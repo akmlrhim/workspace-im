@@ -33,15 +33,6 @@ class TaskBoard extends Component
 
 	public TaskColumnForm $newColumn;
 
-	// Rename column
-	public bool $showRenameColumnModal = false;
-
-	public ?int $renamingColumnId = null;
-
-	public string $renamingColumnName = '';
-
-	public string $renamingColumnColor = '#6b7280';
-
 	// Task detail
 	public ?int $selectedTaskId = null;
 
@@ -148,47 +139,33 @@ class TaskBoard extends Component
 		Flux::toast('Kolom baru berhasil ditambahkan.', variant: 'success');
 	}
 
-	public function startRenamingColumn(int $columnId): void
+	public function saveColumnRename(int $columnId, string $name, string $color): void
 	{
 		if (! $this->canManageBoard()) {
+			Flux::toast('Anda tidak memiliki izin untuk mengubah kolom ini.', variant: 'danger');
+
 			return;
 		}
 
-		$column = TaskStatus::findOrFail($columnId);
-		$this->renamingColumnId = $columnId;
-		$this->renamingColumnName = $column->name;
-		$this->renamingColumnColor = $column->color;
-		$this->showRenameColumnModal = true;
-	}
+		$name = trim($name);
 
-	public function saveColumnRename(): void
-	{
-		if (! $this->canManageBoard()) {
+		if ($name === '' || strlen($name) > 100) {
 			return;
 		}
 
-		$this->validate([
-			'renamingColumnName' => 'required|string|max:100',
-		]);
+		$allowedColors = ['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
-		TaskStatus::where('id', $this->renamingColumnId)->update([
-			'name' => trim($this->renamingColumnName),
-			'color' => $this->renamingColumnColor,
-		]);
+		if (! in_array($color, $allowedColors, true)) {
+			$color = '#6b7280';
+		}
 
-		$this->showRenameColumnModal = false;
-		$this->reset(['renamingColumnId', 'renamingColumnName', 'renamingColumnColor']);
-		$this->renamingColumnColor = '#6b7280';
+		TaskStatus::where('id', $columnId)
+			->where('task_list_id', $this->taskList->id)
+			->update(['name' => $name, 'color' => $color]);
+
 		$this->broadcastChange();
 		unset($this->statuses);
 		Flux::toast('Kolom berhasil diperbarui.', variant: 'success');
-	}
-
-	public function cancelColumnRename(): void
-	{
-		$this->showRenameColumnModal = false;
-		$this->reset(['renamingColumnId', 'renamingColumnName', 'renamingColumnColor']);
-		$this->renamingColumnColor = '#6b7280';
 	}
 
 	public function confirmDeleteColumn(int $columnId): void

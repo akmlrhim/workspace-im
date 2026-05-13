@@ -117,7 +117,8 @@
                 x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75"
                 x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                 class="absolute right-0 top-8 z-30 w-44 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-                <button @click="open = false; $wire.startRenamingColumn({{ $status->id }})"
+                <button
+                  @click="open = false; $dispatch('open-column-rename', { id: {{ $status->id }}, name: @js($status->name), color: @js($status->color) }); $flux.modal('rename-column-modal').show()"
                   class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700">
                   <flux:icon name="pencil" class="size-3.5" /> Ubah Nama
                 </button>
@@ -186,7 +187,11 @@
                   </div>
                 @endif
 
-                <div class="mb-2 pr-8 text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ $task->title }}</div>
+                <div
+                  x-data="{ title: @js($task->title) }"
+                  @task-title-updated.window="if ($event.detail.taskId === {{ $task->id }}) title = $event.detail.title"
+                  x-text="title"
+                  class="mb-2 pr-8 text-sm font-medium text-zinc-900 dark:text-zinc-100"></div>
 
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex flex-wrap items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
@@ -357,54 +362,66 @@
     </div>
   </flux:modal>
 
-  <flux:modal wire:model="showRenameColumnModal" class="w-full max-w-sm">
+  <flux:modal name="rename-column-modal" class="w-full max-w-sm">
     <div
-      x-data="{ color: '{{ $renamingColumnColor }}', saving: false }"
-      x-init="
-        $wire.$watch('renamingColumnColor', v => color = v);
-        $wire.$watch('showRenameColumnModal', open => {
-          if (open) $nextTick(() => $el.querySelector('input')?.focus());
-          else saving = false;
-        });
+      x-data="{ id: null, name: '', color: '#6b7280', nameError: '', saving: false }"
+      @open-column-rename.window="
+        id = $event.detail.id;
+        name = $event.detail.name;
+        color = $event.detail.color;
+        nameError = '';
+        saving = false;
+        $nextTick(() => $refs.renameInput?.focus());
       "
     >
       <form
-        @submit.prevent="if (saving) return; saving = true; $wire.renamingColumnColor = color; $wire.saveColumnRename().finally(() => saving = false)"
+        @submit.prevent="
+          nameError = name.trim().length === 0 ? 'Nama kolom wajib diisi.' : (name.trim().length > 100 ? 'Maksimal 100 karakter.' : '');
+          if (nameError || saving) return;
+          saving = true;
+          $wire.saveColumnRename(id, name.trim(), color)
+            .then(() => $flux.modal('rename-column-modal').close())
+            .finally(() => saving = false)
+        "
         class="space-y-5"
       >
         <flux:heading size="lg">Ubah Kolom</flux:heading>
 
-        <flux:input
-          wire:model.blur="renamingColumnName"
-          label="Nama Kolom"
-          placeholder="Nama kolom..."
-          @keydown.escape="$wire.cancelColumnRename()"
-        />
+        <div>
+          <flux:label>Nama Kolom</flux:label>
+          <flux:input
+            x-model="name"
+            x-ref="renameInput"
+            placeholder="Nama kolom..."
+            @keydown.escape="$flux.modal('rename-column-modal').close()"
+          />
+          <p x-show="nameError" x-text="nameError" x-cloak class="mt-1 text-sm text-red-500 dark:text-red-400"></p>
+        </div>
 
         <div>
           <flux:label>Warna</flux:label>
           <div class="mt-2 flex flex-wrap gap-2">
-            @foreach (['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] as $color)
+            @foreach (['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] as $col)
               <button
                 type="button"
-                @click="color = '{{ $color }}'"
-                title="{{ $color }}"
+                @click="color = '{{ $col }}'"
+                title="{{ $col }}"
                 class="h-7 w-7 rounded-full border-[3px] transition-transform hover:scale-110"
-                :class="color === '{{ $color }}' ? 'border-zinc-900 scale-110 dark:border-white' : 'border-transparent'"
-                style="background-color: {{ $color }}"
+                :class="color === '{{ $col }}' ? 'border-zinc-900 scale-110 dark:border-white' : 'border-transparent'"
+                style="background-color: {{ $col }}"
               ></button>
             @endforeach
           </div>
         </div>
 
         <div class="flex justify-end gap-2 pt-1">
-          <flux:button variant="ghost" type="button" wire:click="cancelColumnRename">Batal</flux:button>
-          <flux:button variant="primary" type="submit">
+          <flux:button variant="ghost" type="button" @click="$flux.modal('rename-column-modal').close()">Batal</flux:button>
+          <flux:button variant="primary" type="submit" x-bind:disabled="saving">
             <span x-show="!saving">Simpan</span>
             <span x-show="saving" x-cloak class="flex items-center gap-1.5">
               <svg class="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
               Menyimpan...
             </span>

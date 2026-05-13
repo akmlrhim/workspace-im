@@ -141,7 +141,8 @@ class TaskListShow extends Component
 	{
 		$query = $this->taskList->tasks()
 			->with(['status', 'assignee', 'assignees', 'labels', 'subtasks'])
-			->whereNull('parent_id');
+			->whereNull('parent_id')
+			->whereHas('status', fn($q) => $q->whereRaw('LOWER(name) != ?', ['note']));
 
 		if ($this->filterPriority) {
 			$query->where('priority', $this->filterPriority);

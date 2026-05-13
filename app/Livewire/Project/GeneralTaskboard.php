@@ -70,8 +70,8 @@ class GeneralTaskboard extends Component
 
 	public int $calMonth;
 
-	/** @var array<int> Empty = semua space ditampilkan */
-	public array $calSelectedSpaceIds = [];
+	/** Null = semua space ditampilkan */
+	public ?int $calSelectedSpaceId = null;
 
 	// ─── Task detail (calendar) ────────────────────────────────
 	public ?int $selectedTaskId = null;
@@ -105,6 +105,7 @@ class GeneralTaskboard extends Component
 		$this->workspaceId = $workspace->id;
 		$this->calYear = now()->year;
 		$this->calMonth = now()->month;
+		$this->calSelectedSpaceId = Space::accessibleBy($user->id)->orderBy('position')->value('id');
 	}
 
 	/** @return array<string, string> */
@@ -372,22 +373,6 @@ class GeneralTaskboard extends Component
 		$this->calMonth = now()->month;
 	}
 
-	public function toggleCalSpace(int $spaceId): void
-	{
-		if (in_array($spaceId, $this->calSelectedSpaceIds)) {
-			$this->calSelectedSpaceIds = array_values(
-				array_filter($this->calSelectedSpaceIds, fn($id) => $id !== $spaceId)
-			);
-		} else {
-			$this->calSelectedSpaceIds[] = $spaceId;
-		}
-	}
-
-	public function calSelectAll(): void
-	{
-		$this->calSelectedSpaceIds = [];
-	}
-
 	public function openTaskDetail(int $taskId): void
 	{
 		$this->selectedTaskId = $taskId;
@@ -440,16 +425,16 @@ class GeneralTaskboard extends Component
 	{
 		$monthStart = Carbon::create($this->calYear, $this->calMonth, 1);
 		$monthEnd = $monthStart->copy()->endOfMonth();
-		$selectedIds = $this->calSelectedSpaceIds;
+		$selectedId = $this->calSelectedSpaceId;
 
 		$calTasks = Task::with(['status', 'taskList.space', 'assignees'])
 			->whereNull('parent_id')
 			->whereNotNull('due_date')
 			->whereBetween('due_date', [$monthStart, $monthEnd])
-			->whereHas('taskList.space', function ($q) use ($selectedIds) {
+			->whereHas('taskList.space', function ($q) use ($selectedId) {
 				$q->accessibleBy(auth()->id());
-				if (! empty($selectedIds)) {
-					$q->whereIn('id', $selectedIds);
+				if ($selectedId !== null) {
+					$q->where('id', $selectedId);
 				}
 			})
 			->orderBy('due_date')

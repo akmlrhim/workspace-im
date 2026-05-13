@@ -73,7 +73,10 @@
 
                     <button wire:click="openTaskDetail({{ $task->id }})"
                       class="truncate text-left text-sm font-medium text-zinc-900 hover:text-indigo-600 hover:underline dark:text-zinc-100 dark:hover:text-indigo-400">
-                      {{ $task->title }}
+                      <span
+                        x-data="{ title: @js($task->title) }"
+                        @task-title-updated.window="if ($event.detail.taskId === {{ $task->id }}) title = $event.detail.title"
+                        x-text="title"></span>
                     </button>
 
                     @if ($task->subtasks->isNotEmpty())

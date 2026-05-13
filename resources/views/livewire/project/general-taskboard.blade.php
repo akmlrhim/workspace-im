@@ -27,7 +27,7 @@
 
   <div class="mb-6 flex items-center gap-1 border-b border-zinc-200 dark:border-zinc-700">
     <button wire:click="$set('activeTab', 'lists')"
-      class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors
+      class="cursor-pointer flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors
         {{ $activeTab === 'lists'
             ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
             : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
@@ -40,7 +40,7 @@
     </button>
 
     <button wire:click="$set('activeTab', 'calendar')"
-      class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors
+      class="cursor-pointer flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors
         {{ $activeTab === 'calendar'
             ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
             : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
@@ -122,66 +122,31 @@
   @endif
 
   @if ($activeTab === 'calendar')
-    <div class="mb-4 flex items-center justify-between">
-      <div class="flex items-center gap-2">
+    @php $selectedSpace = $calSelectedSpaceId ? $this->spaces->firstWhere('id', $calSelectedSpaceId) : null; @endphp
+
+    <div class="mb-4 flex items-center justify-between gap-4">
+      <div class="flex shrink-0 items-center gap-1">
         <flux:button icon="chevron-left" size="sm" variant="ghost" wire:click="calPrevMonth" />
         <flux:button size="sm" variant="ghost" wire:click="calToday">Hari Ini</flux:button>
         <flux:button icon="chevron-right" size="sm" variant="ghost" wire:click="calNextMonth" />
       </div>
-      <h2 class="text-base font-semibold text-zinc-900 dark:text-white sm:text-lg">{{ $calMonthLabel }}</h2>
+
+      <h2 class="truncate text-base font-semibold text-zinc-900 dark:text-white sm:text-lg">{{ $calMonthLabel }}</h2>
+
+      @if ($this->spaces->isNotEmpty())
+        <div class="flex shrink-0 items-center gap-1.5">
+          <flux:select wire:model.live="calSelectedSpaceId" size="sm" class="w-36 sm:w-44">
+            @foreach ($this->spaces as $sp)
+              <flux:select.option value="{{ $sp->id }}">{{ $sp->name }}</flux:select.option>
+            @endforeach
+          </flux:select>
+        </div>
+      @endif
     </div>
 
-    {{-- Space filter pills --}}
-    @if ($this->spaces->isNotEmpty())
-      <div class="mb-5 flex flex-wrap items-center gap-2">
-        <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-          Filter Space:
-        </span>
-
-        <button wire:click="calSelectAll"
-          class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all
-            {{ empty($calSelectedSpaceIds)
-                ? 'border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500/60 dark:bg-indigo-500/15 dark:text-indigo-300'
-                : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-300' }}">
-          <svg class="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-          </svg>
-          Semua
-        </button>
-
-        {{-- Per-space pill --}}
-        @foreach ($this->spaces as $sp)
-          @php $isActive = in_array($sp->id, $calSelectedSpaceIds); @endphp
-          <button wire:click="toggleCalSpace({{ $sp->id }})"
-            class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all"
-            style="
-              border-color: {{ $isActive ? $sp->color : '' }};
-              background-color: {{ $isActive ? $sp->color . '18' : '' }};
-              color: {{ $isActive ? $sp->color : '' }};
-              {{ !$isActive ? 'border-color: rgb(228 228 231); background-color: white; color: rgb(113 113 122);' : '' }}
-            ">
-            <span class="size-2 shrink-0 rounded-full"
-              style="background-color: {{ $sp->color }}; opacity: {{ $isActive ? '1' : '0.5' }}"></span>
-            {{ $sp->name }}
-            @if ($isActive)
-              <svg class="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            @endif
-          </button>
-        @endforeach
-
-        @if (!empty($calSelectedSpaceIds))
-          <span class="text-xs text-zinc-400 dark:text-zinc-500">
-            {{ count($calSelectedSpaceIds) }} dari {{ $this->spaces->count() }} space dipilih
-          </span>
-        @endif
-      </div>
-    @endif
-
-    {{-- Desktop calendar grid --}}
-    <div class="hidden overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 sm:block">
+    <div
+      class="hidden overflow-hidden rounded-xl border border-zinc-200 transition-opacity duration-150 dark:border-zinc-700 sm:block"
+      wire:loading.class="opacity-40" wire:target="calPrevMonth,calNextMonth,calToday">
       <div class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60">
         @foreach (['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] as $idx => $dayName)
           <div
@@ -205,17 +170,11 @@
               <div class="mb-1 flex items-center justify-between">
                 <span
                   class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium
-                  {{ $day['isToday'] ? 'bg-indigo-600 text-white' : '' }}
+                  {{ $day['isToday'] ? 'bg-black text-white' : '' }}
                   {{ !$day['isCurrentMonth'] ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-700 dark:text-zinc-300' }}">
                   {{ $day['date']->day }}
                 </span>
 
-                @if ($day['tasks']->isNotEmpty())
-                  <span class="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white"
-                    style="background-color: {{ $day['tasks']->first()->taskList->space->color ?? '#6366f1' }}">
-                    {{ $day['tasks']->count() }}
-                  </span>
-                @endif
               </div>
 
               <div class="space-y-0.5">
@@ -231,9 +190,10 @@
                       @endphp
                       <span class="h-1.5 w-1.5 shrink-0 rounded-full"
                         style="background-color: {{ $task->priority_color }}"></span>
-                      <span class="min-w-0 flex-1 truncate text-[11px] font-semibold text-zinc-800 dark:text-zinc-100">
-                        {{ $task->title }}
-                      </span>
+                      <span x-data="{ title: @js($task->title) }"
+                        @task-title-updated.window="if ($event.detail.taskId === {{ $task->id }}) title = $event.detail.title"
+                        x-text="title"
+                        class="min-w-0 flex-1 truncate text-[11px] font-semibold text-zinc-800 dark:text-zinc-100"></span>
                       @if ($calDone)
                         <flux:icon name="check-circle" class="size-4 font-bold text-green-600 dark:text-green-400" />
                       @endif
@@ -252,7 +212,8 @@
     </div>
 
     {{-- Mobile: list-style calendar --}}
-    <div class="space-y-2 sm:hidden">
+    <div class="space-y-2 transition-opacity duration-150 sm:hidden" wire:loading.class="opacity-40"
+      wire:target="calPrevMonth,calNextMonth,calToday">
       @foreach ($weeks as $week)
         @foreach ($week as $day)
           @if ($day['isCurrentMonth'])
@@ -294,7 +255,9 @@
                       <span class="h-2 w-2 shrink-0 rounded-full"
                         style="background-color: {{ $task->priority_color }}"></span>
                       <div class="min-w-0 flex-1">
-                        <span class="block truncate text-zinc-900 dark:text-zinc-100">{{ $task->title }}</span>
+                        <span x-data="{ title: @js($task->title) }"
+                          @task-title-updated.window="if ($event.detail.taskId === {{ $task->id }}) title = $event.detail.title"
+                          x-text="title" class="block truncate text-zinc-900 dark:text-zinc-100"></span>
                         <span class="block truncate text-[10px] text-zinc-400 dark:text-zinc-500">
                           {{ $task->taskList->space->name ?? '-' }} / {{ $task->taskList->name ?? '-' }}
                         </span>
@@ -327,7 +290,8 @@
       <form wire:submit="createSpace" class="space-y-4">
         <flux:field>
           <flux:label>Nama Space</flux:label>
-          <flux:input wire:model="createSpaceForm.name" placeholder="Contoh: Design, Engineering, Marketing..." autofocus />
+          <flux:input wire:model="createSpaceForm.name" placeholder="Contoh: Design, Engineering, Marketing..."
+            autofocus />
           <flux:error name="createSpaceForm.name" />
         </flux:field>
 
@@ -381,7 +345,8 @@
       <form wire:submit="createList" class="space-y-4">
         <flux:field>
           <flux:label>Nama List</flux:label>
-          <flux:input wire:model="createListForm.name" placeholder="Contoh: Sprint 1, Backlog, Q1 Tasks..." autofocus />
+          <flux:input wire:model="createListForm.name" placeholder="Contoh: Sprint 1, Backlog, Q1 Tasks..."
+            autofocus />
           <flux:error name="createListForm.name" />
         </flux:field>
 

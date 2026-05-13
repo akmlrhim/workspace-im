@@ -36,9 +36,11 @@
                       this.cancel();
                       return;
                   }
+                  this.draft = next;
                   this.$wire.taskTitle = next;
                   this.editing = false;
-                  await this.$wire.saveTitle();
+                  window.dispatchEvent(new CustomEvent('task-title-updated', { detail: { taskId: this.$wire.taskId, title: next } }));
+                  this.$wire.saveTitle();
               },
               cancel() {
                   this.draft = this.$wire.taskTitle;
@@ -48,9 +50,8 @@
             <button type="button" x-show="!editing" @click="start()"
               class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-lg font-semibold transition-colors {{ $canManage ? 'hover:bg-zinc-100 dark:hover:bg-zinc-800' : 'cursor-default' }}"
               title="{{ $canManage ? 'Klik untuk ubah judul' : '' }}">
-              <span class="flex-1 truncate text-zinc-900 dark:text-zinc-100">
-                {{ $taskTitle !== '' ? $taskTitle : 'Tanpa Judul' }}
-              </span>
+              <span class="flex-1 truncate text-zinc-900 dark:text-zinc-100"
+                x-text="draft !== '' ? draft : 'Tanpa Judul'"></span>
               @if ($canManage)
                 <flux:icon name="pencil-square"
                   class="size-4 shrink-0 text-zinc-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-zinc-500" />
@@ -58,19 +59,11 @@
             </button>
 
             @if ($canManage)
-              <div x-show="editing" x-cloak class="flex items-center gap-1.5">
+              <div x-show="editing" x-cloak>
                 <input type="text" x-ref="titleInput" x-model="draft" maxlength="500" @keydown.enter.prevent="save()"
                   @keydown.escape.prevent="cancel()" @blur="save()" placeholder="Judul tugas..."
-                  class="flex-1 rounded-md border border-indigo-300 bg-white px-2 py-1.5 text-lg font-semibold text-zinc-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-indigo-500/60 dark:bg-zinc-900 dark:text-zinc-100" />
-                <button type="button" @mousedown.prevent @click="save()"
-                  class="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
-                  title="Simpan">
-                  <flux:icon name="check" class="size-4" />
-                </button>
-                <button type="button" @mousedown.prevent @click="cancel()"
-                  class="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700" title="Batal">
-                  <flux:icon name="x-mark" class="size-4" />
-                </button>
+                  class="w-full rounded-md border border-indigo-300 bg-white px-2 py-1.5 text-lg font-semibold text-zinc-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-indigo-500/60 dark:bg-zinc-900 dark:text-zinc-100" />
+                <p class="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">Enter untuk simpan · Esc untuk batal</p>
               </div>
             @endif
           </div>
