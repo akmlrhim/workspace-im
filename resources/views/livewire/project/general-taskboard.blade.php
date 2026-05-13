@@ -464,7 +464,7 @@
         @foreach ($this->allUsers as $user)
           <label wire:key="gtb-user-{{ $user->id }}"
             class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
-            <flux:checkbox wire:model="listMemberIds" :value="$user->id" />
+            <flux:checkbox wire:model.live="listMemberIds" :value="$user->id" />
             <flux:avatar circle :name="$user->name" :initials="$user->initials()" :src="$user->avatar"
               size="sm" />
             <div class="min-w-0 flex-1">
