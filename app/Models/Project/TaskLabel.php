@@ -9,17 +9,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class TaskLabel extends Model
 {
-    use GeneratesUuid;
+	use GeneratesUuid;
 
-    protected $fillable = ['workspace_id', 'name', 'color'];
+	protected $fillable = ['workspace_id', 'name', 'color'];
 
-    public function workspace(): BelongsTo
-    {
-        return $this->belongsTo(Workspace::class);
-    }
+	public function workspace(): BelongsTo
+	{
+		return $this->belongsTo(Workspace::class);
+	}
 
-    public function tasks(): BelongsToMany
-    {
-        return $this->belongsToMany(Task::class, 'task_label_task');
-    }
+	public function tasks(): BelongsToMany
+	{
+		return $this->belongsToMany(Task::class, 'task_label_task');
+	}
 }

@@ -9,31 +9,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TaskAttachment extends Model
 {
-    use GeneratesUuid;
+	use GeneratesUuid;
 
-    protected $fillable = ['task_id', 'task_comment_id', 'task_checklist_item_id', 'user_id', 'filename', 'path', 'mime_type', 'size', 'is_link'];
+	protected $fillable = ['task_id', 'task_comment_id', 'task_checklist_item_id', 'user_id', 'filename', 'path', 'mime_type', 'size', 'is_link'];
 
-    protected $casts = [
-        'is_link' => 'boolean',
-    ];
+	protected $casts = [
+		'is_link' => 'boolean',
+	];
 
-    public function task(): BelongsTo
-    {
-        return $this->belongsTo(Task::class);
-    }
+	public function task(): BelongsTo
+	{
+		return $this->belongsTo(Task::class);
+	}
 
-    public function comment(): BelongsTo
-    {
-        return $this->belongsTo(TaskComment::class, 'task_comment_id');
-    }
+	public function comment(): BelongsTo
+	{
+		return $this->belongsTo(TaskComment::class, 'task_comment_id');
+	}
 
-    public function checklistItem(): BelongsTo
-    {
-        return $this->belongsTo(TaskChecklistItem::class, 'task_checklist_item_id');
-    }
+	public function checklistItem(): BelongsTo
+	{
+		return $this->belongsTo(TaskChecklistItem::class, 'task_checklist_item_id');
+	}
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
+	public function user(): BelongsTo
+	{
+		return $this->belongsTo(User::class);
+	}
 }

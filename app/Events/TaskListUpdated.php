@@ -10,24 +10,22 @@ use Illuminate\Queue\SerializesModels;
 
 class TaskListUpdated implements ShouldBroadcastNow
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+	use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public int $taskListId,
-        public int $triggeredBy,
-        public ?int $workspaceId = null,
-    ) {}
+	public function __construct(
+		public int $taskListId,
+		public int $triggeredBy,
+		public ?int $workspaceId = null,
+	) {}
 
-    public function broadcastOn(): array
-    {
-        $channels = [new Channel('task-list.'.$this->taskListId)];
+	public function broadcastOn(): array
+	{
+		$channels = [new Channel('task-list.' . $this->taskListId)];
 
-        // Broadcast on workspace channel in the same Pusher API call
-        // instead of a separate TaskUpdatedGlobal dispatch.
-        if ($this->workspaceId) {
-            $channels[] = new Channel('workspace.'.$this->workspaceId);
-        }
+		if ($this->workspaceId) {
+			$channels[] = new Channel('workspace.' . $this->workspaceId);
+		}
 
-        return $channels;
-    }
+		return $channels;
+	}
 }
