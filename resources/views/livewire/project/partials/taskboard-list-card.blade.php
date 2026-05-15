@@ -32,6 +32,12 @@
           title="Edit list">
           <flux:icon name="pencil-square" class="size-4" />
         </button>
+        <button type="button"
+          @click.prevent="deletingListId = {{ $list->id }}; deletingListName = @js($list->name); $flux.modal('delete-list-modal').show()"
+          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+          title="Hapus list">
+          <flux:icon name="trash" class="size-4" />
+        </button>
       </div>
     @endif
   </div>

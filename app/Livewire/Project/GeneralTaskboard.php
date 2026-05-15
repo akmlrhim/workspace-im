@@ -82,9 +82,6 @@ class GeneralTaskboard extends Component
 	{
 		$user = auth()->user();
 
-		// Find the workspace the user belongs to (member or owner).
-		// Prefer the oldest workspace (lowest id) so all members of the
-		// same shared workspace end up on the same broadcast channel.
 		$workspace = Workspace::whereHas('members', fn($q) => $q->where('user_id', $user->id))
 			->orderBy('id')
 			->first();
@@ -220,7 +217,40 @@ class GeneralTaskboard extends Component
 		Flux::toast('Space berhasil dibuat.', variant: 'success');
 	}
 
+	public function updatedShowCreateList(bool $value): void
+	{
+		if (! $value) {
+			$this->createListForm->reset();
+			$this->resetValidation();
+		}
+	}
+
+	public function updatedShowCreateSpace(bool $value): void
+	{
+		if (! $value) {
+			$this->createSpaceForm->reset();
+			$this->resetValidation();
+		}
+	}
+
 	// ─── List ──────────────────────────────────────────────────
+
+	public function deleteList(int $listId): void
+	{
+		if (! auth()->user()->canManageLists()) {
+			Flux::toast('Hanya Administrator yang dapat menghapus list.', variant: 'danger');
+
+			return;
+		}
+
+		TaskList::findOrFail($listId)->delete();
+
+		unset($this->listSpaces);
+		$this->skipRender();
+		$this->dispatch('sidebar-updated');
+		$this->broadcastChange();
+		Flux::toast('List berhasil dihapus.', variant: 'success');
+	}
 
 	public function createList(): void
 	{

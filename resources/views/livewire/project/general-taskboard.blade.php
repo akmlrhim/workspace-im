@@ -1,4 +1,4 @@
-<div x-data="{ deletingSpaceId: null, deletingSpaceName: '', deletedSpaceIds: [] }">
+<div x-data="{ deletingSpaceId: null, deletingSpaceName: '', deletedSpaceIds: [], deletingListId: null, deletingListName: '', deletedListIds: [] }">
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <flux:heading size="xl">General Taskboard</flux:heading>
@@ -93,7 +93,11 @@
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               @foreach ($space->lists as $list)
-                @include('livewire.project.partials.taskboard-list-card', ['list' => $list])
+                <div x-show="!deletedListIds.includes({{ $list->id }})"
+                  x-transition:leave="transition duration-150 ease-in" x-transition:leave-start="opacity-100"
+                  x-transition:leave-end="opacity-0">
+                  @include('livewire.project.partials.taskboard-list-card', ['list' => $list])
+                </div>
               @endforeach
             </div>
           </div>
@@ -230,7 +234,8 @@
                     {{ $day['isToday'] ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-300 dark:shadow-indigo-900' : 'text-zinc-700 dark:text-zinc-300' }}">
                     {{ $day['date']->day }}
                   </span>
-                  <span class="text-xs font-medium {{ $day['isToday'] ? 'font-bold text-indigo-600 dark:text-indigo-400' : 'text-zinc-400 dark:text-zinc-500' }}">
+                  <span
+                    class="text-xs font-medium {{ $day['isToday'] ? 'font-bold text-indigo-600 dark:text-indigo-400' : 'text-zinc-400 dark:text-zinc-500' }}">
                     {{ $day['date']->isoFormat('ddd') }}
                   </span>
                 </div>
@@ -290,7 +295,7 @@
       <form wire:submit="createSpace" class="space-y-4">
         <flux:field>
           <flux:label>Nama Space</flux:label>
-          <flux:input wire:model="createSpaceForm.name" placeholder="Contoh: Design, Engineering, Marketing..."
+          <flux:input wire:model="createSpaceForm.name" placeholder="Contoh: Divisi, Proyek, HQ, Arsip....."
             autofocus />
           <flux:error name="createSpaceForm.name" />
         </flux:field>
@@ -345,8 +350,7 @@
       <form wire:submit="createList" class="space-y-4">
         <flux:field>
           <flux:label>Nama List</flux:label>
-          <flux:input wire:model="createListForm.name" placeholder="Contoh: Sprint 1, Backlog, Q1 Tasks..."
-            autofocus />
+          <flux:input wire:model="createListForm.name" placeholder="Finance, HR, Creative......" autofocus />
           <flux:error name="createListForm.name" />
         </flux:field>
 
@@ -489,6 +493,28 @@
           <flux:button variant="ghost" @click="$wire.set('showManageMembers', false)">Batal</flux:button>
           <flux:button variant="primary" wire:click="saveMembers">Simpan Anggota</flux:button>
         </div>
+      </div>
+    </div>
+  </flux:modal>
+
+  {{-- Delete List --}}
+  <flux:modal name="delete-list-modal" class="w-full max-w-sm">
+    <div class="space-y-6">
+      <div>
+        <flux:heading size="lg">Hapus List</flux:heading>
+        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+          List <span class="font-semibold text-zinc-800 dark:text-zinc-200" x-text="deletingListName"></span>
+          beserta seluruh task di dalamnya akan dihapus permanen.
+        </p>
+      </div>
+      <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <flux:button variant="ghost" class="w-full sm:w-auto" @click="$flux.modal('delete-list-modal').close()">
+          Batal
+        </flux:button>
+        <flux:button variant="danger" class="w-full sm:w-auto"
+          @click="deletedListIds.push(deletingListId); $wire.deleteList(deletingListId); $flux.modal('delete-list-modal').close()">
+          Hapus
+        </flux:button>
       </div>
     </div>
   </flux:modal>

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Project;
 
+use App\Events\DailyTaskUpdated;
 use App\Models\Project\DailyTask;
 use App\Models\Project\DailyTaskLog;
 use App\Models\Project\Space;
@@ -33,6 +34,30 @@ class DailyTaskView extends Component
 		$this->selectedDate = today()->toDateString();
 	}
 
+	/** @return array<string, string> */
+	public function getListeners(): array
+	{
+		return [
+			"echo:task-list.{$this->taskList->id},DailyTaskUpdated" => 'onDailyTaskUpdated',
+		];
+	}
+
+	public function onDailyTaskUpdated(array $event): void
+	{
+		if (($event['triggeredBy'] ?? null) === auth()->id()) {
+			$this->skipRender();
+
+			return;
+		}
+
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
+	}
+
+	private function broadcastChange(): void
+	{
+		DailyTaskUpdated::dispatch($this->taskList->id, auth()->id());
+	}
+
 	#[Computed]
 	public function isToday(): bool
 	{
@@ -59,17 +84,23 @@ class DailyTaskView extends Component
 			->where('day_of_week', $this->selectedDayOfWeek)
 			->with([
 				'creator',
-				'logs' => fn($q) => $q->where('user_id', auth()->id())->where('date', $this->selectedDate),
+				'logs' => fn($q) => $q->where('date', $this->selectedDate),
 			])
 			->orderBy('position')
 			->get();
 	}
 
 	#[Computed]
+	public function tasksByCreator(): Collection
+	{
+		return $this->dailyTasks->groupBy('created_by');
+	}
+
+	#[Computed]
 	public function pendingCount(): int
 	{
 		return $this->dailyTasks->filter(function (DailyTask $dt) {
-			$log = $dt->logs->first();
+			$log = $dt->logs->firstWhere('user_id', $dt->created_by);
 
 			return ! ($log && $log->is_completed);
 		})->count();
@@ -88,13 +119,13 @@ class DailyTaskView extends Component
 			$this->selectedDate = today()->toDateString();
 		}
 
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
 	}
 
 	public function previousDay(): void
 	{
 		$this->selectedDate = Carbon::parse($this->selectedDate)->subDay()->toDateString();
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
 	}
 
 	public function nextDay(): void
@@ -104,13 +135,13 @@ class DailyTaskView extends Component
 		}
 
 		$this->selectedDate = Carbon::parse($this->selectedDate)->addDay()->toDateString();
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
 	}
 
 	public function goToToday(): void
 	{
 		$this->selectedDate = today()->toDateString();
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon, $this->selectedDayOfWeek);
 	}
 
 	private function canManage(): bool
@@ -125,12 +156,7 @@ class DailyTaskView extends Component
 			return true;
 		}
 
-		if ($this->taskList->members()->where('users.id', $user->id)->exists()) {
-			return true;
-		}
-
-		return $this->taskList->tasks()->whereHas('assignees', fn($q) => $q->where('users.id', $user->id))->exists()
-			|| $this->taskList->tasks()->where('assigned_to', $user->id)->exists();
+		return $this->taskList->members()->where('users.id', $user->id)->exists();
 	}
 
 	public function addDailyTask(string $title, string $description = ''): void
@@ -157,8 +183,9 @@ class DailyTaskView extends Component
 			'day_of_week' => $dayOfWeek,
 		]);
 
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
 
+		$this->broadcastChange();
 		Flux::toast('Daily task ditambahkan.', variant: 'success');
 	}
 
@@ -184,8 +211,9 @@ class DailyTaskView extends Component
 			'description' => $description ?: null,
 		]);
 
-		unset($this->dailyTasks);
+		unset($this->dailyTasks, $this->tasksByCreator);
 
+		$this->broadcastChange();
 		Flux::toast('Daily task diperbarui.', variant: 'success');
 	}
 
@@ -196,6 +224,9 @@ class DailyTaskView extends Component
 
 			return;
 		}
+
+		$dailyTask = $this->taskList->dailyTasks()->findOrFail($dailyTaskId);
+		abort_if($dailyTask->created_by !== auth()->id(), 403);
 
 		$log = DailyTaskLog::firstOrNew([
 			'daily_task_id' => $dailyTaskId,
@@ -215,12 +246,19 @@ class DailyTaskView extends Component
 			$log->save();
 		}
 
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
+		$this->broadcastChange();
 	}
 
 	public function openReasonModal(int $dailyTaskId): void
 	{
 		if (! $this->canManage()) {
+			return;
+		}
+
+		$dailyTask = $this->taskList->dailyTasks()->findOrFail($dailyTaskId);
+
+		if ($dailyTask->created_by !== auth()->id()) {
 			return;
 		}
 
@@ -250,8 +288,9 @@ class DailyTaskView extends Component
 		$this->reasonModalFor = null;
 		$this->reasonInputs = [];
 
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
 
+		$this->broadcastChange();
 		Flux::toast('Alasan disimpan.', variant: 'success');
 	}
 
@@ -269,8 +308,9 @@ class DailyTaskView extends Component
 
 		$dailyTask->delete();
 
-		unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
+		unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
 
+		$this->broadcastChange();
 		Flux::toast('Daily task dihapus.', variant: 'success');
 	}
 
@@ -278,6 +318,7 @@ class DailyTaskView extends Component
 	{
 		return view('livewire.project.daily-task-view', [
 			'canManage' => $this->canManage(),
+			'tasksByCreator' => $this->tasksByCreator,
 		]);
 	}
 }
