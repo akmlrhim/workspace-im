@@ -162,7 +162,10 @@ class TaskListShow extends Component
 	#[Computed]
 	public function statuses(): Collection
 	{
-		return $this->taskList->statuses()->orderBy('position')->get();
+		return $this->taskList->statuses()
+			->whereRaw('LOWER(name) != ?', ['note'])
+			->orderBy('position')
+			->get();
 	}
 
 	public function render()
