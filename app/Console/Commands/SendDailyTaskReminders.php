@@ -20,12 +20,14 @@ class SendDailyTaskReminders extends Command
         $isTest = $this->option('test');
         $overrideTo = $this->option('to');
 
-        $taskLists = TaskList::whereHas('dailyTasks', fn ($q) => $q->where('is_active', true))
+        $today = today()->toDateString();
+
+        $taskLists = TaskList::whereHas('dailyTasks', fn ($q) => $q->where('is_active', true)->where('date', $today))
             ->with([
                 'space',
                 'members',
-                'dailyTasks' => fn ($q) => $q->where('is_active', true)->orderBy('position'),
-                'dailyTasks.logs' => fn ($q) => $q->where('date', today()->toDateString()),
+                'dailyTasks' => fn ($q) => $q->where('is_active', true)->where('date', $today)->orderBy('position'),
+                'dailyTasks.logs' => fn ($q) => $q->where('date', $today),
             ])
             ->get();
 

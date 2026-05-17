@@ -201,8 +201,7 @@
     $completedCount = $this->completedCount;
     $percentage = $total > 0 ? round(($completedCount / $total) * 100) : 0;
     $myId = auth()->id();
-    $dayNames = [1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu'];
-    $currentDayName = $dayNames[$this->selectedDayOfWeek] ?? '';
+    $currentDayName = $this->selectedCarbon->locale('id')->isoFormat('dddd');
   @endphp
 
   {{-- Day context header --}}
