@@ -61,7 +61,7 @@ jobs:
 
             $PHP artisan down || true
 
-            git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/erp-impost.git main
+            git pull https://${{ secrets.GH_TOKEN }}@github.com/akmlrhim/workspace-im.git main
             git reset --hard FETCH_HEAD
 
             COMPOSER_MEMORY_LIMIT=-1 composer install \

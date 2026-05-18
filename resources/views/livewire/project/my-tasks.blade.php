@@ -162,14 +162,12 @@
       @endforeach
     </div>
   @elseif ($totalCount === 0)
-    <div
-      class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/50 py-20 dark:border-zinc-700 dark:bg-zinc-800/20">
-      <div class="mb-4 rounded-full bg-green-100 p-4 dark:bg-green-500/20">
-        <flux:icon name="check-circle" class="size-9 text-green-600 dark:text-green-400" />
-      </div>
-      <flux:heading size="lg">Tidak ada tugas</flux:heading>
-      <flux:subheading class="mt-1">Anda tidak memiliki tugas yang ditugaskan saat ini.</flux:subheading>
-    </div>
+    <x-empty-state
+      icon="check-circle"
+      iconBgClass="bg-green-100 dark:bg-green-500/20"
+      iconClass="size-9 text-green-600 dark:text-green-400"
+      heading="Tidak ada tugas"
+      subheading="Anda tidak memiliki tugas yang ditugaskan saat ini." />
   @else
     {{-- Grouped by status --}}
     @foreach ($grouped as $group)
@@ -359,24 +357,5 @@
 
   @endif
 
-  <flux:modal name="task-detail-mytasks" wire:model="showTaskDetail" :closable="false"
-    @close="$wire.closeTaskDetail()"
-    @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('task-detail-mytasks').close()"
-    class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-    <div
-      class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
-      <div wire:loading wire:target="openTaskDetail" class="absolute inset-0 z-50 bg-white dark:bg-zinc-900">
-        @include('livewire.project.partials.task-detail-skeleton')
-      </div>
-      @if ($selectedTaskId)
-        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'my-detail-' . $selectedTaskId" />
-      @else
-        <div wire:loading.remove wire:target="openTaskDetail" class="flex min-h-[60vh] items-center justify-center">
-          <div
-            class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400">
-          </div>
-        </div>
-      @endif
-    </div>
-  </flux:modal>
+  <x-task-detail-modal name="task-detail-mytasks" keyPrefix="my-detail" :selectedTaskId="$selectedTaskId" />
 </div>

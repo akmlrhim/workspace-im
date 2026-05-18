@@ -130,7 +130,8 @@
                   {{ $day['isToday'] ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-300 dark:shadow-indigo-900' : 'text-zinc-700 dark:text-zinc-300' }}">
                   {{ $day['date']->day }}
                 </span>
-                <span class="text-xs font-medium {{ $day['isToday'] ? 'font-bold text-indigo-600 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400' }}">
+                <span
+                  class="text-xs font-medium {{ $day['isToday'] ? 'font-bold text-indigo-600 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400' }}">
                   {{ $day['date']->format('D') }}
                 </span>
               </div>
@@ -227,24 +228,5 @@
   </flux:modal>
 
   {{-- Task Detail Modal --}}
-  <flux:modal name="task-detail-calendar" wire:model="showTaskDetail" :closable="false"
-    @close="$wire.closeTaskDetail()"
-    @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('task-detail-calendar').close()"
-    class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-    <div
-      class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto pr-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
-      <div wire:loading wire:target="openTaskDetail" class="absolute inset-0 z-50 bg-white dark:bg-zinc-900">
-        @include('livewire.project.partials.task-detail-skeleton')
-      </div>
-      @if ($selectedTaskId)
-        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'cal-detail-' . $selectedTaskId" />
-      @else
-        <div wire:loading.remove wire:target="openTaskDetail" class="flex min-h-[60vh] items-center justify-center">
-          <div
-            class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400">
-          </div>
-        </div>
-      @endif
-    </div>
-  </flux:modal>
+  <x-task-detail-modal name="task-detail-calendar" keyPrefix="cal-detail" :selectedTaskId="$selectedTaskId" />
 </div>

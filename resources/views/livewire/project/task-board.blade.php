@@ -324,26 +324,7 @@
   @livewire('project.task-form-modal', ['space' => $space, 'taskList' => $taskList])
   @livewire('project.task-delete-modal')
 
-  <flux:modal name="task-detail-board" wire:model="showTaskDetail" :closable="false"
-    @close="$wire.closeTaskDetail()"
-    @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('task-detail-board').close()"
-    class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-    <div
-      class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto px-1 -mx-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
-      <div wire:loading wire:target="openTaskDetail"
-        class="absolute inset-0 z-50 bg-white dark:bg-zinc-900">
-        @include('livewire.project.partials.task-detail-skeleton')
-      </div>
-      @if ($selectedTaskId)
-        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'board-detail-' . $selectedTaskId" />
-      @else
-        {{-- Fallback: visible skeleton while server hasn't responded yet --}}
-        <div wire:loading.remove wire:target="openTaskDetail" class="flex min-h-[60vh] items-center justify-center">
-          <div class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400"></div>
-        </div>
-      @endif
-    </div>
-  </flux:modal>
+  <x-task-detail-modal name="task-detail-board" keyPrefix="board-detail" :selectedTaskId="$selectedTaskId" />
 
   <flux:modal wire:model="showDeleteColumnConfirm" class="w-full max-w-sm">
     <div class="space-y-4 text-center">

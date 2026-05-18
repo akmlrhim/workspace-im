@@ -1,4 +1,4 @@
-<div x-data="{ deletingSpaceId: null, deletingSpaceName: '', deletedSpaceIds: [], deletingListId: null, deletingListName: '', deletedListIds: [] }">
+<div x-data="generalTaskboard">
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <flux:heading size="xl">General Taskboard</flux:heading>
@@ -13,7 +13,7 @@
 
       @if (auth()->user()->canManageLists())
         <flux:button size="sm" variant="ghost" icon="plus" class="cursor-pointer"
-          @click="$wire.listSpaceId = null; $wire.listName = ''; $wire.showCreateList = true; $flux.modal('create-list-modal').show()">
+          @click="$flux.modal('create-list-modal').show()">
           Tambah List
         </flux:button>
 
@@ -104,24 +104,19 @@
         @endforeach
       </div>
     @else
-      <div
-        class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/50 py-20 dark:border-zinc-700 dark:bg-zinc-800/20">
-        <div class="mb-4 rounded-full bg-zinc-100 p-4 dark:bg-zinc-500/20">
-          <flux:icon name="clipboard-document-list" class="size-9 text-zinc-400 dark:text-zinc-500" />
-        </div>
-        <flux:heading size="lg">Belum ada list</flux:heading>
-        <flux:subheading class="mt-1">Mulai dengan membuat Space dan List pertama Anda.</flux:subheading>
-        <div class="mt-6 flex gap-2">
-          <flux:button size="sm" variant="ghost"
-            @click="$wire.listSpaceId = null; $wire.listName = ''; $wire.showCreateList = true; $flux.modal('create-list-modal').show()">
-            Tambah List
-          </flux:button>
-          <flux:button size="sm" variant="primary"
-            @click="$wire.showCreateSpace = true; $flux.modal('create-space-modal').show()">
-            Tambah Space
-          </flux:button>
-        </div>
-      </div>
+      <x-empty-state
+        icon="clipboard-document-list"
+        heading="Belum ada list"
+        subheading="Mulai dengan membuat Space dan List pertama Anda.">
+        <flux:button size="sm" variant="ghost"
+          @click="$flux.modal('create-list-modal').show()">
+          Tambah List
+        </flux:button>
+        <flux:button size="sm" variant="primary"
+          @click="$wire.showCreateSpace = true; $flux.modal('create-space-modal').show()">
+          Tambah Space
+        </flux:button>
+      </x-empty-state>
     @endif
   @endif
 
@@ -300,33 +295,9 @@
           <flux:error name="createSpaceForm.name" />
         </flux:field>
 
-        <div>
-          <flux:label class="mb-2">Warna</flux:label>
-          <div class="flex flex-wrap gap-2">
-            @foreach (['#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6'] as $color)
-              <button type="button" @click="$wire.createSpaceForm.color = '{{ $color }}'"
-                class="h-8 w-8 rounded-full transition-all hover:scale-110"
-                :class="$wire.createSpaceForm.color === '{{ $color }}' ?
-                    'ring-2 ring-offset-2 ring-zinc-900 scale-110 dark:ring-white dark:ring-offset-zinc-900' : ''"
-                style="background-color: {{ $color }}"></button>
-            @endforeach
-          </div>
-        </div>
+        <x-space-color-picker model="$wire.createSpaceForm.color" />
 
-        <div>
-          <flux:label class="mb-2">Ikon</flux:label>
-          <div class="flex flex-wrap gap-1.5">
-            @foreach (['folder', 'squares-2x2', 'briefcase', 'rocket-launch', 'star', 'bolt', 'fire', 'globe-alt', 'heart', 'cube'] as $icon)
-              <button type="button" @click="$wire.createSpaceForm.icon = '{{ $icon }}'"
-                class="flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
-                :class="$wire.createSpaceForm.icon === '{{ $icon }}' ?
-                    'border-zinc-900 bg-zinc-100 text-zinc-900 dark:border-zinc-400 dark:bg-zinc-700 dark:text-white' :
-                    'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'">
-                <flux:icon name="{{ $icon }}" class="size-4" />
-              </button>
-            @endforeach
-          </div>
-        </div>
+        <x-space-icon-picker model="$wire.createSpaceForm.icon" />
 
         <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
           <flux:button variant="ghost" class="w-full sm:w-auto" @click="$flux.modal('create-space-modal').close()">
@@ -339,7 +310,7 @@
   </flux:modal>
 
   {{-- Create List --}}
-  <flux:modal name="create-list-modal" wire:model="showCreateList" class="w-full max-w-md">
+  <flux:modal name="create-list-modal" class="w-full max-w-md" @close="$wire.resetCreateListForm()">
     <div class="space-y-6">
       <div>
         <flux:heading size="lg">Buat List Baru</flux:heading>
@@ -356,9 +327,10 @@
 
         <flux:field>
           <flux:label>Space</flux:label>
-          <flux:select wire:model="createListForm.spaceId" placeholder="Pilih space...">
+          <flux:select wire:model="createListForm.spaceId">
+            <option value="">— Pilih space —</option>
             @foreach ($this->spaces as $sp)
-              <flux:select.option value="{{ $sp->id }}">{{ $sp->name }}</flux:select.option>
+              <option value="{{ $sp->id }}">{{ $sp->name }}</option>
             @endforeach
           </flux:select>
           <flux:error name="createListForm.spaceId" />
@@ -368,7 +340,11 @@
           <flux:button variant="ghost" class="w-full sm:w-auto" @click="$flux.modal('create-list-modal').close()">
             Batal
           </flux:button>
-          <flux:button type="submit" variant="primary" class="w-full sm:w-auto">Buat List</flux:button>
+          <flux:button type="submit" variant="primary" class="w-full sm:w-auto"
+            wire:loading.attr="disabled" wire:target="createList">
+            <span wire:loading.remove wire:target="createList">Buat List</span>
+            <span wire:loading wire:target="createList">Menyimpan...</span>
+          </flux:button>
         </div>
       </form>
     </div>
@@ -389,33 +365,10 @@
           <flux:error name="editSpaceName" />
         </flux:field>
 
-        <div>
-          <flux:label class="mb-2">Warna</flux:label>
-          <div class="flex flex-wrap gap-2">
-            @foreach (['#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6'] as $color)
-              <button type="button" @click="$wire.editSpaceColor = '{{ $color }}'"
-                class="h-8 w-8 rounded-full transition-all hover:scale-110"
-                :class="$wire.editSpaceColor === '{{ $color }}' ?
-                    'ring-2 ring-offset-2 ring-zinc-900 scale-110 dark:ring-white dark:ring-offset-zinc-900' : ''"
-                style="background-color: {{ $color }}"></button>
-            @endforeach
-          </div>
-        </div>
+        <x-space-color-picker model="$wire.editSpaceColor" />
 
-        <div>
-          <flux:label class="mb-2">Ikon</flux:label>
-          <div class="flex flex-wrap gap-1.5">
-            @foreach (['folder', 'squares-2x2', 'briefcase', 'rocket-launch', 'star', 'bolt', 'fire', 'globe-alt', 'heart', 'cube'] as $icon)
-              <button type="button" @click="$wire.editSpaceIcon = '{{ $icon }}'"
-                class="flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
-                :class="$wire.editSpaceIcon === '{{ $icon }}' ?
-                    'border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' :
-                    'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400'">
-                <flux:icon name="{{ $icon }}" class="size-4" />
-              </button>
-            @endforeach
-          </div>
-        </div>
+        <x-space-icon-picker model="$wire.editSpaceIcon"
+          selectedClass="border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" />
 
         <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
           <flux:button variant="ghost" class="w-full sm:w-auto" @click="$wire.set('showEditSpace', false)">
@@ -439,9 +392,10 @@
         </flux:field>
         <flux:field>
           <flux:label>Space</flux:label>
-          <flux:select wire:model="editListSpaceId" placeholder="Pilih space tujuan...">
+          <flux:select wire:model="editListSpaceId">
+            <option value="">— Pilih space —</option>
             @foreach ($this->spaces as $sp)
-              <flux:select.option value="{{ $sp->id }}">{{ $sp->name }}</flux:select.option>
+              <option value="{{ $sp->id }}">{{ $sp->name }}</option>
             @endforeach
           </flux:select>
           <flux:error name="editListSpaceId" />
@@ -465,12 +419,10 @@
       </div>
 
       <div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-200 p-1.5 dark:border-zinc-700">
-        <div wire:loading wire:target="openManageMembers" class="flex min-h-[120px] items-center justify-center">
-          <div
-            class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400">
-          </div>
+        <div x-show="membersLoading" class="flex min-h-[120px] items-center justify-center">
+          <x-spinner />
         </div>
-        <div wire:loading.remove wire:target="openManageMembers">
+        <div x-show="!membersLoading">
           @foreach ($this->allUsers as $user)
             <label wire:key="gtb-user-{{ $user->id }}"
               class="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
@@ -542,24 +494,19 @@
   </flux:modal>
 
   {{-- Task Detail Modal (from calendar) --}}
-  <flux:modal name="gen-task-detail" wire:model="showTaskDetail" :closable="false"
-    @close="$wire.closeTaskDetail()"
-    @task-deleted.window="if ($event.detail.taskId === $wire.selectedTaskId) $flux.modal('gen-task-detail').close()"
-    class="w-full max-w-5xl max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
-    <div
-      class="relative min-h-[60vh] max-h-[85vh] overflow-y-auto px-1 -mx-1 max-sm:max-h-none max-sm:min-h-0 max-sm:h-[calc(100dvh-4rem)]">
-      <div wire:loading wire:target="openTaskDetail" class="absolute inset-0 z-50 bg-white dark:bg-zinc-900">
-        @include('livewire.project.partials.task-detail-skeleton')
-      </div>
-      @if ($selectedTaskId)
-        <livewire:project.task-detail :taskId="$selectedTaskId" :key="'gen-detail-' . $selectedTaskId" />
-      @else
-        <div wire:loading.remove wire:target="openTaskDetail" class="flex min-h-[60vh] items-center justify-center">
-          <div
-            class="size-6 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400">
-          </div>
-        </div>
-      @endif
-    </div>
-  </flux:modal>
+  <x-task-detail-modal name="gen-task-detail" keyPrefix="gen-detail" :selectedTaskId="$selectedTaskId" />
 </div>
+
+@script
+<script>
+    Alpine.data('generalTaskboard', () => ({
+        deletingSpaceId: null,
+        deletingSpaceName: '',
+        deletedSpaceIds: [],
+        deletingListId: null,
+        deletingListName: '',
+        deletedListIds: [],
+        membersLoading: false,
+    }));
+</script>
+@endscript

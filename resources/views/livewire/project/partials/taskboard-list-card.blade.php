@@ -21,7 +21,7 @@
     @if (auth()->user()->canManageLists())
       <div class="relative z-20 flex shrink-0 items-center gap-1">
         <button type="button"
-          @click.prevent="$flux.modal('manage-members-modal').show(); $wire.openManageMembers({{ $list->id }})"
+          @click.prevent="membersLoading = true; $flux.modal('manage-members-modal').show(); $wire.openManageMembers({{ $list->id }}).then(() => membersLoading = false)"
           class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
           title="Kelola Anggota List">
           <flux:icon name="users" class="size-4" />
