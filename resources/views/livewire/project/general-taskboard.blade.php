@@ -58,7 +58,10 @@
             x-transition:leave-end="opacity-0" wire:key="space-{{ $space->id }}">
             <div class="mb-3 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <div class="flex items-center gap-2">
+                <button @click="toggleSpace({{ $space->id }})"
+                  class="cursor-pointer flex items-center gap-2 rounded-md px-1 py-0.5 transition hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                  <flux:icon x-show="!collapsedSpaces.includes({{ $space->id }})" name="chevron-down" class="size-3.5 text-zinc-400" />
+                  <flux:icon x-show="collapsedSpaces.includes({{ $space->id }})" name="chevron-right" class="size-3.5 text-zinc-400" />
                   <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
                     style="background-color: {{ $space->color }}20">
                     <flux:icon name="{{ $space->icon }}" class="size-4" style="color: {{ $space->color }}" />
@@ -66,7 +69,7 @@
                   <h2 class="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     {{ $space->name }}
                   </h2>
-                </div>
+                </button>
                 <span
                   class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
                   {{ $space->lists->count() }}
@@ -91,7 +94,14 @@
               @endif
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+              x-show="!collapsedSpaces.includes({{ $space->id }})"
+              x-transition:enter="transition duration-200 ease-out"
+              x-transition:enter-start="opacity-0 -translate-y-1"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              x-transition:leave="transition duration-150 ease-in"
+              x-transition:leave-start="opacity-100 translate-y-0"
+              x-transition:leave-end="opacity-0 -translate-y-1">
               @foreach ($space->lists as $list)
                 <div x-show="!deletedListIds.includes({{ $list->id }})"
                   x-transition:leave="transition duration-150 ease-in" x-transition:leave-start="opacity-100"
@@ -507,6 +517,14 @@
         deletingListName: '',
         deletedListIds: [],
         membersLoading: false,
+        collapsedSpaces: [],
+        toggleSpace(id) {
+            if (this.collapsedSpaces.includes(id)) {
+                this.collapsedSpaces = this.collapsedSpaces.filter(i => i !== id);
+            } else {
+                this.collapsedSpaces.push(id);
+            }
+        },
     }));
 </script>
 @endscript

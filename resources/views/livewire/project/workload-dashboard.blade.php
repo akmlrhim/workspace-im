@@ -1,6 +1,6 @@
 <div>
   {{-- ─── Header ──────────────────────────────────────────── --}}
-  <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <flux:heading size="xl">Workload & Traffic</flux:heading>
     </div>
@@ -9,6 +9,32 @@
         class="w-full sm:w-72" />
     </div>
   </div>
+
+  {{-- ─── Space filter pills ─────────────────────────────── --}}
+  @if ($spaces->isNotEmpty())
+    <div class="mb-6 flex flex-wrap gap-2">
+      <button wire:click="selectSpace(null)"
+        class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition
+          {{ $selectedSpaceId === null
+              ? 'border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500/60 dark:bg-indigo-500/10 dark:text-indigo-300'
+              : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-200' }}">
+        <flux:icon name="squares-2x2" class="size-3" />
+        Semua Space
+      </button>
+
+      @foreach ($spaces as $space)
+        <button wire:click="selectSpace({{ $space->id }})" wire:key="space-pill-{{ $space->id }}"
+          class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition
+            {{ $selectedSpaceId === $space->id
+                ? 'border-current bg-opacity-10 font-semibold'
+                : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-200' }}"
+          @if ($selectedSpaceId === $space->id) style="border-color: {{ $space->color }}; color: {{ $space->color }}; background-color: {{ $space->color }}15;" @endif>
+          <div class="size-2 rounded-full shrink-0" style="background-color: {{ $space->color }}"></div>
+          {{ $space->name }}
+        </button>
+      @endforeach
+    </div>
+  @endif
 
   {{-- toggle switch  --}}
   <div class="mb-6">
@@ -108,63 +134,11 @@
       </div>
     </div>
 
-    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Distribusi Prioritas</h3>
-          <flux:icon name="flag" class="size-5 text-zinc-400" />
-        </div>
-        @php $priorityTotal = max(1, array_sum(array_column($priorityData, 'count'))); @endphp
-        <div class="space-y-3">
-          @foreach ($priorityData as $priority)
-            <div>
-              <div class="mb-1 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="size-2.5 rounded-full {{ $priority['color'] }}"></div>
-                  <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ $priority['label'] }}</span>
-                </div>
-                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $priority['count'] }}</span>
-              </div>
-              <div class="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
-                <div class="h-full rounded-full {{ $priority['color'] }} transition-all"
-                  style="width: {{ ($priority['count'] / $priorityTotal) * 100 }}%"></div>
-              </div>
-            </div>
-          @endforeach
-        </div>
-      </div>
-
-      <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Distribusi Status</h3>
-          <flux:icon name="chart-bar" class="size-5 text-zinc-400" />
-        </div>
-        @php $statusTotal = max(1, array_sum(array_column($statusData, 'count'))); @endphp
-        <div class="space-y-3">
-          @foreach ($statusData as $status)
-            <div>
-              <div class="mb-1 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="size-2.5 rounded-full {{ $status['color'] }}"></div>
-                  <span class="text-sm text-zinc-600 dark:text-zinc-400">{{ $status['label'] }}</span>
-                </div>
-                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $status['count'] }}</span>
-              </div>
-              <div class="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
-                <div class="h-full rounded-full {{ $status['color'] }} transition-all"
-                  style="width: {{ ($status['count'] / $statusTotal) * 100 }}%"></div>
-              </div>
-            </div>
-          @endforeach
-        </div>
-      </div>
-    </div>
-
     {{-- Task groups table --}}
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Daftar Tugas per Proyek</h3>
-        <span class="text-xs text-zinc-400">{{ $taskGroups->count() }} proyek</span>
+        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Daftar Tugas</h3>
+        <span class="text-xs text-zinc-400">{{ $taskGroups->count() }} List</span>
       </div>
 
       @forelse ($taskGroups as $group)
@@ -182,8 +156,8 @@
             <div>
               <div class="flex items-center gap-2">
                 @if ($groupDone)
-                  <svg class="size-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                    stroke-width="2">
+                  <svg class="size-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
                       d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
