@@ -83,14 +83,28 @@ test('taskboard shows task count per list', function () {
 		->assertSee('2 tasks');
 });
 
-test('taskboard shows all lists to any authenticated user regardless of assignment', function () {
+test('taskboard only shows spaces accessible to the authenticated user', function () {
 	$owner = User::factory()->create(['role' => 'member']);
 	$outsider = User::factory()->create(['role' => 'member']);
 
 	$workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
 	$space = $workspace->spaces()->create(['name' => 'Private Space', 'position' => 0, 'color' => '#3b82f6', 'icon' => 'lock-closed']);
-	$space->lists()->create(['name' => 'Internal List', 'position' => 0]);
+	$list = $space->lists()->create(['name' => 'Internal List', 'position' => 0]);
 
+	// Outsider has no workspace membership, list membership, or task assignment → sees nothing
+	Livewire::actingAs($outsider)
+		->test(GeneralTaskboard::class)
+		->assertDontSee('Private Space')
+		->assertDontSee('Internal List');
+
+	// Owner of the workspace sees their own spaces and lists
+	Livewire::actingAs($owner)
+		->test(GeneralTaskboard::class)
+		->assertSee('Private Space')
+		->assertSee('Internal List');
+
+	// Member added to the list gains access
+	$list->members()->attach($outsider->id);
 	Livewire::actingAs($outsider)
 		->test(GeneralTaskboard::class)
 		->assertSee('Private Space')

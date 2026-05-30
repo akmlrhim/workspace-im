@@ -43,7 +43,7 @@ class WorkloadDashboard extends Component
     #[Computed]
     public function spaces()
     {
-        return Space::orderBy('position')->get();
+        return Space::accessibleBy(auth()->id())->orderBy('position')->get();
     }
 
     public function switchView(string $view): void

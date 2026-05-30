@@ -429,14 +429,16 @@ class GeneralTaskboard extends Component
     #[Computed]
     public function listSpaces()
     {
-        return Space::with([
-            'lists' => function ($q) {
-                $q->with('members')
-                    ->withCount(['tasks' => fn ($q2) => $q2->excludeNotes()])
-                    ->when($this->search, fn ($q2) => $q2->where('name', 'like', "%{$this->search}%"))
-                    ->orderBy('position');
-            },
-        ])
+        return Space::accessibleBy(auth()->id())
+            ->with([
+                'lists' => function ($q) {
+                    $q->accessibleBy(auth()->id())
+                        ->with('members')
+                        ->withCount(['tasks' => fn ($q2) => $q2->excludeNotes()])
+                        ->when($this->search, fn ($q2) => $q2->where('name', 'like', "%{$this->search}%"))
+                        ->orderBy('position');
+                },
+            ])
             ->orderBy('position')
             ->get();
     }
