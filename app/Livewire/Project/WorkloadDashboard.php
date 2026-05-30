@@ -4,7 +4,6 @@ namespace App\Livewire\Project;
 
 use App\Models\Project\Space;
 use App\Models\Project\Task;
-use App\Models\Project\Workspace;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -21,25 +20,18 @@ class WorkloadDashboard extends Component
 
     public ?int $selectedSpaceId = null;
 
-    public ?int $workspaceId = null;
-
     public function mount(): void
     {
-        $this->workspaceId = Workspace::where('owner_id', auth()->id())->value('id');
         $this->selectedMonth = now()->format('Y-m');
     }
 
     public function getListeners(): array
     {
-        $listeners = [];
-
-        if ($this->workspaceId) {
-            $listeners["echo:workspace.{$this->workspaceId},TaskListUpdated"] = 'onBroadcastUpdate';
-            $listeners["echo:workspace.{$this->workspaceId},TaskUpdated"] = 'onBroadcastUpdate';
-            $listeners["echo:workspace.{$this->workspaceId},SpaceUpdated"] = 'onBroadcastUpdate';
-        }
-
-        return $listeners;
+        return [
+            'echo:project,TaskListUpdated' => 'onBroadcastUpdate',
+            'echo:project,TaskUpdated' => 'onBroadcastUpdate',
+            'echo:project,SpaceUpdated' => 'onBroadcastUpdate',
+        ];
     }
 
     public function onBroadcastUpdate(): void
@@ -51,7 +43,7 @@ class WorkloadDashboard extends Component
     #[Computed]
     public function spaces()
     {
-        return Space::accessibleBy(auth()->id())->orderBy('position')->get();
+        return Space::orderBy('position')->get();
     }
 
     public function switchView(string $view): void
@@ -66,13 +58,18 @@ class WorkloadDashboard extends Component
 
     public function render()
     {
-        $userId = auth()->id();
-
         $defaults = [
             'totalTasks' => 0,
             'completedTasks' => 0,
+            'completedOnTime' => 0,
+            'completedLate' => 0,
+            'completedNoDeadline' => 0,
+            'latePercent' => 0,
+            'noDeadlinePercent' => 0,
             'overdueTasks' => 0,
+            'overduePercent' => 0,
             'progressPercent' => 0,
+
             'memberStats' => collect(),
             'memberTraffic' => [],
             'totalMembers' => 0,
@@ -81,18 +78,17 @@ class WorkloadDashboard extends Component
         ];
 
         $data = match ($this->view) {
-            'member' => array_merge($defaults, $this->getMemberViewData($userId)),
-            'task' => array_merge($defaults, $this->getTaskViewData($userId)),
+            'member' => array_merge($defaults, $this->getMemberViewData()),
+            'task' => array_merge($defaults, $this->getTaskViewData()),
             default => $defaults,
         };
 
         return view('livewire.project.workload-dashboard', $data);
     }
 
-    private function getMemberViewData(int $userId): array
+    private function getMemberViewData(): array
     {
-        $tasks = Task::whereHas('taskList', fn ($q) => $q->accessibleBy($userId))
-            ->whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
+        $tasks = Task::whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
             ->tap(fn ($q) => $this->applyMonthFilter($q))
             ->tap(fn ($q) => $this->applySpaceFilter($q))
             ->with(['assignees', 'status', 'taskList.space', 'timeTrackings'])
@@ -127,7 +123,13 @@ class WorkloadDashboard extends Component
             ]);
         }
 
-        $memberStats = $memberStats->sortByDesc('total')->values();
+        $memberStats = $memberStats->sort(function ($a, $b) {
+            if ($b['completed'] !== $a['completed']) {
+                return $b['completed'] <=> $a['completed'];
+            }
+
+            return $b['progress'] <=> $a['progress'];
+        })->values();
 
         $memberTraffic = $memberStats->take(6)->map(fn ($m) => [
             'name' => $m['user']->name,
@@ -146,18 +148,24 @@ class WorkloadDashboard extends Component
         ];
     }
 
-    private function getTaskViewData(int $userId): array
+    private function getTaskViewData(): array
     {
-        $tasks = Task::whereHas('taskList', fn ($q) => $q->accessibleBy($userId))
-            ->whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
+        $tasks = Task::whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
             ->tap(fn ($q) => $this->applyMonthFilter($q))
             ->tap(fn ($q) => $this->applySpaceFilter($q))
             ->with(['assignees', 'status', 'taskList.space', 'timeTrackings'])
             ->get();
 
+        $today = now()->toDateString();
         $totalTasks = $tasks->count();
         $completedTasks = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed')->count();
-        $overdueTasks = $tasks->filter(fn (Task $t) => $t->status?->type !== 'closed' && $t->due_date && $t->due_date->toDateString() < now()->toDateString())->count();
+        $completedLate = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed' && $t->due_date && $t->due_date->toDateString() < $today)->count();
+        $completedOnTime = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed' && $t->due_date && $t->due_date->toDateString() >= $today)->count();
+        $completedNoDeadline = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed' && $t->due_date === null)->count();
+        $latePercent = $completedTasks > 0 ? round(($completedLate / $completedTasks) * 100) : 0;
+        $noDeadlinePercent = $completedTasks > 0 ? round(($completedNoDeadline / $completedTasks) * 100) : 0;
+        $overdueTasks = $tasks->filter(fn (Task $t) => $t->status?->type !== 'closed' && $t->due_date && $t->due_date->toDateString() < $today)->count();
+        $overduePercent = $totalTasks > 0 ? round(($overdueTasks / $totalTasks) * 100) : 0;
         $progressPercent = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
 
         $priorityRank = ['urgent' => 0, 'high' => 1, 'normal' => 2, 'low' => 3];
@@ -205,7 +213,13 @@ class WorkloadDashboard extends Component
         return [
             'totalTasks' => $totalTasks,
             'completedTasks' => $completedTasks,
+            'completedOnTime' => $completedOnTime,
+            'completedLate' => $completedLate,
+            'completedNoDeadline' => $completedNoDeadline,
+            'latePercent' => $latePercent,
+            'noDeadlinePercent' => $noDeadlinePercent,
             'overdueTasks' => $overdueTasks,
+            'overduePercent' => $overduePercent,
             'progressPercent' => $progressPercent,
             'taskGroups' => $taskGroups,
         ];

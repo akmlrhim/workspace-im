@@ -13,6 +13,10 @@ class DailyTask extends Model
 {
     use GeneratesUuid;
 
+    public const TYPE_ROUTINE = 'routine';
+
+    public const TYPE_ON_DEMAND = 'on_demand';
+
     protected $fillable = [
         'task_list_id',
         'created_by',
@@ -21,6 +25,7 @@ class DailyTask extends Model
         'is_active',
         'position',
         'date',
+        'type',
     ];
 
     protected function casts(): array
@@ -29,6 +34,11 @@ class DailyTask extends Model
             'is_active' => 'boolean',
             'date' => 'date:Y-m-d',
         ];
+    }
+
+    public function isRoutine(): bool
+    {
+        return $this->type === self::TYPE_ROUTINE;
     }
 
     public function taskList(): BelongsTo

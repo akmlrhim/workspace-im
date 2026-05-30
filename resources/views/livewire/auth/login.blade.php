@@ -16,7 +16,7 @@
     @endif
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('login.store') }}" class="space-y-5">
+    <form method="POST" action="{{ route('login.store') }}" class="space-y-5" x-data="{ loading: false }" @submit="loading = true">
       @csrf
 
       {{-- Email --}}
@@ -88,9 +88,14 @@
       </div>
 
       {{-- Submit --}}
-      <button type="submit" data-test="login-button"
-        class="flex w-full items-center justify-center rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 active:scale-[0.98] cursor-pointer dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus:ring-white dark:focus:ring-offset-zinc-950">
-        Masuk
+      <button type="submit" data-test="login-button" :disabled="loading"
+        class="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 active:scale-[0.98] cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus:ring-white dark:focus:ring-offset-zinc-950">
+        <svg x-show="loading" x-cloak class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span x-show="!loading">Masuk</span>
+        <span x-show="loading" x-cloak>Memproses...</span>
       </button>
     </form>
 
@@ -102,9 +107,14 @@
     </div>
 
     {{-- Google --}}
-    <a href="{{ route('auth.google') }}"
+    <a href="{{ route('auth.google') }}" x-data="{ gLoading: false }" @click="gLoading = true"
+      :class="gLoading ? 'pointer-events-none opacity-75' : ''"
       class="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-300/50 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-700/60">
-      <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <svg x-show="gLoading" x-cloak class="h-4 w-4 shrink-0 animate-spin text-zinc-400" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <svg x-show="!gLoading" class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path fill="#4285F4"
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
         <path fill="#34A853"

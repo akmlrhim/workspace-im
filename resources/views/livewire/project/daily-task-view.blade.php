@@ -5,6 +5,7 @@
     addForm: false,
     addTitle: '',
     addDesc: '',
+    addType: 'on_demand',
     optimisticTasks: [],
     openAdd() {
         this.addForm = true;
@@ -13,15 +14,17 @@
     closeAdd() {
         this.addForm = false;
         this.addTitle = '';
-        this.addDesc = ''
+        this.addDesc = '';
+        this.addType = 'on_demand';
     },
     submitAdd() {
         if (!this.addTitle.trim()) return;
         const title = this.addTitle.trim();
         const desc = this.addDesc.trim();
-        this.optimisticTasks.push({ id: Date.now(), title, desc });
+        const type = this.addType;
+        this.optimisticTasks.push({ id: Date.now(), title, desc, type });
         this.closeAdd();
-        this.$wire.addDailyTask(title, desc).then(() => { this.optimisticTasks = [] });
+        this.$wire.addDailyTask(title, desc, type).then(() => { this.optimisticTasks = [] });
     }
 }">
   {{-- Header --}}
@@ -204,6 +207,17 @@
     $currentDayName = $this->selectedCarbon->locale('id')->isoFormat('dddd');
   @endphp
 
+  {{-- Sunday rest-day state --}}
+  @if ($isSunday)
+    <div class="mt-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-700">
+      <svg class="size-12 text-amber-300 dark:text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.06 1.06l1.06 1.06Z" />
+      </svg>
+      <p class="mt-3 text-base font-semibold text-zinc-600 dark:text-zinc-300">Hari Libur</p>
+      <p class="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Daily task tidak tersedia di hari Minggu.<br>Selamat beristirahat!</p>
+    </div>
+  @else
+
   {{-- Day context header --}}
   <div class="mb-4 flex items-center gap-2">
     <span
@@ -336,11 +350,21 @@
                 {{-- Task content --}}
                 <div class="min-w-0 flex-1">
                   <div x-show="!editing">
-                    <p
-                      class="text-sm font-medium leading-snug
-                      {{ $isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100' }}">
-                      {{ $dt->title }}
-                    </p>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <p
+                        class="text-sm font-medium leading-snug
+                        {{ $isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100' }}">
+                        {{ $dt->title }}
+                      </p>
+                      @if ($dt->isRoutine())
+                        <span class="inline-flex items-center gap-0.5 rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-600 ring-1 ring-inset ring-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:ring-violet-700">
+                          <svg class="size-2.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.06 1.06l1.06 1.06Z" />
+                          </svg>
+                          Daily
+                        </span>
+                      @endif
+                    </div>
 
                     @if ($dt->description)
                       <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{{ $dt->description }}</p>
@@ -446,6 +470,28 @@
                       class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
                     <input x-model="addDesc" @keydown.escape="closeAdd()" placeholder="Deskripsi (opsional)..."
                       class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                    {{-- Type toggle --}}
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs text-zinc-500 dark:text-zinc-400">Tipe:</span>
+                      <div class="flex divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
+                        <button type="button" @click="addType = 'on_demand'"
+                          :class="addType === 'on_demand' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
+                          class="px-3 py-1 text-xs font-medium transition-colors">
+                          Sekali
+                        </button>
+                        <button type="button" @click="addType = 'routine'"
+                          :class="addType === 'routine' ? 'bg-violet-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
+                          class="flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors">
+                          <svg class="size-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.06 1.06l1.06 1.06Z" />
+                          </svg>
+                          Daily Task
+                        </button>
+                      </div>
+                      <span x-show="addType === 'routine'" class="text-xs text-violet-500 dark:text-violet-400">
+                        Muncul setiap hari
+                      </span>
+                    </div>
                     <div class="flex gap-2">
                       <flux:button @click="submitAdd()" variant="primary" size="sm"
                         wire:loading.attr="disabled" wire:loading.class="opacity-75" wire:target="addDailyTask">
@@ -513,6 +559,28 @@
               class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
             <input x-model="addDesc" @keydown.escape="closeAdd()" placeholder="Deskripsi (opsional)..."
               class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+            {{-- Type toggle --}}
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs text-zinc-500 dark:text-zinc-400">Tipe:</span>
+              <div class="flex divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
+                <button type="button" @click="addType = 'on_demand'"
+                  :class="addType === 'on_demand' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
+                  class="px-3 py-1 text-xs font-medium transition-colors">
+                  Sekali
+                </button>
+                <button type="button" @click="addType = 'routine'"
+                  :class="addType === 'routine' ? 'bg-violet-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
+                  class="flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors">
+                  <svg class="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                  Rutin
+                </button>
+              </div>
+              <span x-show="addType === 'routine'" class="text-xs text-violet-500 dark:text-violet-400">
+                Muncul setiap hari
+              </span>
+            </div>
             <div class="flex gap-2">
               <flux:button @click="submitAdd()" variant="primary" size="sm" wire:loading.attr="disabled"
                 wire:loading.class="opacity-75" wire:target="addDailyTask">
@@ -532,6 +600,8 @@
     @endif
 
   </div>
+
+  @endif {{-- end @else (not Sunday) --}}
 
   {{-- Delete modal --}}
   <div x-show="deleteModal" x-transition:enter="transition ease-out duration-150"

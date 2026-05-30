@@ -36,7 +36,7 @@
     </div>
   @endif
 
-  {{-- toggle switch  --}}
+  {{-- ─── View toggle ─────────────────────────────────────── --}}
   <div class="mb-6">
     <div
       class="flex w-full sm:inline-flex sm:w-auto items-center rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
@@ -45,100 +45,148 @@
           {{ $view === 'task' ? 'bg-white text-blue-700 shadow-sm dark:bg-zinc-700 dark:text-blue-400' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
         <span class="flex items-center justify-center gap-2">
           <flux:icon name="clipboard-document-list" variant="micro" class="size-4 shrink-0" />
-          <span class="truncate text-sm">View by Task</span>
+          <span class="truncate text-sm">View By Task</span>
         </span>
       </button>
       <button wire:click="switchView('member')"
         class="flex-1 sm:flex-none rounded-md px-2 sm:px-4 py-2.5 sm:py-2 text-sm font-medium transition-all
           {{ $view === 'member' ? 'bg-white text-blue-700 shadow-sm dark:bg-zinc-700 dark:text-blue-400' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
         <span class="flex items-center justify-center gap-2">
-          <flux:icon name="users" variant="micro" class="size-4 shrink-0" />
-          <span class="truncate text-sm">View by Member</span>
+          <flux:icon name="trophy" variant="micro" class="size-4 shrink-0" />
+          <span class="truncate text-sm">Peringkat</span>
         </span>
       </button>
     </div>
   </div>
 
-  {{-- view by task  --}}
+  {{-- ─── View: Per Daftar ───────────────────────────────── --}}
   @if ($view === 'task')
-    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <div class="flex items-center gap-3">
-          <div class="flex size-10 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/30">
-            <flux:icon name="clipboard-document-list" class="size-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <p class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{{ $totalTasks }}</p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Total Tugas</p>
-          </div>
-        </div>
-      </div>
+    @php
+      $onTimePercent = $completedTasks > 0 ? max(0, 100 - $latePercent - $noDeadlinePercent) : 0;
+    @endphp
 
+    {{-- ─── Stat cards ────────────────────────────────────── --}}
+    <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+
+      {{-- Card 1: Total Tugas --}}
       <div
-        class="rounded-xl border bg-white p-6 shadow-sm dark:bg-zinc-900
+        class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Total Tugas</p>
+          <p class="tabular-nums text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{{ $totalTasks }}
+          </p>
+          @if ($totalTasks > 0)
+            <div class="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-zinc-400">
+              <span><span
+                  class="tabular-nums font-semibold text-zinc-600 dark:text-zinc-300">{{ $totalTasks - $completedTasks }}</span>
+                belum selesai</span>
+              <span class="text-zinc-300 dark:text-zinc-600">·</span>
+              <span><span
+                  class="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">{{ $completedTasks }}</span>
+                selesai</span>
+            </div>
+          @else
+            <p class="mt-1 text-xs text-zinc-400">Belum ada tugas.</p>
+          @endif
+        </div>
+      </div>
+
+      {{-- Card 2: Tugas Selesai --}}
+      <div
+        class="relative overflow-hidden flex items-start gap-3 rounded-xl border bg-white p-4 shadow-sm dark:bg-zinc-900
           {{ $completedTasks > 0 ? 'border-emerald-200 dark:border-emerald-700/50' : 'border-zinc-200 dark:border-zinc-700' }}">
-        <div class="flex items-center gap-3">
-          <div
-            class="flex size-10 items-center justify-center rounded-lg
-              {{ $completedTasks > 0 ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'bg-zinc-50 dark:bg-zinc-800' }}">
-            <flux:icon name="check-circle"
-              class="size-5 {{ $completedTasks > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400' }}" />
-          </div>
-          <div>
-            <p
-              class="text-2xl font-bold {{ $completedTasks > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-100' }}">
-              {{ $completedTasks }}
-            </p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Tugas Selesai</p>
-          </div>
-        </div>
-        @if ($totalTasks > 0 && $completedTasks === $totalTasks)
-          <div class="mt-3 flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 dark:bg-emerald-900/20">
-            <svg class="size-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Semua tugas selesai!</span>
-          </div>
-        @endif
-      </div>
 
-      <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <div class="flex items-center gap-3">
-          <div class="flex size-10 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/30">
-            <flux:icon name="exclamation-triangle" class="size-5 text-red-600 dark:text-red-400" />
-          </div>
-          <div>
-            <p class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{{ $overdueTasks }}</p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Tugas Terlambat</p>
-          </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Tugas Selesai</p>
+          <p
+            class="tabular-nums text-2xl font-bold tracking-tight {{ $completedTasks > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-zinc-50' }}">
+            {{ $completedTasks }}</p>
+          @if ($completedTasks > 0)
+            <div class="mt-1.5 flex h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
+              @if ($onTimePercent > 0)
+                <div class="h-full bg-emerald-500" style="width:{{ $onTimePercent }}%"></div>
+              @endif
+              @if ($latePercent > 0)
+                <div class="h-full bg-red-400" style="width:{{ $latePercent }}%"></div>
+              @endif
+              @if ($noDeadlinePercent > 0)
+                <div class="h-full bg-zinc-300 dark:bg-zinc-500" style="width:{{ $noDeadlinePercent }}%"></div>
+              @endif
+            </div>
+            <div class="mt-1 flex flex-wrap gap-x-1 gap-y-0.5 text-xs text-zinc-400">
+              <span><span
+                  class="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">{{ $completedOnTime }}</span>
+                tepat waktu</span>
+              <span class="text-zinc-300 dark:text-zinc-600">·</span>
+              <span><span class="tabular-nums font-semibold text-red-500 dark:text-red-400">{{ $completedLate }}</span>
+                terlambat</span>
+              <span class="text-zinc-300 dark:text-zinc-600">·</span>
+              <span><span
+                  class="tabular-nums font-semibold text-zinc-500 dark:text-zinc-400">{{ $completedNoDeadline }}</span>
+                tanpa tenggat</span>
+            </div>
+          @else
+            <p class="mt-1 text-xs text-zinc-400">Belum ada yang selesai.</p>
+          @endif
         </div>
       </div>
 
-      <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <div class="flex items-center gap-3">
-          <div
-            class="flex size-10 items-center justify-center rounded-lg
-              {{ $progressPercent >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/30' : ($progressPercent >= 40 ? 'bg-amber-50 dark:bg-amber-900/30' : 'bg-red-50 dark:bg-red-900/30') }}">
-            <flux:icon name="chart-pie"
-              class="size-5 {{ $progressPercent >= 70 ? 'text-emerald-600 dark:text-emerald-400' : ($progressPercent >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400') }}" />
+      {{-- Card 3: Melewati Tenggat --}}
+      <div
+        class="flex items-start gap-3 rounded-xl border bg-white p-4 shadow-sm dark:bg-zinc-900
+          {{ $overdueTasks > 0 ? 'border-red-200 dark:border-red-800/50' : 'border-zinc-200 dark:border-zinc-700' }}">
+
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Melewati Tenggat</p>
+          <p
+            class="tabular-nums text-2xl font-bold tracking-tight {{ $overdueTasks > 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-900 dark:text-zinc-50' }}">
+            {{ $overdueTasks }}</p>
+          <div class="mt-1 text-xs text-zinc-400">
+            @if ($totalTasks > 0)
+              <span
+                class="tabular-nums font-semibold {{ $overduePercent > 0 ? 'text-red-500 dark:text-red-400' : 'text-zinc-500' }}">{{ $overduePercent }}%</span>
+              dari total tugas
+            @else
+              Belum ada tugas.
+            @endif
           </div>
-          <div>
-            <p
-              class="text-2xl font-bold {{ $progressPercent >= 70 ? 'text-emerald-600 dark:text-emerald-400' : ($progressPercent >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-800 dark:text-zinc-100') }}">
-              {{ $progressPercent }}%
+        </div>
+      </div>
+
+      {{-- Card 4: Penyelesaian --}}
+      <div
+        class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Penyelesaian</p>
+          <p
+            class="tabular-nums text-2xl font-bold tracking-tight
+              {{ $progressPercent >= 70 ? 'text-emerald-600 dark:text-emerald-400' : ($progressPercent >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-900 dark:text-zinc-50') }}">
+            {{ $progressPercent }}%
+          </p>
+          @if ($totalTasks > 0)
+            <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
+              <div
+                class="h-full rounded-full transition-all duration-500
+                  {{ $progressPercent >= 70 ? 'bg-emerald-500' : ($progressPercent >= 40 ? 'bg-amber-500' : 'bg-red-400') }}"
+                style="width: {{ $progressPercent }}%"></div>
+            </div>
+            <p class="mt-1 text-xs text-zinc-400">
+              <span class="tabular-nums font-semibold text-zinc-600 dark:text-zinc-300">{{ $completedTasks }}</span>
+              dari {{ $totalTasks }} tugas selesai
             </p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Tingkat Penyelesaian</p>
-          </div>
+          @else
+            <p class="mt-1 text-xs text-zinc-400">Belum ada tugas.</p>
+          @endif
         </div>
       </div>
     </div>
 
-    {{-- Task groups table --}}
+    {{-- ─── Task groups ────────────────────────────────────── --}}
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Daftar Tugas</h3>
-        <span class="text-xs text-zinc-400">{{ $taskGroups->count() }} List</span>
+        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Daftar Tugas per List</h3>
+        <span class="text-xs text-zinc-400">{{ $taskGroups->count() }} daftar</span>
       </div>
 
       @forelse ($taskGroups as $group)
@@ -156,8 +204,8 @@
             <div>
               <div class="flex items-center gap-2">
                 @if ($groupDone)
-                  <svg class="size-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
+                  <svg class="size-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
                       d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -184,15 +232,16 @@
                 @endif
               </div>
               <div class="mt-1 flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-                <span>{{ $group['total'] }} tugas</span>
+                <span><span class="tabular-nums">{{ $group['total'] }}</span> tugas</span>
                 <span>·</span>
                 <span
                   class="{{ $group['completed'] > 0 ? 'text-emerald-600 dark:text-emerald-400 font-medium' : '' }}">
-                  {{ $group['completed'] }} selesai
+                  <span class="tabular-nums">{{ $group['completed'] }}</span> selesai
                 </span>
                 @if ($group['overdue'] > 0)
                   <span>·</span>
-                  <span class="text-red-500">{{ $group['overdue'] }} terlambat</span>
+                  <span class="text-red-500"><span class="tabular-nums">{{ $group['overdue'] }}</span> melewati
+                    tenggat</span>
                 @endif
               </div>
             </div>
@@ -204,7 +253,7 @@
                   style="width: {{ $group['progress'] }}%"></div>
               </div>
               <span
-                class="text-xs font-semibold {{ $group['progress'] >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-300' }}">
+                class="tabular-nums text-xs font-semibold {{ $group['progress'] >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-300' }}">
                 {{ $group['progress'] }}%
               </span>
             </div>
@@ -216,12 +265,12 @@
               <thead>
                 <tr
                   class="border-b {{ $groupDone ? 'border-emerald-100 dark:border-emerald-800/30' : 'border-zinc-100 dark:border-zinc-700' }}">
-                  <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Judul Tugas</th>
+                  <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Nama Tugas</th>
                   <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Prioritas</th>
                   <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Status</th>
-                  <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Ditugaskan Kepada</th>
+                  <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Ditugaskan Ke</th>
                   <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Tenggat Waktu</th>
-                  <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Waktu Tercatat</th>
+                  <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Jam Tercatat</th>
                 </tr>
               </thead>
               <tbody>
@@ -294,7 +343,7 @@
                           };
                           $statusLabel = match ($task['status_type']) {
                               'active' => 'Sedang Dikerjakan',
-                              default => 'Belum Dikerjakan',
+                              default => 'Belum Dimulai',
                           };
                         @endphp
                         <flux:badge color="{{ $statusColor }}" size="sm">{{ $statusLabel }}</flux:badge>
@@ -335,7 +384,7 @@
                           <span class="font-medium text-red-600 dark:text-red-400">
                             {{ $task['due_date']->format('d M Y') }}
                           </span>
-                          <div class="mt-0.5 text-xs text-red-500">Terlambat</div>
+                          <div class="mt-0.5 text-xs text-red-500">Melewati Tenggat</div>
                         @else
                           <span
                             class="text-zinc-600 dark:text-zinc-400">{{ $task['due_date']->format('d M Y') }}</span>
@@ -348,7 +397,7 @@
                     {{-- Hours --}}
                     <td
                       class="px-6 py-4 {{ $isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400' }}">
-                      {{ $task['hours'] }} jam
+                      {{ $task['hours'] > 0 ? $task['hours'] . ' jam' : '–' }}
                     </td>
                   </tr>
                 @endforeach
@@ -359,180 +408,280 @@
       @empty
         <div
           class="rounded-xl border border-zinc-200 bg-white px-6 py-12 text-center text-sm text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900">
-          Tidak ada data tugas tersedia.
+          Tidak ada data tugas untuk periode ini.
         </div>
       @endforelse
     </div>
 
-
-    {{-- view by member  --}}
+    {{-- ─── View: Peringkat Tim (Leaderboard) ─────────────── --}}
   @elseif ($view === 'member')
-    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <div class="flex items-center gap-3">
-          <div class="flex size-10 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-900/30">
-            <flux:icon name="users" class="size-5 text-teal-600 dark:text-teal-400" />
-          </div>
-          <div>
-            <p class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{{ $totalMembers }}</p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Anggota Tim</p>
-          </div>
-        </div>
-      </div>
+    {{-- ─── Summary stat cards ────────────────────────────── --}}
+    <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
 
-      <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <div class="flex items-center gap-3">
-          <div class="flex size-10 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/30">
-            <flux:icon name="clipboard-document-list" class="size-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <p class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{{ $totalTasks }}</p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Total Tugas</p>
-          </div>
-        </div>
-      </div>
-
+      {{-- Anggota Aktif --}}
       <div
-        class="rounded-xl border p-6 shadow-sm
+        class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Anggota Aktif</p>
+          <p class="tabular-nums text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            {{ $totalMembers }}</p>
+          <p class="mt-0.5 text-xs text-zinc-400">memiliki tugas bulan ini</p>
+        </div>
+      </div>
+
+      {{-- Total Tugas --}}
+      <div
+        class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Total Tugas</p>
+          <p class="tabular-nums text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            {{ $totalTasks }}</p>
+          <p class="mt-0.5 text-xs text-zinc-400">ditetapkan ke anggota</p>
+        </div>
+      </div>
+
+      {{-- Tugas Selesai --}}
+      <div
+        class="flex items-start gap-3 rounded-xl border p-4 shadow-sm
           {{ $completedTasks > 0 ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-700/50 dark:bg-emerald-900/10' : 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900' }}">
-        <div class="flex items-center gap-3">
-          <div
-            class="flex size-10 items-center justify-center rounded-lg
-              {{ $completedTasks > 0 ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-zinc-50 dark:bg-zinc-800' }}">
-            <flux:icon name="check-circle"
-              class="size-5 {{ $completedTasks > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400' }}" />
-          </div>
-          <div>
-            <p
-              class="text-2xl font-bold {{ $completedTasks > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-100' }}">
-              {{ $completedTasks }}
-            </p>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">Tugas Selesai</p>
-          </div>
+
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Tugas Selesai</p>
+          <p
+            class="tabular-nums text-2xl font-bold tracking-tight {{ $completedTasks > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-zinc-50' }}">
+            {{ $completedTasks }}</p>
+          <p
+            class="mt-0.5 text-xs {{ $completedTasks > 0 ? 'text-emerald-600/70 dark:text-emerald-400/70' : 'text-zinc-400' }}">
+            {{ $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0 }}% dari total tugas
+          </p>
+        </div>
+      </div>
+
+      {{-- Melewati Tenggat --}}
+      <div
+        class="flex items-start gap-3 rounded-xl border p-4 shadow-sm
+          {{ $overdueTasks > 0 ? 'border-red-200 bg-red-50/30 dark:border-red-800/50 dark:bg-red-900/5' : 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900' }}">
+
+        <div class="min-w-0 flex-1">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Melewati Tenggat</p>
+          <p
+            class="tabular-nums text-2xl font-bold tracking-tight {{ $overdueTasks > 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-900 dark:text-zinc-50' }}">
+            {{ $overdueTasks }}</p>
+          <p class="mt-0.5 text-xs text-zinc-400">
+            {{ $overdueTasks > 0 ? 'perlu segera diselesaikan' : 'Semua tugas tepat waktu' }}
+          </p>
         </div>
       </div>
     </div>
 
-    {{-- Member table --}}
-    <div
-      class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <div class="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Beban Kerja Anggota</h3>
+    {{-- ─── Leaderboard ────────────────────────────────────── --}}
+    @if ($memberStats->isEmpty())
+      <div
+        class="rounded-xl border border-zinc-200 bg-white px-6 py-12 text-center text-sm text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900">
+        Tidak ada data anggota untuk periode ini.
+      </div>
+    @else
+      {{-- Leaderboard header --}}
+      <div class="mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <flux:icon name="trophy" class="size-5 text-amber-500" />
+          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Papan Peringkat Anggota</h3>
+        </div>
+        <span class="text-xs text-zinc-400">
+          {{ $memberStats->count() }} anggota · diurutkan berdasarkan tugas selesai
+        </span>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full whitespace-nowrap text-left text-sm">
-          <thead>
-            <tr class="border-b border-zinc-100 dark:border-zinc-700">
-              <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Anggota</th>
-              <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Tugas</th>
-              <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Progres</th>
-              <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Terlambat</th>
-              <th class="px-6 py-3 font-medium text-zinc-500 dark:text-zinc-400">Waktu Tercatat</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse ($memberStats as $member)
+      {{-- Top 3 podium cards --}}
+      @php
+        $topMembers = $memberStats->take(3);
+        $topCount = $topMembers->count();
+        $podiumGridClass = match (true) {
+            $topCount === 1 => 'grid-cols-1 max-w-xs',
+            $topCount === 2 => 'grid-cols-2',
+            default => 'grid-cols-1 sm:grid-cols-3',
+        };
+        $medalColors = [
+            ['body' => '#FBBF24', 'stroke' => '#D97706', 'ribbonA' => '#FBBF24', 'ribbonB' => '#D97706'],
+            ['body' => '#D4D4D8', 'stroke' => '#9CA3AF', 'ribbonA' => '#D4D4D8', 'ribbonB' => '#9CA3AF'],
+            ['body' => '#FB923C', 'stroke' => '#EA580C', 'ribbonA' => '#FB923C', 'ribbonB' => '#EA580C'],
+        ];
+        $medalStyles = [
+            [
+                'border' => 'border-amber-300 dark:border-amber-500/40',
+                'bg' => 'bg-gradient-to-b from-amber-50 to-white dark:from-amber-900/15 dark:to-zinc-900',
+                'badge' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                'score' => 'text-amber-600 dark:text-amber-400',
+                'divider' => 'border-amber-100 dark:border-amber-800/30',
+            ],
+            [
+                'border' => 'border-zinc-300 dark:border-zinc-500/40',
+                'bg' => 'bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-800/60 dark:to-zinc-900',
+                'badge' => 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300',
+                'score' => 'text-zinc-700 dark:text-zinc-300',
+                'divider' => 'border-zinc-100 dark:border-zinc-700/50',
+            ],
+            [
+                'border' => 'border-orange-300 dark:border-orange-600/40',
+                'bg' => 'bg-gradient-to-b from-orange-50 to-white dark:from-orange-900/10 dark:to-zinc-900',
+                'badge' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+                'score' => 'text-orange-600 dark:text-orange-400',
+                'divider' => 'border-orange-100 dark:border-orange-800/30',
+            ],
+        ];
+      @endphp
+
+      <div class="mb-6 grid gap-4 {{ $podiumGridClass }}">
+        @foreach ($topMembers as $rankIndex => $member)
+          @php
+            $style = $medalStyles[$rankIndex];
+            $allDone = $member['total'] > 0 && $member['progress'] >= 100;
+          @endphp
+          <div
+            class="relative overflow-hidden rounded-xl border-2 p-5 shadow-sm transition {{ $style['border'] }} {{ $style['bg'] }}"
+            wire:key="podium-{{ $member['user']->id }}">
+
+            {{-- Medal + rank badge --}}
+            @php $mc = $medalColors[$rankIndex]; @endphp
+            <div class="mb-4 flex items-start justify-between">
+              <svg viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg" class="size-9 shrink-0">
+                <rect x="10" y="0" width="5" height="14" rx="2" fill="{{ $mc['ribbonA'] }}" />
+                <rect x="17" y="0" width="5" height="14" rx="2" fill="{{ $mc['ribbonB'] }}" />
+                <circle cx="16" cy="24" r="11" fill="{{ $mc['body'] }}"
+                  stroke="{{ $mc['stroke'] }}" stroke-width="1.5" />
+                <circle cx="16" cy="24" r="7" fill="none" stroke="{{ $mc['stroke'] }}"
+                  stroke-width="1" stroke-opacity="0.4" />
+              </svg>
+              <span
+                class="rounded-full px-2.5 py-0.5 text-xs font-bold {{ $style['badge'] }}">#{{ $rankIndex + 1 }}</span>
+            </div>
+
+            {{-- Avatar + name --}}
+            <div class="mb-4 flex flex-col items-center text-center">
+              <flux:avatar circle size="lg" :name="$member['user']->name" :initials="$member['user']->initials()"
+                :src="$member['user']->avatar" class="mb-2" />
+              <p class="font-semibold leading-snug text-zinc-800 dark:text-zinc-100">{{ $member['user']->name }}</p>
+              @if ($allDone)
+                <span
+                  class="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                  <svg class="size-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  Semua Selesai
+                </span>
+              @endif
+            </div>
+
+            {{-- Score (completion %) --}}
+            <div class="mb-3 text-center">
+              <p class="tabular-nums text-3xl font-bold {{ $style['score'] }}">{{ $member['progress'] }}%</p>
+              <p class="text-[11px] text-zinc-400 dark:text-zinc-500">tingkat penyelesaian</p>
+            </div>
+
+            {{-- Progress bar --}}
+            <div class="mb-4 h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
+              <div
+                class="h-full rounded-full transition-all duration-700
+                  {{ $allDone ? 'bg-emerald-500' : ($member['progress'] >= 70 ? 'bg-teal-500' : ($member['progress'] >= 40 ? 'bg-amber-500' : 'bg-red-500')) }}"
+                style="width: {{ $member['progress'] }}%"></div>
+            </div>
+
+            {{-- 3-col stats --}}
+            <div class="grid grid-cols-2 gap-2 border-t pt-3 text-center {{ $style['divider'] }}">
+              <div>
+                <p class="tabular-nums text-sm font-bold text-zinc-800 dark:text-zinc-100">
+                  {{ $member['completed'] }}<span
+                    class="text-xs font-normal text-zinc-400">/{{ $member['total'] }}</span>
+                </p>
+                <p class="text-[10px] text-zinc-400">Selesai</p>
+              </div>
+              <div>
+                <p
+                  class="tabular-nums text-sm font-bold {{ $member['overdue'] > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                  {{ $member['overdue'] }}</p>
+                <p class="text-[10px] text-zinc-400">Terlambat</p>
+              </div>
+            </div>
+          </div>
+        @endforeach
+      </div>
+
+      {{-- Ranked list for #4 and beyond --}}
+      @if ($memberStats->count() > 3)
+        <div
+          class="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <div class="border-b border-zinc-100 px-5 py-3 dark:border-zinc-700">
+            <p class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Peringkat Selanjutnya</p>
+          </div>
+          <div class="divide-y divide-zinc-50 dark:divide-zinc-800">
+            @foreach ($memberStats->slice(3) as $member)
               @php $allDone = $member['total'] > 0 && $member['progress'] >= 100; @endphp
-              <tr
-                class="border-b transition last:border-b-0
-                  {{ $allDone
-                      ? 'border-emerald-50 bg-emerald-50/60 hover:bg-emerald-50 dark:border-emerald-900/20 dark:bg-emerald-900/10 dark:hover:bg-emerald-900/15'
-                      : 'border-zinc-50 hover:bg-zinc-50/50 dark:border-zinc-800 dark:hover:bg-zinc-800/50' }}"
-                wire:key="member-{{ $member['user']->id }}">
+              <div class="flex items-center gap-3 px-5 py-3.5 transition hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40"
+                wire:key="rank-{{ $member['user']->id }}">
 
-                {{-- Member info --}}
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <div class="relative">
-                      <flux:avatar circle size="sm" :name="$member['user']->name"
-                        :initials="$member['user']->initials()" :src="$member['user']->avatar" />
-                      @if ($allDone)
-                        <span
-                          class="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900">
-                          <svg class="size-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                            stroke-width="3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                          </svg>
-                        </span>
-                      @endif
-                    </div>
-                    <div>
-                      <div
-                        class="font-medium {{ $allDone ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-100' }}">
-                        {{ $member['user']->name }}
-                        @if ($allDone)
-                          <span
-                            class="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
-                            <svg class="size-2.5 shrink-0" viewBox="0 0 16 16" fill="currentColor"
-                              aria-hidden="true">
-                              <path fill-rule="evenodd"
-                                d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"
-                                clip-rule="evenodd" />
-                            </svg>
-                            Clear
-                          </span>
-                        @endif
-                      </div>
-                      <div class="text-xs text-zinc-400">{{ $member['user']->email }}</div>
-                    </div>
-                  </div>
-                </td>
-
-                {{-- Task count --}}
-                <td class="px-6 py-4">
+                {{-- Rank number --}}
+                <div
+                  class="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
                   <span
-                    class="font-semibold {{ $allDone ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-700 dark:text-zinc-300' }}">
-                    {{ $member['total'] }}
-                  </span>
-                  <span class="text-zinc-400">
-                    ({{ $member['completed'] }} selesai)
-                  </span>
-                </td>
+                    class="tabular-nums text-xs font-bold text-zinc-500 dark:text-zinc-400">#{{ $loop->index + 4 }}</span>
+                </div>
+
+                {{-- Avatar --}}
+                <flux:avatar circle size="sm" :name="$member['user']->name"
+                  :initials="$member['user']->initials()" :src="$member['user']->avatar" />
+
+                {{-- Name --}}
+                <div class="min-w-0 flex-1">
+                  <p
+                    class="truncate text-sm font-medium {{ $allDone ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-100' }}">
+                    {{ $member['user']->name }}
+                    @if ($allDone)
+                      <span
+                        class="ml-1 inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                        <svg class="size-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                        Clear</span>
+                    @endif
+                  </p>
+                </div>
 
                 {{-- Progress bar --}}
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <div class="h-2 w-24 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
-                      <div
-                        class="h-full rounded-full transition-all
-                          {{ $allDone ? 'bg-emerald-500' : ($member['progress'] >= 70 ? 'bg-teal-500' : ($member['progress'] >= 40 ? 'bg-amber-500' : 'bg-red-500')) }}"
-                        style="width: {{ $member['progress'] }}%"></div>
-                    </div>
-                    <span
-                      class="text-xs font-semibold {{ $allDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500' }}">
-                      {{ $member['progress'] }}%
-                    </span>
+                <div class="hidden sm:flex w-36 shrink-0 items-center gap-2">
+                  <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
+                    <div
+                      class="h-full rounded-full {{ $allDone ? 'bg-emerald-500' : ($member['progress'] >= 70 ? 'bg-teal-500' : ($member['progress'] >= 40 ? 'bg-amber-500' : 'bg-red-500')) }}"
+                      style="width: {{ $member['progress'] }}%"></div>
                   </div>
-                </td>
+                  <span
+                    class="tabular-nums w-8 text-right text-xs font-semibold text-zinc-500 dark:text-zinc-400">{{ $member['progress'] }}%</span>
+                </div>
+
+                {{-- Task count --}}
+                <div class="hidden md:block w-20 shrink-0 text-right">
+                  <p class="tabular-nums text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    {{ $member['completed'] }}/{{ $member['total'] }}</p>
+                  <p class="text-[10px] text-zinc-400">selesai</p>
+                </div>
 
                 {{-- Overdue --}}
-                <td class="px-6 py-4">
-                  @if ($allDone)
-                    <span class="text-emerald-500 dark:text-emerald-400">–</span>
-                  @elseif ($member['overdue'] > 0)
-                    <flux:badge color="red" size="sm">{{ $member['overdue'] }}</flux:badge>
+                <div class="hidden md:flex w-20 shrink-0 justify-end">
+                  @if ($member['overdue'] > 0)
+                    <flux:badge color="red" size="sm">{{ $member['overdue'] }} terlambat</flux:badge>
                   @else
-                    <span class="text-zinc-400">0</span>
+                    <span class="text-xs text-zinc-300 dark:text-zinc-600">–</span>
                   @endif
-                </td>
+                </div>
 
-                {{-- Hours --}}
-                <td
-                  class="px-6 py-4 {{ $allDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400' }}">
-                  {{ $member['hours'] }} jam
-                </td>
-              </tr>
-            @empty
-              <tr>
-                <td colspan="5" class="px-6 py-12 text-center text-zinc-400">
-                  Tidak ada data anggota tersedia.
-                </td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </div>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @endif
+    @endif
+
   @endif
 </div>

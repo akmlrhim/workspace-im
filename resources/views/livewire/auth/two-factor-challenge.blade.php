@@ -2,6 +2,7 @@
 
   <div class="space-y-7" x-cloak x-data="{
     showRecovery: @js($errors->has('recovery_code')),
+    loading: false,
     code: '',
     recovery_code: '',
     toggle() {
@@ -37,7 +38,7 @@
     </div>
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('two-factor.login.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('two-factor.login.store') }}" class="space-y-6" @submit="loading = true">
       @csrf
 
       {{-- OTP input --}}
@@ -70,9 +71,14 @@
         @enderror
       </div>
 
-      <button type="submit"
-        class="flex w-full items-center justify-center rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 active:scale-[0.98] dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus:ring-white dark:focus:ring-offset-zinc-950">
-        Lanjutkan
+      <button type="submit" :disabled="loading"
+        class="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus:ring-white dark:focus:ring-offset-zinc-950">
+        <svg x-show="loading" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span x-show="!loading">Lanjutkan</span>
+        <span x-show="loading">Memverifikasi...</span>
       </button>
     </form>
 

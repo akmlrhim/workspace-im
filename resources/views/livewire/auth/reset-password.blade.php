@@ -22,7 +22,7 @@
     </div>
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('password.update') }}" class="space-y-5">
+    <form method="POST" action="{{ route('password.update') }}" class="space-y-5" x-data="{ loading: false }" @submit="loading = true">
       @csrf
       <input type="hidden" name="token" value="{{ request()->route('token') }}" />
 
@@ -84,9 +84,14 @@
         </div>
       </div>
 
-      <button type="submit" data-test="reset-password-button"
-        class="flex w-full items-center justify-center rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 active:scale-[0.98] dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus:ring-white dark:focus:ring-offset-zinc-950">
-        Atur Ulang Password
+      <button type="submit" data-test="reset-password-button" :disabled="loading"
+        class="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus:ring-white dark:focus:ring-offset-zinc-950">
+        <svg x-show="loading" x-cloak class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span x-show="!loading">Atur Ulang Password</span>
+        <span x-show="loading" x-cloak>Menyimpan...</span>
       </button>
     </form>
 

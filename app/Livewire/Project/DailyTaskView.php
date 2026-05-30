@@ -65,6 +65,12 @@ class DailyTaskView extends Component
     }
 
     #[Computed]
+    public function isSunday(): bool
+    {
+        return Carbon::parse($this->selectedDate)->isSunday();
+    }
+
+    #[Computed]
     public function selectedCarbon(): Carbon
     {
         return Carbon::parse($this->selectedDate);
@@ -73,13 +79,31 @@ class DailyTaskView extends Component
     #[Computed]
     public function dailyTasks(): Collection
     {
+        // Daily tasks only apply on working days (Mon–Sat)
+        if ($this->isSunday) {
+            return collect();
+        }
+
+        $selectedDate = $this->selectedDate;
+
         return $this->taskList->dailyTasks()
             ->where('is_active', true)
-            ->where('date', $this->selectedDate)
+            ->where(function ($q) use ($selectedDate) {
+                $q->where(function ($q2) use ($selectedDate) {
+                    // Routine tasks appear on every working day from their start date onward
+                    $q2->where('type', DailyTask::TYPE_ROUTINE)
+                        ->where('date', '<=', $selectedDate);
+                })->orWhere(function ($q2) use ($selectedDate) {
+                    // On-demand tasks only appear on their specific date
+                    $q2->where('type', DailyTask::TYPE_ON_DEMAND)
+                        ->where('date', $selectedDate);
+                });
+            })
             ->with([
                 'creator',
-                'logs' => fn ($q) => $q->where('date', $this->selectedDate),
+                'logs' => fn ($q) => $q->where('date', $selectedDate),
             ])
+            ->orderByRaw("CASE WHEN type = 'routine' THEN 0 ELSE 1 END")
             ->orderBy('position')
             ->get();
     }
@@ -106,6 +130,11 @@ class DailyTaskView extends Component
         return $this->dailyTasks->count() - $this->pendingCount;
     }
 
+    private function clearComputedCache(): void
+    {
+        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->isSunday, $this->selectedCarbon);
+    }
+
     public function updatedSelectedDate(): void
     {
         // Clamp future dates to today
@@ -113,13 +142,13 @@ class DailyTaskView extends Component
             $this->selectedDate = today()->toDateString();
         }
 
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
+        $this->clearComputedCache();
     }
 
     public function previousDay(): void
     {
         $this->selectedDate = Carbon::parse($this->selectedDate)->subDay()->toDateString();
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
+        $this->clearComputedCache();
     }
 
     public function nextDay(): void
@@ -129,13 +158,13 @@ class DailyTaskView extends Component
         }
 
         $this->selectedDate = Carbon::parse($this->selectedDate)->addDay()->toDateString();
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
+        $this->clearComputedCache();
     }
 
     public function goToToday(): void
     {
         $this->selectedDate = today()->toDateString();
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
+        $this->clearComputedCache();
     }
 
     private function canManage(): bool
@@ -153,10 +182,16 @@ class DailyTaskView extends Component
         return $this->taskList->members()->where('users.id', $user->id)->exists();
     }
 
-    public function addDailyTask(string $title, string $description = ''): void
+    public function addDailyTask(string $title, string $description = '', string $type = DailyTask::TYPE_ON_DEMAND): void
     {
         if (! $this->canManage()) {
             Flux::toast('Anda tidak memiliki izin untuk mengubah ini.', variant: 'danger');
+
+            return;
+        }
+
+        if ($this->isSunday) {
+            Flux::toast('Daily task tidak tersedia di hari Minggu.', variant: 'warning');
 
             return;
         }
@@ -165,8 +200,19 @@ class DailyTaskView extends Component
         $description = trim($description);
 
         abort_if($title === '' || strlen($title) > 255, 422);
+        abort_if(! in_array($type, [DailyTask::TYPE_ROUTINE, DailyTask::TYPE_ON_DEMAND]), 422);
 
-        $maxPosition = $this->taskList->dailyTasks()->where('date', $this->selectedDate)->max('position') ?? -1;
+        if ($type === DailyTask::TYPE_ROUTINE) {
+            $maxPosition = $this->taskList->dailyTasks()
+                ->where('type', DailyTask::TYPE_ROUTINE)
+                ->where('created_by', auth()->id())
+                ->max('position') ?? -1;
+        } else {
+            $maxPosition = $this->taskList->dailyTasks()
+                ->where('type', DailyTask::TYPE_ON_DEMAND)
+                ->where('date', $this->selectedDate)
+                ->max('position') ?? -1;
+        }
 
         $this->taskList->dailyTasks()->create([
             'title' => $title,
@@ -174,6 +220,7 @@ class DailyTaskView extends Component
             'created_by' => auth()->id(),
             'position' => $maxPosition + 1,
             'date' => $this->selectedDate,
+            'type' => $type,
         ]);
 
         unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
@@ -312,6 +359,7 @@ class DailyTaskView extends Component
         return view('livewire.project.daily-task-view', [
             'canManage' => $this->canManage(),
             'tasksByCreator' => $this->tasksByCreator,
+            'isSunday' => $this->isSunday,
         ]);
     }
 }
