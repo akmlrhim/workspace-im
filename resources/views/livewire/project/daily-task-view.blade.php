@@ -200,102 +200,73 @@
   </div>
 
   @php
-    $total = $this->dailyTasks->count();
-    $completedCount = $this->completedCount;
-    $percentage = $total > 0 ? round(($completedCount / $total) * 100) : 0;
     $myId = auth()->id();
     $currentDayName = $this->selectedCarbon->locale('id')->isoFormat('dddd');
   @endphp
 
   {{-- Sunday rest-day state --}}
   @if ($isSunday)
-    <div class="mt-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-700">
+    <div
+      class="mt-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-700">
       <svg class="size-12 text-amber-300 dark:text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.06 1.06l1.06 1.06Z" />
+        <path
+          d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.06 1.06l1.06 1.06Z" />
       </svg>
       <p class="mt-3 text-base font-semibold text-zinc-600 dark:text-zinc-300">Hari Libur</p>
-      <p class="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Daily task tidak tersedia di hari Minggu.<br>Selamat beristirahat!</p>
+      <p class="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Daily task tidak tersedia di hari Minggu.<br>Selamat
+        beristirahat!</p>
     </div>
   @else
-
-  {{-- Day context header --}}
-  <div class="mb-4 flex items-center gap-2">
-    <span
-      class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-700">
-      <flux:icon name="calendar-days" class="size-3.5" />
-      Task hari {{ $currentDayName }}
-    </span>
-    @if ($total === 0)
-      <span class="text-xs text-zinc-400 dark:text-zinc-500">Belum ada task untuk hari ini</span>
-    @endif
-  </div>
-
-  {{-- Progress bar (overall task completion by each creator) --}}
-  @if ($total > 0)
-    <div class="mb-5">
-      <div class="mb-1.5 flex items-center justify-between">
-        <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ $completedCount }} / {{ $total }} task
-          selesai</span>
-        <span
-          class="text-xs font-semibold {{ $percentage === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400' }}">
-          {{ $percentage }}%
-        </span>
-      </div>
-      <div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-        <div
-          class="h-full rounded-full transition-all duration-500 {{ $percentage === 100 ? 'bg-emerald-500' : 'bg-indigo-500' }}"
-          style="width: {{ $percentage }}%"></div>
-      </div>
+    {{-- Day context header --}}
+    <div class="mb-4 flex items-center gap-2">
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-700">
+        <flux:icon name="calendar-days" class="size-3.5" />
+        Task hari {{ $currentDayName }}
+      </span>
+      @if ($this->dailyTasks->isEmpty())
+        <span class="text-xs text-zinc-400 dark:text-zinc-500">Belum ada task untuk hari ini</span>
+      @endif
     </div>
-  @endif
 
-  {{-- Task list grouped by creator --}}
-  @php $myGroupRendered = false; @endphp
+    {{-- Task list --}}
+    <div wire:loading.class="opacity-60" wire:target="previousDay,nextDay,goToToday,toggleComplete,submitReason">
 
-  <div class="space-y-5" wire:loading.class="opacity-60"
-    wire:target="previousDay,nextDay,goToToday,toggleComplete,submitReason">
-
-    @forelse ($tasksByCreator as $creatorId => $tasks)
-      @php
-        $creator = $tasks->first()->creator;
-        $isMyGroup = $creatorId === $myId;
-        if ($isMyGroup) {
-            $myGroupRendered = true;
-        }
-        $groupDone = $tasks->filter(fn($dt) => $dt->logs->firstWhere('user_id', $creatorId)?->is_completed)->count();
-      @endphp
-
-      <div>
-        {{-- Group header --}}
-        <div class="mb-2 flex items-center gap-2">
-          <flux:avatar circle :name="$creator?->name ?? 'Dihapus'" :src="$creator?->avatar ?? null" size="xs" />
-          <span class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-            {{ $isMyGroup ? 'Task saya' : $creator?->name ?? 'Pengguna dihapus' }}
-          </span>
-          <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ $tasks->count() }} task</span>
-          @if ($groupDone > 0)
-            <span class="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              <flux:icon name="check-circle" class="size-3" />
-              {{ $groupDone }} selesai
-            </span>
-          @endif
+      @if ($this->dailyTasks->isEmpty() && !$canManage)
+        <div
+          class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-700">
+          <flux:icon name="clipboard-document-list" class="size-10 text-zinc-300 dark:text-zinc-600" />
+          <p class="mt-3 text-sm font-medium text-zinc-500 dark:text-zinc-400">Belum ada task untuk hari
+            {{ $currentDayName }}</p>
         </div>
-
-        {{-- Task rows --}}
+      @else
         <div class="overflow-hidden rounded-xl border border-zinc-100 bg-white dark:border-zinc-800 dark:bg-zinc-900">
           <div class="divide-y divide-zinc-50 dark:divide-zinc-800/50">
 
-            @foreach ($tasks as $dt)
+            @if ($this->dailyTasks->isEmpty())
+              <div x-show="optimisticTasks.length === 0 && !addForm"
+                class="flex flex-col items-center justify-center py-10 px-4">
+                <flux:icon name="clipboard-document-list" class="size-10 text-zinc-300 dark:text-zinc-600" />
+                <p class="mt-3 text-sm font-medium text-zinc-500 dark:text-zinc-400">Belum ada task untuk hari
+                  {{ $currentDayName }}</p>
+                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Tambah task baru di bawah</p>
+              </div>
+            @endif
+
+            @foreach ($this->dailyTasks as $dt)
               @php
-                $taskLog = $dt->logs->firstWhere('user_id', $creatorId);
+                $taskLog = $dt->logs->firstWhere('user_id', $myId);
                 $isDone = (bool) $taskLog?->is_completed;
+                $completedLogs = $dt->logs->where('is_completed', true)->values();
               @endphp
 
               <div wire:key="task-{{ $dt->id }}-{{ $selectedDate }}"
-                x-show="!deletingIds.includes({{ $dt->id }})"
-                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0 -translate-y-1" x-data="{
+                x-show="!deletingIds.includes({{ $dt->id }})" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 -translate-y-1"
+                x-data="{
                     editing: false,
+                    done: @js($isDone),
+                    toggling: false,
                     t: @js($dt->title),
                     d: @js($dt->description ?? ''),
                     openEdit() {
@@ -311,39 +282,39 @@
                         if (!this.t.trim()) return;
                         this.$wire.saveEdit({{ $dt->id }}, this.t.trim(), this.d.trim());
                         this.editing = false;
+                    },
+                    async toggleDone() {
+                        if (this.toggling) return;
+                        this.done = !this.done;
+                        this.toggling = true;
+                        try {
+                            await this.$wire.toggleComplete({{ $dt->id }});
+                        } finally {
+                            this.toggling = false;
+                        }
                     }
                 }"
-                class="flex items-start gap-3 px-4 py-3 transition-colors {{ $isDone ? 'bg-zinc-50/80 dark:bg-zinc-900/60' : '' }}">
+                :class="done ? 'bg-zinc-50/80 dark:bg-zinc-900/60' : ''"
+                class="flex items-start gap-3 px-4 py-3 transition-colors">
 
-                {{-- Status indicator / interactive checkbox --}}
-                @if ($isMyGroup && $canManage)
-                  {{-- Interactive checkbox — only for the creator --}}
-                  <button type="button" @click="$wire.toggleComplete({{ $dt->id }})"
-                    wire:loading.attr="disabled" wire:target="toggleComplete({{ $dt->id }})"
-                    title="{{ $isDone ? 'Tandai belum selesai' : 'Tandai selesai' }}"
-                    class="mt-0.5 shrink-0 flex h-5 w-5 items-center justify-center rounded transition-all duration-150
-                      {{ $isDone
-                          ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                          : 'border-2 border-zinc-300 hover:border-emerald-400 dark:border-zinc-600 dark:hover:border-emerald-500' }}">
-                    @if ($isDone)
-                      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    @endif
+                {{-- Checkbox --}}
+                @if ($canManage)
+                  <button type="button" @click="toggleDone()" :disabled="toggling"
+                    :title="done ? 'Tandai belum selesai' : 'Tandai selesai'"
+                    :class="done
+                        ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                        : 'border-2 border-zinc-300 hover:border-emerald-400 dark:border-zinc-600 dark:hover:border-emerald-500'"
+                    class="mt-0.5 shrink-0 flex h-5 w-5 items-center justify-center rounded transition-all duration-150 disabled:opacity-60">
+                    <svg x-show="done" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
                   </button>
                 @else
-                  {{-- Read-only status dot — for viewers of others' tasks --}}
-                  <div
-                    class="mt-0.5 shrink-0 flex h-5 w-5 items-center justify-center rounded
-                    {{ $isDone ? 'bg-emerald-500' : 'border-2 border-zinc-200 dark:border-zinc-700' }}"
-                    title="{{ $isDone ? 'Selesai' : 'Belum selesai' }}">
-                    @if ($isDone)
-                      <svg class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    @endif
+                  <div :class="done ? 'bg-emerald-500' : 'border-2 border-zinc-200 dark:border-zinc-700'"
+                    class="mt-0.5 shrink-0 flex h-5 w-5 items-center justify-center rounded">
+                    <svg x-show="done" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
                   </div>
                 @endif
 
@@ -351,23 +322,31 @@
                 <div class="min-w-0 flex-1">
                   <div x-show="!editing">
                     <div class="flex items-center gap-1.5 flex-wrap">
-                      <p
-                        class="text-sm font-medium leading-snug
-                        {{ $isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100' }}">
+                      <p :class="done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'"
+                        class="text-sm font-medium leading-snug">
                         {{ $dt->title }}
                       </p>
-                      @if ($dt->isRoutine())
-                        <span class="inline-flex items-center gap-0.5 rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-600 ring-1 ring-inset ring-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:ring-violet-700">
-                          <svg class="size-2.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.06 1.06l1.06 1.06Z" />
-                          </svg>
-                          Daily
+                      @unless ($dt->isRoutine())
+                        <span class="inline-flex items-center rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-700">
+                          On Demand
                         </span>
-                      @endif
+                      @endunless
                     </div>
 
                     @if ($dt->description)
                       <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{{ $dt->description }}</p>
+                    @endif
+
+                    {{-- Who has checked this task --}}
+                    @if ($completedLogs->isNotEmpty())
+                      <div class="mt-1.5 flex items-center gap-1.5">
+                        <div class="flex -space-x-1.5">
+                          @foreach ($completedLogs->take(5) as $log)
+                            <flux:avatar circle :name="$log->user?->name ?? '?'" :src="$log->user?->avatar ?? null"
+                              size="xs" class="ring-1 ring-white dark:ring-zinc-900" />
+                          @endforeach
+                        </div>
+                      </div>
                     @endif
 
                     @if ($taskLog?->reason)
@@ -379,8 +358,8 @@
                       </div>
                     @endif
 
-                    @if ($isDone && $taskLog?->completed_at)
-                      <div class="mt-1 flex items-center gap-1">
+                    @if ($taskLog?->completed_at)
+                      <div x-show="done" class="mt-1 flex items-center gap-1">
                         <flux:icon name="clock" class="size-3 text-emerald-400" />
                         <span class="text-xs text-emerald-500 dark:text-emerald-400">
                           Selesai {{ $taskLog->completed_at->locale('id')->isoFormat('HH:mm') }}
@@ -389,8 +368,7 @@
                     @endif
                   </div>
 
-                  {{-- Edit form (creator only) --}}
-                  @if ($isMyGroup)
+                  @if ($canManage)
                     <div x-show="editing" x-cloak class="space-y-2">
                       <input x-ref="editInput" x-model="t" @keydown.enter.prevent="submitEdit()"
                         @keydown.escape="cancelEdit()"
@@ -408,17 +386,16 @@
                   @endif
                 </div>
 
-                {{-- Actions — only for the task creator --}}
-                @if ($isMyGroup && $canManage)
+                @if ($canManage)
                   <div x-show="!editing" class="shrink-0 flex items-center gap-0.5">
-                    @if (!$isDone)
+                    <div x-show="!done">
                       <flux:tooltip content="Catat alasan" position="top">
                         <flux:button variant="ghost" size="sm" icon="chat-bubble-left-ellipsis"
                           class="h-7 w-7 p-0 text-zinc-400 hover:text-amber-500"
                           wire:click="openReasonModal({{ $dt->id }})" wire:loading.attr="disabled"
                           wire:target="openReasonModal({{ $dt->id }})" />
                       </flux:tooltip>
-                    @endif
+                    </div>
                     <flux:dropdown position="bottom" align="end">
                       <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"
                         class="h-7 w-7 p-0 text-zinc-400" />
@@ -437,169 +414,75 @@
               </div>
             @endforeach
 
-            {{-- Optimistic rows (inside my group) --}}
-            @if ($isMyGroup)
-              <template x-for="ot in optimisticTasks" :key="ot.id">
-                <div class="flex items-start gap-3 px-4 py-3">
-                  <div class="mt-0.5 shrink-0 h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
-                  <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" x-text="ot.title"></p>
-                    <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500" x-show="ot.desc" x-text="ot.desc"></p>
-                    <div class="mt-1.5 flex items-center gap-1">
-                      <svg class="h-3 w-3 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                          stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
-                        </path>
-                      </svg>
-                      <span class="text-xs text-zinc-400">Menyimpan...</span>
-                    </div>
+            {{-- Optimistic rows --}}
+            <template x-for="ot in optimisticTasks" :key="ot.id">
+              <div class="flex items-start gap-3 px-4 py-3">
+                <div class="mt-0.5 shrink-0 h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" x-text="ot.title"></p>
+                  <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500" x-show="ot.desc" x-text="ot.desc"></p>
+                  <div class="mt-1.5 flex items-center gap-1">
+                    <svg class="h-3 w-3 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                        stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                      </path>
+                    </svg>
+                    <span class="text-xs text-zinc-400">Menyimpan...</span>
                   </div>
                 </div>
-              </template>
-            @endif
-
-            {{-- Add row (inside my group) --}}
-            @if ($isMyGroup && $canManage)
-              <div>
-                <div x-show="addForm" x-cloak class="flex items-start gap-3 px-4 py-3">
-                  <div class="mt-0.5 shrink-0 h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
-                  <div class="min-w-0 flex-1 space-y-2">
-                    <input x-ref="addInput" x-model="addTitle" @keydown.enter.prevent="submitAdd()"
-                      @keydown.escape="closeAdd()" placeholder="Nama daily task..."
-                      class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
-                    <input x-model="addDesc" @keydown.escape="closeAdd()" placeholder="Deskripsi (opsional)..."
-                      class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
-                    {{-- Type toggle --}}
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-xs text-zinc-500 dark:text-zinc-400">Tipe:</span>
-                      <div class="flex divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
-                        <button type="button" @click="addType = 'on_demand'"
-                          :class="addType === 'on_demand' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
-                          class="px-3 py-1 text-xs font-medium transition-colors">
-                          Sekali
-                        </button>
-                        <button type="button" @click="addType = 'routine'"
-                          :class="addType === 'routine' ? 'bg-violet-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
-                          class="flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors">
-                          <svg class="size-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.06 1.06l1.06 1.06Z" />
-                          </svg>
-                          Daily Task
-                        </button>
-                      </div>
-                      <span x-show="addType === 'routine'" class="text-xs text-violet-500 dark:text-violet-400">
-                        Muncul setiap hari
-                      </span>
-                    </div>
-                    <div class="flex gap-2">
-                      <flux:button @click="submitAdd()" variant="primary" size="sm"
-                        wire:loading.attr="disabled" wire:loading.class="opacity-75" wire:target="addDailyTask">
-                        Simpan
-                      </flux:button>
-                      <flux:button @click="closeAdd()" variant="ghost" size="sm">Batal</flux:button>
-                    </div>
-                  </div>
-                </div>
-                <button x-show="!addForm" @click="openAdd()"
-                  class="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-indigo-500 dark:hover:bg-zinc-800/60 dark:hover:text-indigo-400">
-                  <flux:icon name="plus" class="size-3.5" />
-                  Tambah task
-                </button>
               </div>
+            </template>
+
+            {{-- Add row --}}
+            @if ($canManage)
+              <div x-show="addForm" x-cloak class="flex items-start gap-3 px-4 py-3">
+                <div class="mt-0.5 shrink-0 h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
+                <div class="min-w-0 flex-1 space-y-2">
+                  <input x-ref="addInput" x-model="addTitle" @keydown.enter.prevent="submitAdd()"
+                    @keydown.escape="closeAdd()" placeholder="Nama task..."
+                    class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                  <input x-model="addDesc" @keydown.escape="closeAdd()" placeholder="Deskripsi (opsional)..."
+                    class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">Tipe:</span>
+                    <div
+                      class="flex divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
+                      <button type="button" @click="addType = 'on_demand'"
+                        :class="addType === 'on_demand' ? 'bg-indigo-600 text-white' :
+                            'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
+                        class="px-3 py-1 text-xs font-medium transition-colors">
+                        Hari ini
+                      </button>
+                      <button type="button" @click="addType = 'routine'"
+                        :class="addType === 'routine' ? 'bg-violet-600 text-white' :
+                            'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
+                        class="px-3 py-1 text-xs font-medium transition-colors">
+                        Setiap hari
+                      </button>
+                    </div>
+                  </div>
+                  <div class="flex gap-2">
+                    <flux:button @click="submitAdd()" variant="primary" size="sm" wire:loading.attr="disabled"
+                      wire:loading.class="opacity-75" wire:target="addDailyTask">
+                      Simpan
+                    </flux:button>
+                    <flux:button @click="closeAdd()" variant="ghost" size="sm">Batal</flux:button>
+                  </div>
+                </div>
+              </div>
+              <button x-show="!addForm" @click="openAdd()"
+                class="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-indigo-500 dark:hover:bg-zinc-800/60 dark:hover:text-indigo-400">
+                <flux:icon name="plus" class="size-3.5" />
+                Tambah task
+              </button>
             @endif
 
           </div>
         </div>
-      </div>
-    @empty
-      <div
-        class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-700">
-        <flux:icon name="clipboard-document-list" class="size-10 text-zinc-300 dark:text-zinc-600" />
-        <p class="mt-3 text-sm font-medium text-zinc-500 dark:text-zinc-400">Belum ada task untuk hari
-          {{ $currentDayName }}</p>
-        @if ($canManage)
-          <button @click="openAdd()"
-            class="mt-4 flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600">
-            <flux:icon name="plus" class="size-4" />
-            Tambah task pertama
-          </button>
-        @endif
-      </div>
-    @endforelse
+      @endif
 
-    {{-- Add section for users who haven't created any task yet --}}
-    @if ($canManage && !$myGroupRendered)
-      <div class="overflow-hidden rounded-xl border border-zinc-100 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-
-        {{-- Optimistic rows --}}
-        <template x-for="ot in optimisticTasks" :key="ot.id">
-          <div class="flex items-start gap-3 border-b border-zinc-50 px-4 py-3 dark:border-zinc-800/50">
-            <div class="mt-0.5 shrink-0 h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" x-text="ot.title"></p>
-              <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500" x-show="ot.desc" x-text="ot.desc"></p>
-              <div class="mt-1.5 flex items-center gap-1">
-                <svg class="h-3 w-3 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                    stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                <span class="text-xs text-zinc-400">Menyimpan...</span>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <div x-show="addForm" x-cloak class="flex items-start gap-3 px-4 py-3">
-          <div class="mt-0.5 shrink-0 h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
-          <div class="min-w-0 flex-1 space-y-2">
-            <input x-ref="addInput" x-model="addTitle" @keydown.enter.prevent="submitAdd()"
-              @keydown.escape="closeAdd()" placeholder="Nama daily task..."
-              class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
-            <input x-model="addDesc" @keydown.escape="closeAdd()" placeholder="Deskripsi (opsional)..."
-              class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
-            {{-- Type toggle --}}
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs text-zinc-500 dark:text-zinc-400">Tipe:</span>
-              <div class="flex divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
-                <button type="button" @click="addType = 'on_demand'"
-                  :class="addType === 'on_demand' ? 'bg-indigo-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
-                  class="px-3 py-1 text-xs font-medium transition-colors">
-                  Sekali
-                </button>
-                <button type="button" @click="addType = 'routine'"
-                  :class="addType === 'routine' ? 'bg-violet-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
-                  class="flex items-center gap-1 px-3 py-1 text-xs font-medium transition-colors">
-                  <svg class="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-                  </svg>
-                  Rutin
-                </button>
-              </div>
-              <span x-show="addType === 'routine'" class="text-xs text-violet-500 dark:text-violet-400">
-                Muncul setiap hari
-              </span>
-            </div>
-            <div class="flex gap-2">
-              <flux:button @click="submitAdd()" variant="primary" size="sm" wire:loading.attr="disabled"
-                wire:loading.class="opacity-75" wire:target="addDailyTask">
-                Simpan
-              </flux:button>
-              <flux:button @click="closeAdd()" variant="ghost" size="sm">Batal</flux:button>
-            </div>
-          </div>
-        </div>
-
-        <button x-show="!addForm" @click="openAdd()"
-          class="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-indigo-500 dark:hover:bg-zinc-800/60 dark:hover:text-indigo-400">
-          <flux:icon name="plus-circle" class="size-4" />
-          Tambah task saya
-        </button>
-      </div>
-    @endif
-
-  </div>
+    </div>
 
   @endif {{-- end @else (not Sunday) --}}
 

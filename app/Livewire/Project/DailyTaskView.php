@@ -50,7 +50,7 @@ class DailyTaskView extends Component
             return;
         }
 
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
+        unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
     }
 
     private function broadcastChange(): void
@@ -90,18 +90,15 @@ class DailyTaskView extends Component
             ->where('is_active', true)
             ->where(function ($q) use ($selectedDate) {
                 $q->where(function ($q2) use ($selectedDate) {
-                    // Routine tasks appear on every working day from their start date onward
                     $q2->where('type', DailyTask::TYPE_ROUTINE)
                         ->where('date', '<=', $selectedDate);
                 })->orWhere(function ($q2) use ($selectedDate) {
-                    // On-demand tasks only appear on their specific date
                     $q2->where('type', DailyTask::TYPE_ON_DEMAND)
                         ->where('date', $selectedDate);
                 });
             })
             ->with([
-                'creator',
-                'logs' => fn ($q) => $q->where('date', $selectedDate),
+                'logs' => fn ($q) => $q->where('date', $selectedDate)->with('user'),
             ])
             ->orderByRaw("CASE WHEN type = 'routine' THEN 0 ELSE 1 END")
             ->orderBy('position')
@@ -109,16 +106,12 @@ class DailyTaskView extends Component
     }
 
     #[Computed]
-    public function tasksByCreator(): Collection
-    {
-        return $this->dailyTasks->groupBy('created_by');
-    }
-
-    #[Computed]
     public function pendingCount(): int
     {
-        return $this->dailyTasks->filter(function (DailyTask $dt) {
-            $log = $dt->logs->firstWhere('user_id', $dt->created_by);
+        $myId = auth()->id();
+
+        return $this->dailyTasks->filter(function (DailyTask $dt) use ($myId) {
+            $log = $dt->logs->firstWhere('user_id', $myId);
 
             return ! ($log && $log->is_completed);
         })->count();
@@ -132,7 +125,7 @@ class DailyTaskView extends Component
 
     private function clearComputedCache(): void
     {
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount, $this->isToday, $this->isSunday, $this->selectedCarbon);
+        unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->isSunday, $this->selectedCarbon);
     }
 
     public function updatedSelectedDate(): void
@@ -210,6 +203,7 @@ class DailyTaskView extends Component
         } else {
             $maxPosition = $this->taskList->dailyTasks()
                 ->where('type', DailyTask::TYPE_ON_DEMAND)
+                ->where('created_by', auth()->id())
                 ->where('date', $this->selectedDate)
                 ->max('position') ?? -1;
         }
@@ -223,7 +217,7 @@ class DailyTaskView extends Component
             'type' => $type,
         ]);
 
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
+        unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
 
         $this->broadcastChange();
         Flux::toast('Daily task ditambahkan.', variant: 'success');
@@ -244,14 +238,12 @@ class DailyTaskView extends Component
 
         $dailyTask = $this->taskList->dailyTasks()->findOrFail($id);
 
-        abort_if($dailyTask->created_by !== auth()->id(), 403);
-
         $dailyTask->update([
             'title' => $title,
             'description' => $description ?: null,
         ]);
 
-        unset($this->dailyTasks, $this->tasksByCreator);
+        unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
 
         $this->broadcastChange();
         Flux::toast('Daily task diperbarui.', variant: 'success');
@@ -265,8 +257,7 @@ class DailyTaskView extends Component
             return;
         }
 
-        $dailyTask = $this->taskList->dailyTasks()->findOrFail($dailyTaskId);
-        abort_if($dailyTask->created_by !== auth()->id(), 403);
+        $this->taskList->dailyTasks()->findOrFail($dailyTaskId);
 
         $log = DailyTaskLog::firstOrNew([
             'daily_task_id' => $dailyTaskId,
@@ -286,7 +277,7 @@ class DailyTaskView extends Component
             $log->save();
         }
 
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
+        unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
         $this->broadcastChange();
     }
 
@@ -296,11 +287,7 @@ class DailyTaskView extends Component
             return;
         }
 
-        $dailyTask = $this->taskList->dailyTasks()->findOrFail($dailyTaskId);
-
-        if ($dailyTask->created_by !== auth()->id()) {
-            return;
-        }
+        $this->taskList->dailyTasks()->findOrFail($dailyTaskId);
 
         $this->reasonModalFor = $dailyTaskId;
         $this->reasonInputs[$dailyTaskId] = '';
@@ -328,7 +315,7 @@ class DailyTaskView extends Component
         $this->reasonModalFor = null;
         $this->reasonInputs = [];
 
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
+        unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
 
         $this->broadcastChange();
         Flux::toast('Alasan disimpan.', variant: 'success');
@@ -344,11 +331,9 @@ class DailyTaskView extends Component
 
         $dailyTask = $this->taskList->dailyTasks()->findOrFail($id);
 
-        abort_if($dailyTask->created_by !== auth()->id(), 403);
-
         $dailyTask->delete();
 
-        unset($this->dailyTasks, $this->tasksByCreator, $this->pendingCount, $this->completedCount);
+        unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
 
         $this->broadcastChange();
         Flux::toast('Daily task dihapus.', variant: 'success');
@@ -358,7 +343,6 @@ class DailyTaskView extends Component
     {
         return view('livewire.project.daily-task-view', [
             'canManage' => $this->canManage(),
-            'tasksByCreator' => $this->tasksByCreator,
             'isSunday' => $this->isSunday,
         ]);
     }
