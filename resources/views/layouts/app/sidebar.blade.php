@@ -33,8 +33,8 @@
       <flux:sidebar.nav>
 
         @if ($isGuestUser)
-          <flux:sidebar.item icon="squares-2x2" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')"
-            wire:navigate>
+          <flux:sidebar.item icon="squares-2x2" :href="route('profile.edit')"
+            :current="request()->routeIs('profile.edit')" wire:navigate>
             {{ __('Profil Saya') }}
           </flux:sidebar.item>
         @elseif ($currentModule)
@@ -72,14 +72,17 @@
       <div class="flex items-center gap-1">
         @foreach ($modules as $key => $module)
           @php
-            $requiredRole    = $module['required_role'] ?? null;
+            $requiredRole = $module['required_role'] ?? null;
             $allowedPositions = $module['allowed_positions'] ?? [];
-            $hasModuleAccess = auth()->check() && ! auth()->user()->isGuest() && match (true) {
-                $requiredRole !== null => auth()->user()->role === $requiredRole,
-                empty($allowedPositions) => true,
-                auth()->user()->isAdmin() => true,
-                default => in_array(auth()->user()->position, $allowedPositions),
-            };
+            $hasModuleAccess =
+                auth()->check() &&
+                !auth()->user()->isGuest() &&
+                match (true) {
+                    $requiredRole !== null => auth()->user()->role === $requiredRole,
+                    empty($allowedPositions) => true,
+                    auth()->user()->isAdmin() => true,
+                    default => in_array(auth()->user()->position, $allowedPositions),
+                };
           @endphp
 
           @if ($hasModuleAccess)

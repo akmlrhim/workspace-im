@@ -24,6 +24,9 @@ class GeneralTaskboard extends Component
 {
     public string $search = '';
 
+    // Global task search across all accessible spaces
+    public string $globalSearch = '';
+
     public ?int $workspaceId = null;
 
     public string $activeTab = 'lists';
@@ -505,6 +508,29 @@ class GeneralTaskboard extends Component
     public function allUsers()
     {
         return User::orderBy('name')->get();
+    }
+
+    /**
+     * Global task title suggestions while typing, scoped to lists the user can access.
+     */
+    #[Computed]
+    public function globalSearchSuggestions()
+    {
+        $term = trim($this->globalSearch);
+
+        if (mb_strlen($term) < 2) {
+            return collect();
+        }
+
+        return Task::query()
+            ->whereNull('parent_id')
+            ->excludeNotes()
+            ->whereHas('taskList', fn ($q) => $q->accessibleBy(auth()->id()))
+            ->where('title', 'like', '%'.addcslashes($term, '\\%_').'%')
+            ->with(['status:id,name,color', 'taskList:id,space_id,name', 'taskList.space:id,name,color'])
+            ->orderBy('title')
+            ->limit(10)
+            ->get();
     }
 
     public function render()

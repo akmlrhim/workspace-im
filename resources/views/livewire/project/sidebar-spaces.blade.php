@@ -9,9 +9,8 @@
 
       <flux:sidebar.group expandable :expanded="true" wire:key="sidebar-space-{{ $sidebarSpace->id }}">
         <x-slot:heading>
-          {{ $sidebarSpace->name }}
+          <span class="uppercase font-bold text-base">{{ $sidebarSpace->name }}</span>
         </x-slot:heading>
-
         @foreach ($sidebarSpace->lists as $sidebarList)
           <flux:sidebar.item :href="route('project-management.lists.board', [$sidebarSpace, $sidebarList])"
             :current="request()->is($spacePath . '/lists/' . $sidebarList->uuid . '*')" wire:navigate

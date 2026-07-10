@@ -20,6 +20,8 @@ class WorkloadDashboard extends Component
 
     public ?int $selectedSpaceId = null;
 
+    public ?int $selectedMemberId = null;
+
     public function mount(): void
     {
         $this->selectedMonth = now()->format('Y-m');
@@ -46,6 +48,25 @@ class WorkloadDashboard extends Component
         return Space::accessibleBy(auth()->id())->orderBy('position')->get();
     }
 
+    /**
+     * Distinct assignees who have tasks in the current month/space scope.
+     * Computed without the member filter so the dropdown always lists everyone.
+     */
+    #[Computed]
+    public function members()
+    {
+        return Task::whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
+            ->tap(fn ($q) => $this->applyMonthFilter($q))
+            ->tap(fn ($q) => $this->applySpaceFilter($q))
+            ->with('assignees:id,name')
+            ->get()
+            ->flatMap
+            ->assignees
+            ->unique('id')
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+    }
+
     public function switchView(string $view): void
     {
         $this->view = $view;
@@ -54,6 +75,27 @@ class WorkloadDashboard extends Component
     public function selectSpace(?int $spaceId): void
     {
         $this->selectedSpaceId = $spaceId;
+
+        // The member list is scoped to the space, so a previously chosen member
+        // may no longer be present — clear the filter to avoid an empty result.
+        $this->selectedMemberId = null;
+    }
+
+    public function updatedSelectedMonth(): void
+    {
+        // The native month input can emit transient/empty values mid-edit;
+        // snap back to the current month instead of rendering unfiltered.
+        if (! preg_match('/^\d{4}-\d{2}$/', $this->selectedMonth)) {
+            $this->selectedMonth = now()->format('Y-m');
+        }
+
+        // Drop a selected member that has no tasks in the new month's scope,
+        // otherwise the filter stays active while its banner disappears.
+        unset($this->members);
+
+        if ($this->selectedMemberId !== null && ! $this->members->contains('id', $this->selectedMemberId)) {
+            $this->selectedMemberId = null;
+        }
     }
 
     public function render()
@@ -91,6 +133,7 @@ class WorkloadDashboard extends Component
         $tasks = Task::whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
             ->tap(fn ($q) => $this->applyMonthFilter($q))
             ->tap(fn ($q) => $this->applySpaceFilter($q))
+            ->tap(fn ($q) => $this->applyMemberFilter($q))
             ->with(['assignees', 'status', 'taskList.space', 'timeTrackings'])
             ->get();
 
@@ -153,15 +196,22 @@ class WorkloadDashboard extends Component
         $tasks = Task::whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
             ->tap(fn ($q) => $this->applyMonthFilter($q))
             ->tap(fn ($q) => $this->applySpaceFilter($q))
+            ->tap(fn ($q) => $this->applyMemberFilter($q))
             ->with(['assignees', 'status', 'taskList.space', 'timeTrackings'])
             ->get();
 
         $today = now()->toDateString();
         $totalTasks = $tasks->count();
         $completedTasks = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed')->count();
-        $completedLate = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed' && $t->due_date && $t->due_date->toDateString() < $today)->count();
-        $completedOnTime = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed' && $t->due_date && $t->due_date->toDateString() >= $today)->count();
+        // Late means finished after the deadline — compare completion time to the
+        // deadline, not the deadline to today (a task finished on time must not
+        // flip to "late" once its due date passes).
+        $completedLate = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed'
+            && $t->due_date
+            && $t->completed_at
+            && $t->completed_at->toDateString() > $t->due_date->toDateString())->count();
         $completedNoDeadline = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed' && $t->due_date === null)->count();
+        $completedOnTime = $completedTasks - $completedLate - $completedNoDeadline;
         $latePercent = $completedTasks > 0 ? round(($completedLate / $completedTasks) * 100) : 0;
         $noDeadlinePercent = $completedTasks > 0 ? round(($completedNoDeadline / $completedTasks) * 100) : 0;
         $overdueTasks = $tasks->filter(fn (Task $t) => $t->status?->type !== 'closed' && $t->due_date && $t->due_date->toDateString() < $today)->count();
@@ -198,6 +248,7 @@ class WorkloadDashboard extends Component
                 })->values();
 
                 return [
+                    'id' => $first->task_list_id,
                     'name' => $first->taskList?->name ?? 'Tanpa Proyek',
                     'space' => $first->taskList?->space?->name,
                     'total' => $total,
@@ -234,16 +285,55 @@ class WorkloadDashboard extends Component
         $query->whereHas('taskList', fn (Builder $q) => $q->where('space_id', $this->selectedSpaceId));
     }
 
-    private function applyMonthFilter(Builder $query): void
+    private function applyMemberFilter(Builder $query): void
     {
-        if (! preg_match('/^(\d{4})-(\d{2})$/', $this->selectedMonth, $matches)) {
+        if ($this->selectedMemberId === null) {
             return;
         }
 
-        $query->where(function (Builder $q) use ($matches): void {
-            $q->whereYear('due_date', (int) $matches[1])
-                ->whereMonth('due_date', (int) $matches[2])
-                ->orWhereNull('due_date');
+        $query->whereHas('assignees', fn (Builder $q) => $q->where('users.id', $this->selectedMemberId));
+    }
+
+    private function applyMonthFilter(Builder $query): void
+    {
+        // Never skip the month scope: an invalid/transient value (e.g. while the
+        // native month input is mid-edit) falls back to the current month.
+        // Skipping would briefly render every task ever, ballooning the page
+        // height and yanking the user's scroll position to the top.
+        if (preg_match('/^(\d{4})-(\d{2})$/', $this->selectedMonth, $matches)) {
+            $year = (int) $matches[1];
+            $month = (int) $matches[2];
+        } else {
+            $year = now()->year;
+            $month = now()->month;
+        }
+
+        $isCurrentMonth = $year === now()->year && $month === now()->month;
+
+        // A task without a deadline has no natural month. We place it by activity:
+        //   - completed no-deadline tasks land in the month they were completed;
+        //   - still-open no-deadline tasks are live backlog, shown only for the
+        //     current month so they don't pollute past-month reports forever.
+        // (completed_at is non-null exactly while a task sits in a closed status.)
+        $query->where(function (Builder $q) use ($year, $month, $isCurrentMonth): void {
+            $q->where(function (Builder $sub) use ($year, $month): void {
+                $sub->whereNotNull('due_date')
+                    ->whereYear('due_date', $year)
+                    ->whereMonth('due_date', $month);
+            });
+
+            $q->orWhere(function (Builder $sub) use ($year, $month): void {
+                $sub->whereNull('due_date')
+                    ->whereNotNull('completed_at')
+                    ->whereYear('completed_at', $year)
+                    ->whereMonth('completed_at', $month);
+            });
+
+            if ($isCurrentMonth) {
+                $q->orWhere(function (Builder $sub): void {
+                    $sub->whereNull('due_date')->whereNull('completed_at');
+                });
+            }
         });
     }
 }

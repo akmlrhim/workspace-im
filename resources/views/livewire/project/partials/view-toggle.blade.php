@@ -22,9 +22,14 @@
       Kalender
     </a>
     <a href="{{ route('project-management.lists.daily', [$space, $taskList]) }}" wire:navigate
-      class="flex shrink-0 items-center gap-1.5 pb-3 text-sm font-medium border-b-2 -mb-px transition-colors {{ $active === 'daily' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+      class="flex shrink-0 items-center gap-1.5 pb-3 pr-6 text-sm font-medium border-b-2 -mb-px transition-colors {{ $active === 'daily' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
       <flux:icon name="clipboard-document-check" class="size-4" />
       Daily Task
+    </a>
+    <a href="{{ route('project-management.lists.notes', [$space, $taskList]) }}" wire:navigate
+      class="flex shrink-0 items-center gap-1.5 pb-3 text-sm font-medium border-b-2 -mb-px transition-colors {{ $active === 'notes' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200' }}">
+      <flux:icon name="document-text" class="size-4" />
+      Catatan
     </a>
   </div>
 </div>

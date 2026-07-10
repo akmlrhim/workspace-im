@@ -3,6 +3,7 @@
 use App\Http\Middleware\CheckModuleAccess;
 use App\Livewire\Project\DailyTaskView;
 use App\Livewire\Project\GeneralTaskboard;
+use App\Livewire\Project\ListNotes;
 use App\Livewire\Project\MyTasks;
 use App\Livewire\Project\TaskBoard;
 use App\Livewire\Project\TaskCalendar;
@@ -19,6 +20,7 @@ Route::middleware(['auth', 'verified', CheckModuleAccess::class.':project'])->na
     Route::get('/spaces/{space}/lists/{taskList}/gantt', TaskGantt::class)->name('lists.gantt');
     Route::get('/spaces/{space}/lists/{taskList}/calendar', TaskCalendar::class)->name('lists.calendar');
     Route::get('/spaces/{space}/lists/{taskList}/daily', DailyTaskView::class)->name('lists.daily');
+    Route::get('/spaces/{space}/lists/{taskList}/notes', ListNotes::class)->name('lists.notes');
 
     Route::get('/general-taskboard', GeneralTaskboard::class)->name('general-taskboard');
     Route::get('/my-tasks', MyTasks::class)->name('my-tasks');

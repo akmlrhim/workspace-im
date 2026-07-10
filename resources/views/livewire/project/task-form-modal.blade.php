@@ -6,8 +6,8 @@
 
       <form wire:submit="saveTask" class="space-y-4">
         <flux:field>
-          <flux:label>Title</flux:label>
-          <flux:input wire:model="formTaskTitle" placeholder="What needs to be done?" autofocus />
+          <flux:label>Judul tugas</flux:label>
+          <flux:input wire:model="formTaskTitle" placeholder="Apa yang dikerjakan?" autofocus />
           <flux:error name="formTaskTitle" />
         </flux:field>
 

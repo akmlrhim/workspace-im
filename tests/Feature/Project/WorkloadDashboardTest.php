@@ -25,20 +25,20 @@ test('workload dashboard renders task view by default', function () {
     makeWorkloadContext();
 
     Livewire::test(WorkloadDashboard::class)
-        ->assertSee('View by Member')
-        ->assertSee('View by Task')
-        ->assertSee('Distribusi Prioritas')
-        ->assertSee('Distribusi Status');
+        ->assertSee('View By Task')
+        ->assertSee('Peringkat')
+        ->assertSee('Total Tugas')
+        ->assertSee('Daftar Tugas per List');
 });
 
-test('workload dashboard can switch to task view', function () {
+test('workload dashboard can switch to member view', function () {
     makeWorkloadContext();
 
     Livewire::test(WorkloadDashboard::class)
-        ->call('switchView', 'task')
-        ->assertSee('Distribusi Prioritas')
-        ->assertSee('Distribusi Status')
-        ->assertSee('Daftar Tugas per Proyek');
+        ->call('switchView', 'member')
+        ->assertSet('view', 'member')
+        ->assertSee('Anggota Aktif')
+        ->assertSee('memiliki tugas bulan ini');
 });
 
 test('task view shows task data with correct labels', function () {
@@ -57,7 +57,7 @@ test('task view shows task data with correct labels', function () {
         ->call('switchView', 'task')
         ->assertSee('Tugas Contoh')
         ->assertSee('Tinggi')
-        ->assertSee('Belum Dikerjakan');
+        ->assertSee('Belum Dimulai');
 });
 
 test('task view shows correct stats', function () {
@@ -83,7 +83,9 @@ test('task view shows correct stats', function () {
         ->call('switchView', 'task')
         ->assertSee('Total Tugas')
         ->assertSee('Tugas Selesai')
-        ->assertSee('Tingkat Penyelesaian');
+        ->assertSee('Penyelesaian')
+        ->assertViewHas('totalTasks', 2)
+        ->assertViewHas('completedTasks', 1);
 });
 
 test('task view excludes tasks with status named Note', function () {
@@ -126,13 +128,206 @@ test('task view excludes tasks with status named Note', function () {
         ->assertDontSee('Catatan Huruf Kecil');
 });
 
-test('member view labels are in Indonesian', function () {
-    makeWorkloadContext();
+test('member view shows the leaderboard for assigned members', function () {
+    $ctx = makeWorkloadContext();
+
+    $alice = User::factory()->create(['name' => 'Alice', 'role' => 'member']);
+    $task = Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
+        'title' => 'Tugas Alice',
+        'priority' => 'normal',
+        'created_by' => $ctx['owner']->id,
+    ]);
+    $task->assignees()->attach($alice->id);
 
     Livewire::test(WorkloadDashboard::class)
         ->call('switchView', 'member')
-        ->assertSee('Anggota Tim')
-        ->assertSee('Total Tugas')
-        ->assertSee('Terlambat')
-        ->assertSee('Beban Kerja Anggota');
+        ->assertSee('Papan Peringkat Anggota')
+        ->assertSee('Anggota Aktif')
+        ->assertSee('Alice')
+        ->assertSee('Terlambat');
+});
+
+test('an invalid month value snaps back to the current month', function () {
+    makeWorkloadContext();
+
+    Livewire::test(WorkloadDashboard::class)
+        ->set('selectedMonth', '')
+        ->assertSet('selectedMonth', now()->format('Y-m'));
+});
+
+test('a task completed before its deadline stays on time after the deadline passes', function () {
+    $ctx = makeWorkloadContext();
+
+    $due = now()->subDay();
+
+    $task = Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['closedStatus']->id,
+        'title' => 'Selesai Duluan',
+        'priority' => 'normal',
+        'due_date' => $due,
+        'created_by' => $ctx['owner']->id,
+    ]);
+    $task->forceFill(['completed_at' => $due->copy()->subDays(2)])->saveQuietly();
+
+    Livewire::test(WorkloadDashboard::class)
+        ->set('selectedMonth', $due->format('Y-m'))
+        ->assertViewHas('completedOnTime', 1)
+        ->assertViewHas('completedLate', 0);
+});
+
+test('a task completed after its deadline counts as late', function () {
+    $ctx = makeWorkloadContext();
+
+    $due = now()->subDay();
+
+    $task = Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['closedStatus']->id,
+        'title' => 'Selesai Telat',
+        'priority' => 'normal',
+        'due_date' => $due,
+        'created_by' => $ctx['owner']->id,
+    ]);
+    $task->forceFill(['completed_at' => $due->copy()->addDays(2)])->saveQuietly();
+
+    Livewire::test(WorkloadDashboard::class)
+        ->set('selectedMonth', $due->format('Y-m'))
+        ->assertViewHas('completedOnTime', 0)
+        ->assertViewHas('completedLate', 1);
+});
+
+test('changing the month clears a member that has no tasks in the new scope', function () {
+    $ctx = makeWorkloadContext();
+
+    $alice = User::factory()->create(['name' => 'Alice', 'role' => 'member']);
+
+    // Open task without a deadline → only in the current month's scope.
+    $task = Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
+        'title' => 'Tugas Alice',
+        'priority' => 'normal',
+        'due_date' => null,
+        'created_by' => $ctx['owner']->id,
+    ]);
+    $task->assignees()->attach($alice->id);
+
+    Livewire::test(WorkloadDashboard::class)
+        ->set('selectedMemberId', $alice->id)
+        ->set('selectedMonth', now()->subMonthsNoOverflow(1)->format('Y-m'))
+        ->assertSet('selectedMemberId', null);
+});
+
+test('task view can be filtered to a single assignee', function () {
+    $ctx = makeWorkloadContext();
+
+    $alice = User::factory()->create(['name' => 'Alice', 'role' => 'member']);
+    $bob = User::factory()->create(['name' => 'Bob', 'role' => 'member']);
+
+    $aliceTask = Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
+        'title' => 'Tugas Alice',
+        'priority' => 'normal',
+        'created_by' => $ctx['owner']->id,
+    ]);
+    $aliceTask->assignees()->attach($alice->id);
+
+    $bobTask = Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
+        'title' => 'Tugas Bob',
+        'priority' => 'normal',
+        'created_by' => $ctx['owner']->id,
+    ]);
+    $bobTask->assignees()->attach($bob->id);
+
+    Livewire::test(WorkloadDashboard::class)
+        ->assertSee('Tugas Alice')
+        ->assertSee('Tugas Bob')
+        ->set('selectedMemberId', $alice->id)
+        ->assertSee('Tugas Alice')
+        ->assertDontSee('Tugas Bob');
+});
+
+test('the member dropdown lists assignees that have tasks in scope', function () {
+    $ctx = makeWorkloadContext();
+
+    $alice = User::factory()->create(['name' => 'Alice', 'role' => 'member']);
+
+    $task = Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
+        'title' => 'Tugas Alice',
+        'priority' => 'normal',
+        'created_by' => $ctx['owner']->id,
+    ]);
+    $task->assignees()->attach($alice->id);
+
+    $members = Livewire::test(WorkloadDashboard::class)->instance()->members;
+
+    expect($members->pluck('id')->all())->toContain($alice->id);
+});
+
+test('open tasks without a deadline appear only in the current month', function () {
+    $ctx = makeWorkloadContext();
+
+    Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
+        'title' => 'Backlog Terbuka',
+        'priority' => 'normal',
+        'due_date' => null,
+        'created_by' => $ctx['owner']->id,
+    ]);
+
+    $lastMonth = now()->subMonthsNoOverflow(1)->format('Y-m');
+
+    Livewire::test(WorkloadDashboard::class)
+        ->assertSee('Backlog Terbuka')
+        ->set('selectedMonth', $lastMonth)
+        ->assertDontSee('Backlog Terbuka');
+});
+
+test('completed tasks without a deadline appear in the month they were completed', function () {
+    $ctx = makeWorkloadContext();
+
+    // Created directly in a closed status → completed_at is set to now().
+    Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['closedStatus']->id,
+        'title' => 'Selesai Tanpa Tenggat',
+        'priority' => 'normal',
+        'due_date' => null,
+        'created_by' => $ctx['owner']->id,
+    ]);
+
+    $lastMonth = now()->subMonthsNoOverflow(1)->format('Y-m');
+
+    Livewire::test(WorkloadDashboard::class)
+        ->assertSee('Selesai Tanpa Tenggat')
+        ->set('selectedMonth', $lastMonth)
+        ->assertDontSee('Selesai Tanpa Tenggat');
+});
+
+test('changing the space filter clears the selected member', function () {
+    $ctx = makeWorkloadContext();
+
+    $alice = User::factory()->create(['name' => 'Alice', 'role' => 'member']);
+    $task = Task::create([
+        'task_list_id' => $ctx['list']->id,
+        'task_status_id' => $ctx['openStatus']->id,
+        'title' => 'Tugas Alice',
+        'priority' => 'normal',
+        'created_by' => $ctx['owner']->id,
+    ]);
+    $task->assignees()->attach($alice->id);
+
+    Livewire::test(WorkloadDashboard::class)
+        ->set('selectedMemberId', $alice->id)
+        ->call('selectSpace', null)
+        ->assertSet('selectedMemberId', null);
 });

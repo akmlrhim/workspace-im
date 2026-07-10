@@ -8,22 +8,49 @@
     </div>
     @include('livewire.project.partials.view-toggle', ['active' => 'board'])
 
-    <div class="mt-4 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700/60 dark:bg-zinc-800/40">
+    <div class="mt-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
 
         <div class="flex items-center justify-between sm:w-auto">
-          <span
-            class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            <flux:icon name="funnel" class="size-3.5" />
-            Filter
-          </span>
-
           @if ($this->hasActiveFilter)
             <button wire:click="clearFilters"
               class="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-red-600 transition-colors hover:bg-red-50 sm:hidden dark:text-red-400 dark:hover:bg-red-500/10">
               <flux:icon name="x-mark" class="size-3" />
               Hapus
             </button>
+          @endif
+        </div>
+
+        <div class="relative w-full sm:w-64" x-data="{ showSuggestions: false }" @click.outside="showSuggestions = false"
+          @keydown.escape="showSuggestions = false">
+          <flux:input icon="magnifying-glass" size="sm" placeholder="Cari tugas..."
+            wire:model.live.debounce.300ms="search" @focus="showSuggestions = true" @input="showSuggestions = true" />
+
+          @if (mb_strlen(trim($search)) >= 2)
+            <div x-show="showSuggestions" x-cloak x-transition:enter="transition ease-out duration-100"
+              x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+              class="absolute inset-x-0 top-full z-40 mt-1 max-h-64 overflow-y-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+              @forelse ($this->searchSuggestions as $suggestion)
+                <button type="button" wire:key="search-suggestion-{{ $suggestion->id }}"
+                  @click="showSuggestions = false; $flux.modal('task-detail-board').show(); if ($wire.selectedTaskId !== {{ $suggestion->id }}) { $wire.openTaskDetail({{ $suggestion->id }}) }"
+                  class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700">
+                  <span class="flex min-w-0 items-center gap-1.5">
+                    <flux:icon name="magnifying-glass" class="size-3.5 shrink-0 text-zinc-400" />
+                    <span class="truncate">{{ $suggestion->title }}</span>
+                  </span>
+                  @if ($suggestion->status)
+                    <span
+                      class="flex shrink-0 items-center gap-1 rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+                      <span class="h-1.5 w-1.5 rounded-full"
+                        style="background-color: {{ $suggestion->status->color }}"></span>
+                      {{ $suggestion->status->name }}
+                    </span>
+                  @endif
+                </button>
+              @empty
+                <div class="px-3 py-2 text-sm text-zinc-400 dark:text-zinc-500">Tidak ada tugas yang cocok.</div>
+              @endforelse
+            </div>
           @endif
         </div>
 
@@ -92,21 +119,20 @@
             @endif
             <div class="h-2.5 w-2.5 shrink-0 rounded-full" style="background-color: {{ $status->color }}"></div>
 
-              <span class="truncate text-sm font-semibold text-zinc-700 dark:text-zinc-300">{{ $status->name }}</span>
-              <span data-task-count
-                class="rounded-md bg-zinc-200 px-1.5 py-0.5 text-xs font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
-                {{ $status->tasks->count() }}
-              </span>
+            <span class="truncate text-sm font-semibold text-zinc-700 dark:text-zinc-300">{{ $status->name }}</span>
+            <span data-task-count
+              class="rounded-md bg-zinc-200 px-1.5 py-0.5 text-xs font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+              {{ $status->tasks->count() }}
+            </span>
           </div>
 
           @if ($canManage)
             <div class="relative flex items-center gap-0.5" x-data="{ open: false }">
-              <button @click="$wire.set('createInStatusId', {{ $status->id }})"
-                class="rounded-md p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 transition-colors"
-                title="Tambah Tugas">
+              <button wire:click="$dispatch('open-create-task-form', { statusId: {{ $status->id }} })"
+                title="Tambah tugas"
+                class="rounded-md p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 transition-colors">
                 <flux:icon name="plus" class="size-4" />
               </button>
-
               <button @click="open = !open"
                 class="rounded-md p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 transition-colors">
                 <flux:icon name="ellipsis-horizontal" class="size-4" />
@@ -187,11 +213,9 @@
                   </div>
                 @endif
 
-                <div
-                  x-data="{ title: @js($task->title) }"
+                <div x-data="{ title: @js($task->title) }"
                   @task-title-updated.window="if ($event.detail.taskId === {{ $task->id }}) title = $event.detail.title"
-                  x-text="title"
-                  class="mb-2 pr-8 text-sm font-medium text-zinc-900 dark:text-zinc-100"></div>
+                  x-text="title" class="mb-2 pr-8 text-sm font-medium text-zinc-900 dark:text-zinc-100"></div>
 
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex flex-wrap items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
@@ -223,11 +247,8 @@
                     @endif
 
                     @if ($dd)
-                      <span
-                        data-due-badge
-                        data-open-class="{{ $ddClass }}"
-                        data-open-label="{{ $ddLabel }}"
-                        data-closed-label="{{ $dd->isoFormat('D MMM') }}"
+                      <span data-due-badge data-open-class="{{ $ddClass }}"
+                        data-open-label="{{ $ddLabel }}" data-closed-label="{{ $dd->isoFormat('D MMM') }}"
                         class="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] {{ $ddClass }}"
                         title="Tenggat {{ $dd->format('d M Y') }}">
                         <flux:icon name="{{ $ddIcon }}" class="size-3" />
@@ -256,27 +277,6 @@
           @endforeach
         </div>
 
-        @if ($canManage)
-          <div class="px-2 pb-2">
-            @if ($createInStatusId === $status->id)
-              <form wire:submit="createTaskInStatus({{ $status->id }})" class="space-y-2"
-                wire:key="create-in-{{ $status->id }}">
-                <flux:input wire:model="newTaskTitle" placeholder="Nama tugas..." size="sm" autofocus />
-                <div class="flex justify-end gap-1">
-                  <flux:button size="xs" variant="ghost" @click="$wire.set('createInStatusId', null)">Batal
-                  </flux:button>
-                  <flux:button size="xs" variant="primary" type="submit">Tambah</flux:button>
-                </div>
-              </form>
-            @else
-              <button @click="$wire.set('createInStatusId', {{ $status->id }})"
-                class="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-200/60 hover:text-zinc-600 dark:hover:bg-zinc-700/60 dark:hover:text-zinc-300">
-                <flux:icon name="plus" class="size-4" />
-                <span>Tambah Tugas</span>
-              </button>
-            @endif
-          </div>
-        @endif
       </div>
     @endforeach
 
@@ -285,11 +285,8 @@
         @if ($showNewColumnInput)
           <div
             class="rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-3 dark:border-indigo-500/40 dark:bg-indigo-900/10">
-            <form
-              x-data="{ newColor: '{{ $newColumn->color }}' }"
-              x-init="$wire.$watch('newColumn.color', v => newColor = v)"
-              @submit.prevent="$wire.newColumn.color = newColor; $wire.addColumn()"
-              class="space-y-3">
+            <form x-data="{ newColor: '{{ $newColumn->color }}' }" x-init="$wire.$watch('newColumn.color', v => newColor = v)"
+              @submit.prevent="$wire.newColumn.color = newColor; $wire.addColumn()" class="space-y-3">
               <flux:input wire:model="newColumn.name" placeholder="Nama kolom..." size="sm" autofocus />
               <flux:error name="newColumn.name" class="text-xs" />
               <div class="flex items-center gap-2">
@@ -298,7 +295,8 @@
                   @foreach (['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] as $color)
                     <button type="button" @click="newColor = '{{ $color }}'"
                       class="h-5 w-5 rounded-full border-2 transition-transform hover:scale-110"
-                      :class="newColor === '{{ $color }}' ? 'border-zinc-900 dark:border-white scale-110' : 'border-transparent'"
+                      :class="newColor === '{{ $color }}' ? 'border-zinc-900 dark:border-white scale-110' :
+                          'border-transparent'"
                       style="background-color: {{ $color }}"></button>
                   @endforeach
                 </div>
@@ -344,8 +342,7 @@
   </flux:modal>
 
   <flux:modal name="rename-column-modal" class="w-full max-w-sm">
-    <div
-      x-data="{ id: null, name: '', color: '#6b7280', nameError: '', saving: false }"
+    <div x-data="{ id: null, name: '', color: '#6b7280', nameError: '', saving: false }"
       @open-column-rename.window="
         id = $event.detail.id;
         name = $event.detail.name;
@@ -353,8 +350,7 @@
         nameError = '';
         saving = false;
         $nextTick(() => $refs.renameInput?.focus());
-      "
-    >
+      ">
       <form
         @submit.prevent="
           nameError = name.trim().length === 0 ? 'Nama kolom wajib diisi.' : (name.trim().length > 100 ? 'Maksimal 100 karakter.' : '');
@@ -364,18 +360,13 @@
             .then(() => $flux.modal('rename-column-modal').close())
             .finally(() => saving = false)
         "
-        class="space-y-5"
-      >
+        class="space-y-5">
         <flux:heading size="lg">Ubah Kolom</flux:heading>
 
         <div>
           <flux:label>Nama Kolom</flux:label>
-          <flux:input
-            x-model="name"
-            x-ref="renameInput"
-            placeholder="Nama kolom..."
-            @keydown.escape="$flux.modal('rename-column-modal').close()"
-          />
+          <flux:input x-model="name" x-ref="renameInput" placeholder="Nama kolom..."
+            @keydown.escape="$flux.modal('rename-column-modal').close()" />
           <p x-show="nameError" x-text="nameError" x-cloak class="mt-1 text-sm text-red-500 dark:text-red-400"></p>
         </div>
 
@@ -383,25 +374,23 @@
           <flux:label>Warna</flux:label>
           <div class="mt-2 flex flex-wrap gap-2">
             @foreach (['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'] as $col)
-              <button
-                type="button"
-                @click="color = '{{ $col }}'"
-                title="{{ $col }}"
+              <button type="button" @click="color = '{{ $col }}'" title="{{ $col }}"
                 class="h-7 w-7 rounded-full border-[3px] transition-transform hover:scale-110"
                 :class="color === '{{ $col }}' ? 'border-zinc-900 scale-110 dark:border-white' : 'border-transparent'"
-                style="background-color: {{ $col }}"
-              ></button>
+                style="background-color: {{ $col }}"></button>
             @endforeach
           </div>
         </div>
 
         <div class="flex justify-end gap-2 pt-1">
-          <flux:button variant="ghost" type="button" @click="$flux.modal('rename-column-modal').close()">Batal</flux:button>
+          <flux:button variant="ghost" type="button" @click="$flux.modal('rename-column-modal').close()">Batal
+          </flux:button>
           <flux:button variant="primary" type="submit" x-bind:disabled="saving">
             <span x-show="!saving">Simpan</span>
             <span x-show="saving" x-cloak class="flex items-center gap-1.5">
               <svg class="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                  stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
               Menyimpan...
@@ -485,7 +474,9 @@
           }
         });
 
-        Livewire.on('task-created-on-board', () => {
+        // A task created/updated via the form modal re-renders the board; make
+        // sure Sortable is (re)attached to any freshly-morphed columns.
+        Livewire.on('task-updated', () => {
           this.$nextTick(() => this._initAll());
         });
       },
@@ -635,19 +626,19 @@
         const badge = cardEl.querySelector('[data-due-badge]');
         if (!badge) return;
 
-        const isClosed    = destStatusType === 'closed';
+        const isClosed = destStatusType === 'closed';
         const closedClass = 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400';
-        const openClass   = badge.dataset.openClass || '';
-        const base        = 'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] ';
+        const openClass = badge.dataset.openClass || '';
+        const base = 'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] ';
 
         badge.setAttribute('class', base + (isClosed ? closedClass : openClass));
 
         // Also update the label text so "Hari ini"/"Besok" becomes the actual date when closed
         const labelEl = badge.querySelector('[data-due-label]');
         if (labelEl) {
-          labelEl.textContent = isClosed
-            ? (badge.dataset.closedLabel || labelEl.textContent)
-            : (badge.dataset.openLabel  || labelEl.textContent);
+          labelEl.textContent = isClosed ?
+            (badge.dataset.closedLabel || labelEl.textContent) :
+            (badge.dataset.openLabel || labelEl.textContent);
         }
       },
 

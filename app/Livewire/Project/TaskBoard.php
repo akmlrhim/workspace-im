@@ -23,11 +23,6 @@ class TaskBoard extends Component
 
     public TaskList $taskList;
 
-    // Create task
-    public string $newTaskTitle = '';
-
-    public ?int $createInStatusId = null;
-
     // Create column
     public bool $showNewColumnInput = false;
 
@@ -49,6 +44,9 @@ class TaskBoard extends Component
     public ?string $filterPriority = null;
 
     public ?int $filterLabelId = null;
+
+    // Search (task title, scoped to current space)
+    public string $search = '';
 
     public function mount(Space $space, TaskList $taskList): void
     {
@@ -206,8 +204,13 @@ class TaskBoard extends Component
             ->first();
 
         if ($firstOther) {
+            // This bulk update bypasses model events, so keep the completed_at
+            // invariant (non-null only while in a closed status) in sync here.
             Task::where('task_status_id', $columnId)
-                ->update(['task_status_id' => $firstOther->id]);
+                ->update([
+                    'task_status_id' => $firstOther->id,
+                    'completed_at' => $firstOther->type === 'closed' ? now() : null,
+                ]);
         }
 
         $column->delete();
@@ -251,50 +254,6 @@ class TaskBoard extends Component
     }
 
     // ─── Task CRUD ─────────────────────────────────────────────────
-
-    public function createTaskInStatus(int $statusId): void
-    {
-        if (! $this->canManageBoard()) {
-            Flux::toast('Anda tidak memiliki izin untuk mengubah tugas ini.', variant: 'danger');
-
-            return;
-        }
-        if (empty($this->newTaskTitle)) {
-            return;
-        }
-
-        $maxPosition = Task::where('task_list_id', $this->taskList->id)
-            ->where('task_status_id', $statusId)
-            ->max('position') ?? -1;
-
-        $task = Task::create([
-            'task_list_id' => $this->taskList->id,
-            'task_status_id' => $statusId,
-            'title' => $this->newTaskTitle,
-            'priority' => 'normal',
-            'position' => $maxPosition + 1,
-            'created_by' => auth()->id(),
-        ]);
-
-        // Ensure creator is a list member then auto-assign them to the task
-        $this->taskList->members()->syncWithoutDetaching([auth()->id()]);
-        $task->assignees()->sync([auth()->id()]);
-
-        TaskActivity::create([
-            'task_id' => $task->id,
-            'user_id' => auth()->id(),
-            'type' => 'created',
-            'new_value' => $task->title,
-        ]);
-
-        $this->reset('newTaskTitle');
-        $this->createInStatusId = null;
-
-        $this->dispatch('task-created-on-board', taskId: $task->id, statusId: $statusId);
-
-        $this->broadcastChange();
-        Flux::toast('Tugas berhasil dibuat.', variant: 'success');
-    }
 
     public function moveTask(int $taskId, int $newStatusId, array $orderedIds): void
     {
@@ -434,9 +393,10 @@ class TaskBoard extends Component
         $filterAssigneeId = $this->filterAssigneeId;
         $filterPriority = $this->filterPriority;
         $filterLabelId = $this->filterLabelId;
+        $search = trim($this->search);
 
         $statuses = $this->taskList->statuses()
-            ->with(['tasks' => function ($q) use ($filterAssigneeId, $filterPriority, $filterLabelId) {
+            ->with(['tasks' => function ($q) use ($filterAssigneeId, $filterPriority, $filterLabelId, $search) {
                 $q->whereNull('parent_id')
                     ->with(['assignees', 'labels'])
                     ->withCount([
@@ -455,6 +415,9 @@ class TaskBoard extends Component
                 }
                 if ($filterLabelId) {
                     $q->whereHas('labels', fn ($q2) => $q2->where('task_labels.id', $filterLabelId));
+                }
+                if ($search !== '') {
+                    $q->where('title', 'like', '%'.addcslashes($search, '\\%_').'%');
                 }
             }])
             ->orderBy('position')
@@ -476,7 +439,30 @@ class TaskBoard extends Component
     {
         return filled($this->filterAssigneeId)
             || filled($this->filterPriority)
-            || filled($this->filterLabelId);
+            || filled($this->filterLabelId)
+            || filled(trim($this->search));
+    }
+
+    /**
+     * Task title suggestions while typing, scoped to the current list.
+     */
+    #[Computed]
+    public function searchSuggestions()
+    {
+        $term = trim($this->search);
+
+        if (mb_strlen($term) < 2) {
+            return collect();
+        }
+
+        return Task::query()
+            ->whereNull('parent_id')
+            ->where('task_list_id', $this->taskList->id)
+            ->where('title', 'like', '%'.addcslashes($term, '\\%_').'%')
+            ->with('status:id,name,color')
+            ->orderBy('title')
+            ->limit(8)
+            ->get();
     }
 
     #[Computed]
@@ -500,6 +486,12 @@ class TaskBoard extends Component
         $this->filterAssigneeId = null;
         $this->filterPriority = null;
         $this->filterLabelId = null;
+        $this->search = '';
+        unset($this->statuses);
+    }
+
+    public function updatedSearch(): void
+    {
         unset($this->statuses);
     }
 

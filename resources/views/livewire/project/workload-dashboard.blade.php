@@ -4,11 +4,38 @@
     <div>
       <flux:heading size="xl">Workload & Traffic</flux:heading>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <flux:select wire:model.live="selectedMemberId" size="sm" class="w-full sm:w-56">
+        <flux:select.option value="">Semua Anggota</flux:select.option>
+        @foreach ($this->members as $member)
+          <flux:select.option value="{{ $member->id }}">{{ $member->name }}</flux:select.option>
+        @endforeach
+      </flux:select>
       <flux:input onclick="this.showPicker()" type="month" wire:model.live="selectedMonth" size="sm" icon="calendar"
-        class="w-full sm:w-72" />
+        class="w-full sm:w-56" />
     </div>
   </div>
+
+  {{-- ─── Active member filter banner ────────────────────── --}}
+  @if ($selectedMemberId)
+    @php $activeMember = $this->members->firstWhere('id', $selectedMemberId); @endphp
+    @if ($activeMember)
+      <div
+        class="mb-4 flex items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 dark:border-indigo-500/40 dark:bg-indigo-500/10">
+        <div class="flex min-w-0 items-center gap-2 text-sm text-indigo-700 dark:text-indigo-300">
+          <flux:avatar circle size="xs" :name="$activeMember->name" :initials="$activeMember->initials()"
+            :src="$activeMember->avatar" />
+          <span class="truncate">Menampilkan tugas yang dikerjakan oleh
+            <span class="font-semibold">{{ $activeMember->name }}</span></span>
+        </div>
+        <button wire:click="$set('selectedMemberId', null)"
+          class="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-indigo-600 transition hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-500/20">
+          <flux:icon name="x-mark" class="size-3.5" />
+          Hapus filter
+        </button>
+      </div>
+    @endif
+  @endif
 
   {{-- ─── Space filter pills ─────────────────────────────── --}}
   @if ($spaces->isNotEmpty())
@@ -195,7 +222,7 @@
           class="overflow-hidden rounded-xl border shadow-sm
             {{ $groupDone ? 'border-emerald-200 dark:border-emerald-700/50' : 'border-zinc-200 dark:border-zinc-700' }}
             {{ $groupDone ? 'bg-emerald-50/30 dark:bg-emerald-900/5' : 'bg-white dark:bg-zinc-900' }}"
-          wire:key="group-{{ $loop->index }}">
+          wire:key="group-{{ $group['id'] }}">
 
           {{-- Group header --}}
           <div
