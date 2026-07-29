@@ -198,10 +198,7 @@
               data-task-id="{{ $task->id }}" data-can-drag="{{ $task->can_drag ? '1' : '0' }}"
               @click="if (!_isDraggingTask && !$event.target.closest('[data-no-drag]')) { $flux.modal('task-detail-board').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); } }">
 
-              <div class="absolute inset-y-0 left-0 w-1" style="background-color: {{ $task->priority_color }}"
-                title="Prioritas: {{ ucfirst($task->priority) }}"></div>
-
-              <div class="p-3 pl-3.5">
+              <div class="p-3">
                 @if ($task->labels->isNotEmpty())
                   <div class="mb-2 flex flex-wrap gap-1">
                     @foreach ($task->labels as $label)

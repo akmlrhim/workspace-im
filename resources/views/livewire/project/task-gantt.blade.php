@@ -127,8 +127,6 @@
         class="flex w-full items-center gap-3 rounded-xl border bg-white p-3 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800
         {{ $isClosed ? 'border-green-200 dark:border-green-800/30' : ($isOverdue ? 'border-red-200 dark:border-red-800/40' : 'border-zinc-200 dark:border-zinc-700') }}"
         wire:key="gantt-m-{{ $task->id }}">
-        <div class="h-8 w-1 shrink-0 rounded-full" style="background-color: {{ $task->status->color ?? '#6366f1' }}">
-        </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
             <div class="h-2 w-2 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}"></div>

@@ -202,71 +202,88 @@
   @php
     $myId = auth()->id();
     $currentDayName = $this->selectedCarbon->locale('id')->isoFormat('dddd');
+
+    $allTasks = $this->dailyTasks;
+    $totalTasks = $allTasks->count();
+    $doneTasks = $this->completedCount;
+    $progressPercent = $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : 0;
+
+    $routineTasks = $allTasks->filter(fn(\App\Models\Project\DailyTask $dt) => $dt->isRoutine());
+    $onDemandTasks = $allTasks->reject(fn(\App\Models\Project\DailyTask $dt) => $dt->isRoutine());
+
+    $sections = [
+        ['label' => 'Rutin harian', 'icon' => 'arrow-path', 'tasks' => $routineTasks],
+        ['label' => 'Khusus hari ini', 'icon' => 'sparkles', 'tasks' => $onDemandTasks],
+    ];
+
+    // Judul bagian hanya berguna kalau kedua tipe sama-sama ada.
+    $showSectionHeaders = $routineTasks->isNotEmpty() && $onDemandTasks->isNotEmpty();
   @endphp
 
-  {{-- Sunday rest-day state --}}
-  @if ($isSunday)
-    <div
-      class="mt-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-700">
-      <svg class="size-12 text-amber-300 dark:text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-        <path
-          d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.061ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.06 1.06l1.06 1.06Z" />
-      </svg>
-      <p class="mt-3 text-base font-semibold text-zinc-600 dark:text-zinc-300">Hari Libur</p>
-      <p class="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Daily task tidak tersedia di hari Minggu.<br>Selamat
-        beristirahat!</p>
-    </div>
-  @else
-    {{-- Day context header --}}
-    <div class="mb-4 flex items-center gap-2">
-      <span
-        class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-700">
-        <flux:icon name="calendar-days" class="size-3.5" />
-        Task hari {{ $currentDayName }}
-      </span>
-      @if ($this->dailyTasks->isEmpty())
-        <span class="text-xs text-zinc-400 dark:text-zinc-500">Belum ada task untuk hari ini</span>
-      @endif
-    </div>
 
-    {{-- Task list --}}
-    <div wire:loading.class="opacity-60" wire:target="previousDay,nextDay,goToToday,toggleComplete,submitReason">
+  {{-- Task list --}}
+  <div wire:loading.class="opacity-60" wire:target="previousDay,nextDay,goToToday">
 
-      @if ($this->dailyTasks->isEmpty() && !$canManage)
-        <div
-          class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 dark:border-zinc-700">
-          <flux:icon name="clipboard-document-list" class="size-10 text-zinc-300 dark:text-zinc-600" />
-          <p class="mt-3 text-sm font-medium text-zinc-500 dark:text-zinc-400">Belum ada task untuk hari
-            {{ $currentDayName }}</p>
-        </div>
-      @else
-        <div class="overflow-hidden rounded-xl border border-zinc-100 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-          <div class="divide-y divide-zinc-50 dark:divide-zinc-800/50">
+    @if ($totalTasks === 0 && !$canManage)
+      <div
+        class="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
+        <flux:icon name="clipboard-document-list" class="size-10 text-zinc-300 dark:text-zinc-600" />
+        <p class="mt-3 text-sm font-medium text-zinc-500 dark:text-zinc-400">Belum ada task untuk hari
+          {{ $currentDayName }}
+        </p>
+      </div>
+    @else
+      <div class="overflow-hidden rounded-xl border border-zinc-100 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
 
-            @if ($this->dailyTasks->isEmpty())
-              <div x-show="optimisticTasks.length === 0 && !addForm"
-                class="flex flex-col items-center justify-center py-10 px-4">
-                <flux:icon name="clipboard-document-list" class="size-10 text-zinc-300 dark:text-zinc-600" />
-                <p class="mt-3 text-sm font-medium text-zinc-500 dark:text-zinc-400">Belum ada task untuk hari
-                  {{ $currentDayName }}</p>
-                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Tambah task baru di bawah</p>
+          @if ($totalTasks === 0)
+            <div x-show="optimisticTasks.length === 0 && !addForm"
+              class="flex flex-col items-center justify-center px-4 py-12">
+              <flux:icon name="clipboard-document-list" class="size-10 text-zinc-300 dark:text-zinc-600" />
+              <p class="mt-3 text-sm font-medium text-zinc-500 dark:text-zinc-400">Belum ada task untuk hari
+                {{ $currentDayName }}
+              </p>
+              <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Tambah task baru di bawah</p>
+            </div>
+          @endif
+
+          @foreach ($sections as $section)
+            @continue($section['tasks']->isEmpty())
+
+            @if ($showSectionHeaders)
+              <div class="flex items-center gap-2 bg-zinc-50/80 px-4 py-2 dark:bg-zinc-800/40">
+                <flux:icon :name="$section['icon']" class="size-3.5 text-zinc-400 dark:text-zinc-500" />
+                <span class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  {{ $section['label'] }}
+                </span>
+                <span class="text-[11px] tabular-nums text-zinc-400 dark:text-zinc-600">
+                  {{ $section['tasks']->count() }}
+                </span>
               </div>
             @endif
 
-            @foreach ($this->dailyTasks as $dt)
+            @foreach ($section['tasks'] as $dt)
               @php
                 $taskLog = $dt->logs->firstWhere('user_id', $myId);
                 $isDone = (bool) $taskLog?->is_completed;
                 $completedLogs = $dt->logs->where('is_completed', true)->values();
+                $otherCompletedLogs = $completedLogs->where('user_id', '!=', $myId)->take(4);
               @endphp
 
-              <div wire:key="task-{{ $dt->id }}-{{ $selectedDate }}"
+              {{--
+                Semua tampilan (centang, coret, warna, spinner) digerakkan CSS lewat atribut data-*
+                di baris ini, bukan lewat :class dari Alpine. Setiap data-* punya nilai awal dari
+                server, jadi saat Livewire mem-morph baris ini nilainya ditimpa dengan yang benar
+                — bukan dihapus. Ini yang bikin checkbox & teks tidak bisa lagi beda state.
+              --}}
+              <div wire:key="task-{{ $dt->id }}-{{ $selectedDate }}-{{ $isDone ? 1 : 0 }}"
                 x-show="!deletingIds.includes({{ $dt->id }})" x-transition:leave="transition ease-in duration-150"
                 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 -translate-y-1"
                 x-data="{
                     editing: false,
                     done: @js($isDone),
-                    toggling: false,
+                    doneAt: @js($taskLog?->completed_at?->format('H:i')),
+                    pending: 0,
                     t: @js($dt->title),
                     d: @js($dt->description ?? ''),
                     openEdit() {
@@ -283,101 +300,128 @@
                         this.$wire.saveEdit({{ $dt->id }}, this.t.trim(), this.d.trim());
                         this.editing = false;
                     },
+                    applyDone(isDone, at) {
+                        if (isDone === this.done) return;
+                        this.done = isDone;
+                        this.doneAt = at;
+                        this.$dispatch('daily-task-toggled', { delta: isDone ? 1 : -1 });
+                    },
+                    nowLabel() {
+                        return new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    },
                     async toggleDone() {
-                        if (this.toggling) return;
-                        this.done = !this.done;
-                        this.toggling = true;
+                        // Sengaja tanpa guard 'sedang jalan': klik cepat berturut-turut
+                        // harus tetap tercatat. Livewire menjalankan requestnya berurutan
+                        // dan tiap balasan membawa status sebenarnya, jadi yang terakhir menang.
+                        const completing = !this.done;
+                        const previousDoneAt = this.doneAt;
+                        this.applyDone(completing, completing ? this.nowLabel() : null);
+                        this.pending++;
                         try {
-                            await this.$wire.toggleComplete({{ $dt->id }});
+                            // Server membalas status sebenarnya; UI selalu ikut nilai itu,
+                            // jadi tebakan optimistis yang meleset terkoreksi sendiri.
+                            const serverDone = await this.$wire.toggleComplete({{ $dt->id }});
+                            if (serverDone === null || serverDone === undefined) {
+                                this.applyDone(!completing, previousDoneAt);
+                            } else {
+                                this.applyDone(serverDone, serverDone ? (this.doneAt ?? this.nowLabel()) : null);
+                            }
+                        } catch (e) {
+                            this.applyDone(!completing, previousDoneAt);
                         } finally {
-                            this.toggling = false;
+                            this.pending--;
                         }
                     }
                 }"
-                :class="done ? 'bg-zinc-50/80 dark:bg-zinc-900/60' : ''"
-                class="flex items-start gap-3 px-4 py-3 transition-colors">
+                {{-- Selalu string: x-bind menghapus atribut kalau nilainya boolean false. --}}
+                data-done="{{ $isDone ? 'true' : 'false' }}" data-busy="false" data-editing="false"
+                :data-done="done ? 'true' : 'false'" :data-busy="pending > 0 ? 'true' : 'false'"
+                :data-editing="editing ? 'true' : 'false'"
+                class="group/task flex items-start gap-3 px-4 py-3.5 transition-colors data-[done=true]:bg-emerald-50/50 dark:data-[done=true]:bg-emerald-400/5">
 
                 {{-- Checkbox --}}
                 @if ($canManage)
-                  <button type="button" @click="toggleDone()" :disabled="toggling"
+                  <button type="button" role="checkbox" :aria-checked="done" @click="toggleDone()"
                     :title="done ? 'Tandai belum selesai' : 'Tandai selesai'"
-                    :class="done
-                        ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                        : 'border-2 border-zinc-300 hover:border-emerald-400 dark:border-zinc-600 dark:hover:border-emerald-500'"
-                    class="mt-0.5 shrink-0 flex h-5 w-5 items-center justify-center rounded transition-all duration-150 disabled:opacity-60">
-                    <svg x-show="done" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    class="relative mt-0.5 grid h-[22px] w-[22px] shrink-0 cursor-pointer place-items-center rounded-md border-2 border-zinc-300 transition-all duration-150 before:absolute before:-inset-2 before:content-[''] hover:border-emerald-400 active:scale-90 group-data-[done=true]/task:border-emerald-500 group-data-[done=true]/task:bg-emerald-500 dark:border-zinc-600 dark:hover:border-emerald-500 dark:group-data-[done=true]/task:border-emerald-500">
+                    <svg
+                      class="h-3.5 w-3.5 scale-50 text-white opacity-0 transition-all duration-200 group-data-[done=true]/task:scale-100 group-data-[done=true]/task:opacity-100 group-data-[busy=true]/task:opacity-0"
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                    <svg
+                      class="absolute h-3.5 w-3.5 animate-spin text-zinc-400 opacity-0 transition-opacity group-data-[busy=true]/task:opacity-100 group-data-[done=true]/task:text-white dark:text-zinc-500"
+                      fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                   </button>
                 @else
-                  <div :class="done ? 'bg-emerald-500' : 'border-2 border-zinc-200 dark:border-zinc-700'"
-                    class="mt-0.5 shrink-0 flex h-5 w-5 items-center justify-center rounded">
-                    <svg x-show="done" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  <div
+                    class="mt-0.5 grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md border-2 border-zinc-300 group-data-[done=true]/task:border-emerald-500 group-data-[done=true]/task:bg-emerald-500 dark:border-zinc-600 dark:group-data-[done=true]/task:border-emerald-500">
+                    <svg
+                      class="h-3.5 w-3.5 scale-50 text-white opacity-0 transition-all duration-200 group-data-[done=true]/task:scale-100 group-data-[done=true]/task:opacity-100"
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                 @endif
 
                 {{-- Task content --}}
                 <div class="min-w-0 flex-1">
-                  <div x-show="!editing">
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                      <p :class="done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'"
-                        class="text-sm font-medium leading-snug">
-                        {{ $dt->title }}
-                      </p>
-                      @unless ($dt->isRoutine())
-                        <span class="inline-flex items-center rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-700">
-                          On Demand
-                        </span>
-                      @endunless
-                    </div>
+                  <div class="group-data-[editing=true]/task:hidden">
+                    <p
+                      class="text-sm font-medium leading-snug text-zinc-800 transition-colors group-data-[done=true]/task:text-zinc-400 group-data-[done=true]/task:line-through dark:text-zinc-100 dark:group-data-[done=true]/task:text-zinc-500">
+                      {{ $dt->title }}
+                    </p>
 
                     @if ($dt->description)
                       <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{{ $dt->description }}</p>
                     @endif
 
-                    {{-- Who has checked this task --}}
-                    @if ($completedLogs->isNotEmpty())
-                      <div class="mt-1.5 flex items-center gap-1.5">
-                        <div class="flex -space-x-1.5">
-                          @foreach ($completedLogs->take(5) as $log)
-                            <flux:avatar circle :name="$log->user?->name ?? '?'" :src="$log->user?->avatar ?? null"
-                              size="xs" class="ring-1 ring-white dark:ring-zinc-900" />
-                          @endforeach
-                        </div>
+                    {{-- Avatar sendiri di-toggle CSS agar terasa instan, avatar orang lain dari server --}}
+                    <div
+                      class="mt-1.5 items-center gap-1.5 {{ $otherCompletedLogs->isNotEmpty() ? 'flex' : 'hidden group-data-[done=true]/task:flex' }}">
+                      <div class="flex -space-x-1.5">
+                        <span class="hidden group-data-[done=true]/task:inline-flex">
+                          <flux:avatar circle :name="auth()->user()->name" :src="auth()->user()->avatar" size="xs"
+                            class="ring-1 ring-white dark:ring-zinc-900" />
+                        </span>
+                        @foreach ($otherCompletedLogs as $log)
+                          <flux:avatar circle :name="$log->user?->name ?? '?'" :src="$log->user?->avatar ?? null"
+                            size="xs" class="ring-1 ring-white dark:ring-zinc-900" />
+                        @endforeach
                       </div>
-                    @endif
+                    </div>
 
                     @if ($taskLog?->reason)
                       <div
-                        class="mt-1.5 inline-flex items-start gap-1 rounded-md bg-amber-50 px-2 py-1 dark:bg-amber-900/20">
+                        class="mt-1.5 inline-flex items-start gap-1 rounded-md bg-amber-50 px-2 py-1 group-data-[done=true]/task:hidden dark:bg-amber-900/20">
                         <flux:icon.chat-bubble-left-ellipsis class="mt-0.5 h-3 w-3 shrink-0 text-amber-500" />
                         <span
                           class="text-xs leading-relaxed text-amber-700 dark:text-amber-400">{{ $taskLog->reason }}</span>
                       </div>
                     @endif
 
-                    @if ($taskLog?->completed_at)
-                      <div x-show="done" class="mt-1 flex items-center gap-1">
-                        <flux:icon name="clock" class="size-3 text-emerald-400" />
-                        <span class="text-xs text-emerald-500 dark:text-emerald-400">
-                          Selesai {{ $taskLog->completed_at->locale('id')->isoFormat('HH:mm') }}
-                        </span>
-                      </div>
-                    @endif
+                    <div class="mt-1 hidden items-center gap-1 group-data-[done=true]/task:flex">
+                      <flux:icon name="clock" class="size-3 text-emerald-500" />
+                      <span class="text-xs text-emerald-600 dark:text-emerald-400"
+                        x-text="doneAt ? `Selesai ${doneAt}` : ''">{{ $taskLog?->completed_at ? 'Selesai ' . $taskLog->completed_at->format('H:i') : '' }}</span>
+                    </div>
                   </div>
 
                   @if ($canManage)
-                    <div x-show="editing" x-cloak class="space-y-2">
+                    <div class="hidden space-y-2 group-data-[editing=true]/task:block">
                       <input x-ref="editInput" x-model="t" @keydown.enter.prevent="submitEdit()"
                         @keydown.escape="cancelEdit()"
-                        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none focus:inset-ring-1 focus:inset-ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
                       <input x-model="d" @keydown.escape="cancelEdit()" placeholder="Deskripsi (opsional)..."
-                        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:inset-ring-1 focus:inset-ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
                       <div class="flex gap-2">
-                        <flux:button @click="submitEdit()" variant="primary" size="sm"
-                          wire:loading.attr="disabled" wire:loading.class="opacity-75" wire:target="saveEdit">
+                        <flux:button @click="submitEdit()" variant="primary" size="sm" wire:loading.attr="disabled"
+                          wire:loading.class="opacity-75" wire:target="saveEdit">
                           Simpan
                         </flux:button>
                         <flux:button @click="cancelEdit()" variant="ghost" size="sm">Batal</flux:button>
@@ -387,8 +431,9 @@
                 </div>
 
                 @if ($canManage)
-                  <div x-show="!editing" class="shrink-0 flex items-center gap-0.5">
-                    <div x-show="!done">
+                  <div
+                    class="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/task:opacity-100 group-data-[editing=true]/task:hidden max-sm:opacity-100">
+                    <div class="group-data-[done=true]/task:hidden">
                       <flux:tooltip content="Catat alasan" position="top">
                         <flux:button variant="ghost" size="sm" icon="chat-bubble-left-ellipsis"
                           class="h-7 w-7 p-0 text-zinc-400 hover:text-amber-500"
@@ -413,78 +458,82 @@
 
               </div>
             @endforeach
+          @endforeach
 
-            {{-- Optimistic rows --}}
-            <template x-for="ot in optimisticTasks" :key="ot.id">
-              <div class="flex items-start gap-3 px-4 py-3">
-                <div class="mt-0.5 shrink-0 h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
-                <div class="min-w-0 flex-1">
-                  <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" x-text="ot.title"></p>
-                  <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500" x-show="ot.desc" x-text="ot.desc"></p>
-                  <div class="mt-1.5 flex items-center gap-1">
-                    <svg class="h-3 w-3 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                        stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
-                      </path>
-                    </svg>
-                    <span class="text-xs text-zinc-400">Menyimpan...</span>
-                  </div>
+          {{-- Optimistic rows --}}
+          <template x-for="ot in optimisticTasks" :key="ot.id">
+            <div class="flex items-start gap-3 px-4 py-3">
+              <div class="mt-0.5 h-[22px] w-[22px] shrink-0 rounded-md border-2 border-zinc-200 dark:border-zinc-700">
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100" x-text="ot.title"></p>
+                <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500" x-show="ot.desc" x-text="ot.desc"></p>
+                <div class="mt-1.5 flex items-center gap-1">
+                  <svg class="h-3 w-3 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                      stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                    </path>
+                  </svg>
+                  <span class="text-xs text-zinc-400">Menyimpan...</span>
                 </div>
               </div>
-            </template>
+            </div>
+          </template>
 
-            {{-- Add row --}}
-            @if ($canManage)
-              <div x-show="addForm" x-cloak class="flex items-start gap-3 px-4 py-3">
-                <div class="mt-0.5 shrink-0 h-5 w-5 rounded border-2 border-zinc-200 dark:border-zinc-700"></div>
-                <div class="min-w-0 flex-1 space-y-2">
-                  <input x-ref="addInput" x-model="addTitle" @keydown.enter.prevent="submitAdd()"
-                    @keydown.escape="closeAdd()" placeholder="Nama task..."
-                    class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
-                  <input x-model="addDesc" @keydown.escape="closeAdd()" placeholder="Deskripsi (opsional)..."
-                    class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">Tipe:</span>
-                    <div
-                      class="flex divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
-                      <button type="button" @click="addType = 'on_demand'"
-                        :class="addType === 'on_demand' ? 'bg-indigo-600 text-white' :
-                            'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
-                        class="px-3 py-1 text-xs font-medium transition-colors">
-                        Hari ini
-                      </button>
-                      <button type="button" @click="addType = 'routine'"
-                        :class="addType === 'routine' ? 'bg-violet-600 text-white' :
-                            'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
-                        class="px-3 py-1 text-xs font-medium transition-colors">
-                        Setiap hari
-                      </button>
-                    </div>
-                  </div>
-                  <div class="flex gap-2">
-                    <flux:button @click="submitAdd()" variant="primary" size="sm" wire:loading.attr="disabled"
-                      wire:loading.class="opacity-75" wire:target="addDailyTask">
-                      Simpan
-                    </flux:button>
-                    <flux:button @click="closeAdd()" variant="ghost" size="sm">Batal</flux:button>
+          {{-- Add row --}}
+          @if ($canManage)
+            <div x-show="addForm" x-cloak class="flex items-start gap-3 px-4 py-3">
+              <div class="mt-0.5 h-[22px] w-[22px] shrink-0 rounded-md border-2 border-zinc-200 dark:border-zinc-700">
+              </div>
+              <div class="min-w-0 flex-1 space-y-2">
+                <input x-ref="addInput" x-model="addTitle" @keydown.enter.prevent="submitAdd()"
+                  @keydown.escape="closeAdd()" placeholder="Nama task..."
+                  class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:inset-ring-1 focus:inset-ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                <input x-model="addDesc" @keydown.escape="closeAdd()" placeholder="Deskripsi (opsional)..."
+                  class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none focus:inset-ring-1 focus:inset-ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs text-zinc-500 dark:text-zinc-400">Tipe:</span>
+                  <div
+                    class="flex divide-x divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
+                    <button type="button" @click="addType = 'on_demand'"
+                      :class="addType === 'on_demand' ? 'bg-indigo-600 text-white' :
+                          'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
+                      class="px-3 py-1 text-xs font-medium transition-colors">
+                      Hari ini
+                    </button>
+                    <button type="button" @click="addType = 'routine'"
+                      :class="addType === 'routine' ? 'bg-violet-600 text-white' :
+                          'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'"
+                      class="px-3 py-1 text-xs font-medium transition-colors">
+                      Setiap hari
+                    </button>
                   </div>
                 </div>
+                <div class="flex gap-2">
+                  <flux:button @click="submitAdd()" variant="primary" size="sm" wire:loading.attr="disabled"
+                    wire:loading.class="opacity-75" wire:target="addDailyTask">
+                    Simpan
+                  </flux:button>
+                  <flux:button @click="closeAdd()" variant="ghost" size="sm">Batal</flux:button>
+                </div>
               </div>
-              <button x-show="!addForm" @click="openAdd()"
-                class="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-indigo-500 dark:hover:bg-zinc-800/60 dark:hover:text-indigo-400">
-                <flux:icon name="plus" class="size-3.5" />
-                Tambah task
-              </button>
-            @endif
+            </div>
+            <button x-show="!addForm" @click="openAdd()"
+              class="group/add flex w-full items-center gap-2 px-4 py-3 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-indigo-500 dark:hover:bg-zinc-800/60 dark:hover:text-indigo-400">
+              <span
+                class="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md border-2 border-dashed border-zinc-300 transition-colors group-hover/add:border-indigo-400 dark:border-zinc-700">
+                <flux:icon name="plus" class="size-3" />
+              </span>
+              Tambah task
+            </button>
+          @endif
 
-          </div>
         </div>
-      @endif
+      </div>
+    @endif
 
-    </div>
-
-  @endif {{-- end @else (not Sunday) --}}
+  </div>
 
   {{-- Delete modal --}}
   <div x-show="deleteModal" x-transition:enter="transition ease-out duration-150"

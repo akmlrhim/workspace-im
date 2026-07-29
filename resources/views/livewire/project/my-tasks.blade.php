@@ -77,8 +77,7 @@
                 @foreach ($day['tasks']->take(3) as $task)
                   <button
                     @click="$flux.modal('task-detail-mytasks').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
-                    class="group/task w-full rounded-md border bg-white/70 px-1.5 py-1 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm dark:bg-zinc-900/70"
-                    style="border-color: {{ $task->taskList->space->color ?? ($task->status->color ?? '#6366f1') }}55; border-left-width: 3px;"
+                    class="group/task w-full rounded-md border border-zinc-200 bg-white/70 px-1.5 py-1 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-900/70"
                     title="{{ $task->title }} — {{ $task->taskList->space->name ?? '' }}">
                     <span class="mb-0.5 flex min-w-0 items-center gap-1">
                       <span class="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -142,8 +141,7 @@
                   @foreach ($day['tasks'] as $task)
                     <button
                       @click="$flux.modal('task-detail-mytasks').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
-                      class="flex w-full items-center gap-2 rounded-md border-l-2 px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                      style="border-left-color: {{ $task->taskList->space->color ?? '#6366f1' }}; color: {{ $task->status->color ?? '#6366f1' }};">
+                      class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800">
                       <div class="h-2 w-2 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}">
                       </div>
                       <span class="min-w-0 flex-1">
@@ -188,7 +186,6 @@
             @endphp
             <div wire:key="overdue-{{ $task->id }}"
               class="flex items-center gap-3 rounded-lg border border-red-100 bg-white p-3 dark:border-red-800/20 dark:bg-zinc-900">
-              <div class="h-8 w-1 shrink-0 rounded-full bg-red-400"></div>
               <div class="min-w-0 flex-1">
                 <button
                   @click="$flux.modal('task-detail-mytasks').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
@@ -258,14 +255,6 @@
                 {{ $isClosedType ? 'border-zinc-100 opacity-70 dark:border-zinc-800' : 'border-zinc-200 hover:border-indigo-200 dark:border-zinc-700 dark:hover:border-indigo-500/30' }}">
 
               <div class="flex items-center gap-3">
-                <div
-                  class="h-8 w-1 shrink-0 rounded-full
-                  @if ($task->priority === 'urgent') bg-red-500
-                  @elseif ($task->priority === 'high') bg-orange-400
-                  @elseif ($task->priority === 'normal') bg-blue-400
-                  @else bg-zinc-200 dark:bg-zinc-600 @endif">
-                </div>
-
                 <div class="min-w-0 flex-1">
                   <button
                     @click="$flux.modal('task-detail-mytasks').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"

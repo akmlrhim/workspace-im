@@ -12,13 +12,6 @@
 
   {{-- Toolbar --}}
   <div class="mb-4 flex items-center justify-between gap-3">
-    <div class="flex items-center gap-2">
-      <span
-        class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-700">
-        <flux:icon name="document-text" class="size-3.5" />
-        {{ $this->notes->count() }} Catatan
-      </span>
-    </div>
 
     @if ($canManage)
       <flux:button variant="primary" size="sm" icon="plus" wire:click="$set('showNewNoteForm', true)">
@@ -51,9 +44,11 @@
 
               @if ($canManage)
                 <flux:dropdown position="bottom" align="end" class="shrink-0">
-                  <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="h-7 w-7 p-0 text-zinc-400" />
+                  <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"
+                    class="h-7 w-7 p-0 text-zinc-400" />
                   <flux:menu>
-                    <flux:menu.item icon="pencil-square" wire:click="openEditNote({{ $note->id }})">Edit</flux:menu.item>
+                    <flux:menu.item icon="pencil-square" wire:click="openEditNote({{ $note->id }})">Edit
+                    </flux:menu.item>
                     <flux:menu.separator />
                     <flux:menu.item variant="danger" icon="trash" wire:click="confirmDeleteNote({{ $note->id }})">
                       Hapus
@@ -64,7 +59,8 @@
             </div>
 
             @if ($note->content)
-              <p class="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-600 dark:text-zinc-300">{{ $note->content }}</p>
+              <p class="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-600 dark:text-zinc-300">
+                {{ $note->content }}</p>
             @endif
 
             {{-- Attachments --}}
@@ -86,7 +82,8 @@
                       @endif
                       <span class="truncate text-sm">{{ $attachment->filename }}</span>
                       @unless ($attachment->is_link)
-                        <span class="shrink-0 text-xs text-zinc-400">{{ number_format(($attachment->size ?? 0) / 1024, 1) }}
+                        <span
+                          class="shrink-0 text-xs text-zinc-400">{{ number_format(($attachment->size ?? 0) / 1024, 1) }}
                           KB</span>
                       @endunless
                     </a>
@@ -125,7 +122,8 @@
 
             {{-- Meta --}}
             <div class="mt-3 flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500">
-              <flux:avatar circle :name="$note->creator?->name ?? '?'" :src="$note->creator?->avatar ?? null" size="xs" />
+              <flux:avatar circle :name="$note->creator?->name ?? '?'" :src="$note->creator?->avatar ?? null"
+                size="xs" />
               <span>{{ $note->creator?->name ?? 'Pengguna' }}</span>
               <span>·</span>
               <span>{{ $note->updated_at?->locale('id')->diffForHumans() }}</span>
@@ -158,7 +156,8 @@
         @if (!empty($newNoteFiles) || !empty($newNoteLinks))
           <div class="space-y-1">
             @foreach ($newNoteLinks as $i => $link)
-              <div class="flex items-center justify-between rounded-lg border border-zinc-100 px-2.5 py-1.5 dark:border-zinc-800"
+              <div
+                class="flex items-center justify-between rounded-lg border border-zinc-100 px-2.5 py-1.5 dark:border-zinc-800"
                 wire:key="staged-link-{{ $i }}">
                 <span class="flex min-w-0 items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
                   <flux:icon name="link" class="size-4 shrink-0 text-indigo-400" />
@@ -171,7 +170,8 @@
               </div>
             @endforeach
             @foreach ($newNoteFiles as $i => $file)
-              <div class="flex items-center justify-between rounded-lg border border-zinc-100 px-2.5 py-1.5 dark:border-zinc-800"
+              <div
+                class="flex items-center justify-between rounded-lg border border-zinc-100 px-2.5 py-1.5 dark:border-zinc-800"
                 wire:key="staged-file-{{ $i }}">
                 <span class="flex min-w-0 items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
                   <flux:icon name="document" class="size-4 shrink-0 text-zinc-400" />
@@ -193,7 +193,8 @@
               size="sm" class="flex-1" wire:keydown.enter.prevent="addStagedLink" />
             <flux:input wire:model="newNoteLinkLabel" placeholder="Label (opsional)" maxlength="255" size="sm"
               class="sm:w-40" wire:keydown.enter.prevent="addStagedLink" />
-            <flux:button variant="filled" size="sm" wire:click="addStagedLink" class="shrink-0">Tambah</flux:button>
+            <flux:button variant="filled" size="sm" wire:click="addStagedLink" class="shrink-0">Tambah
+            </flux:button>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -215,7 +216,8 @@
 
         <div class="flex justify-end gap-2 pt-2">
           <flux:button variant="ghost" wire:click="cancelNewNote">Batal</flux:button>
-          <flux:button variant="primary" wire:click="createNote" wire:loading.attr="disabled" wire:target="createNote">
+          <flux:button variant="primary" wire:click="createNote" wire:loading.attr="disabled"
+            wire:target="createNote">
             Simpan
           </flux:button>
         </div>
@@ -239,7 +241,8 @@
 
         <div class="flex justify-end gap-2 pt-2">
           <flux:button variant="ghost" wire:click="$set('showEditNoteForm', false)">Batal</flux:button>
-          <flux:button variant="primary" wire:click="updateNote" wire:loading.attr="disabled" wire:target="updateNote">
+          <flux:button variant="primary" wire:click="updateNote" wire:loading.attr="disabled"
+            wire:target="updateNote">
             Simpan
           </flux:button>
         </div>
@@ -253,7 +256,8 @@
 
         <flux:field>
           <flux:label>URL</flux:label>
-          <flux:input wire:model="newLinkUrl" type="url" placeholder="https://..." wire:keydown.enter="addLink" />
+          <flux:input wire:model="newLinkUrl" type="url" placeholder="https://..."
+            wire:keydown.enter="addLink" />
         </flux:field>
 
         <flux:field>
@@ -282,10 +286,10 @@
           Catatan beserta semua lampirannya akan dihapus. Tindakan ini tidak bisa dibatalkan.
         </p>
         <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-center">
-          <flux:button variant="ghost" class="w-full sm:w-auto"
-            wire:click="$set('showDeleteNoteConfirm', false)">Batal</flux:button>
-          <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteNote" wire:loading.attr="disabled"
-            wire:target="deleteNote">Hapus</flux:button>
+          <flux:button variant="ghost" class="w-full sm:w-auto" wire:click="$set('showDeleteNoteConfirm', false)">
+            Batal</flux:button>
+          <flux:button variant="danger" class="w-full sm:w-auto" wire:click="deleteNote"
+            wire:loading.attr="disabled" wire:target="deleteNote">Hapus</flux:button>
         </div>
       </div>
     </flux:modal>

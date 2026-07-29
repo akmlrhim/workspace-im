@@ -76,10 +76,17 @@
     @apply !mb-0 !leading-tight;
 }
 
+/*
+ * Focus ring is drawn *inside* the field (ring-inset) instead of floating
+ * outside it. An outward ring + ring-offset extends ~4px beyond the field box
+ * and gets sliced by any ancestor with overflow-hidden / overflow-*-auto
+ * (cards, modals, scrollable lists, the kanban board), which made focused
+ * inputs look cut off. An inset ring can never be clipped.
+ */
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply outline-hidden inset-ring-2 inset-ring-accent;
 }
 
 .kanban-ghost {

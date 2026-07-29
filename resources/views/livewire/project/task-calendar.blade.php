@@ -157,8 +157,7 @@
                 @foreach ($day['tasks'] as $task)
                   <button
                     @click="$flux.modal('task-detail-calendar').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
-                    class="flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-1.5 text-left text-xs font-medium transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                    style="border-left-color: {{ $task->status->color ?? '#6366f1' }}; color: {{ $task->status->color ?? '#6366f1' }};">
+                    class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium transition hover:bg-zinc-50 dark:hover:bg-zinc-800">
                     @php
                       $calDone = $task->status?->type === 'closed';
                       $calOver = !$calDone && $task->due_date?->isPast();

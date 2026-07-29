@@ -232,8 +232,7 @@
                 @foreach ($day['tasks'] as $task)
                   <button
                     @click="$flux.modal('gen-task-detail').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
-                    class="w-full rounded-md border-l-[3px] bg-white/80 px-1.5 py-1 text-left shadow-sm transition hover:shadow-md dark:bg-zinc-800/80"
-                    style="border-left-color: {{ $task->taskList->space->color ?? '#6366f1' }}"
+                    class="w-full rounded-md border border-zinc-200 bg-white/80 px-1.5 py-1 text-left shadow-sm transition hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800/80"
                     title="{{ $task->title }} — {{ $task->taskList->space->name ?? '' }} / {{ $task->taskList->name ?? '' }}">
                     <div class="flex min-w-0 items-center gap-1">
                       @php
@@ -250,7 +249,7 @@
                       @endif
                     </div>
                     <span class="mt-0.5 block truncate rounded px-1 py-0.5 text-[9px] font-medium text-white"
-                      style="background-color: {{ $task->taskList->space->color ?? '#6366f1' }}">
+                      style="background-color: {{ $task->status?->color ?? '#6366f1' }}">
                       {{ $task->taskList->space->name ?? '-' }} / {{ $task->taskList->name ?? '-' }}
                     </span>
                   </button>
@@ -299,8 +298,7 @@
                   @foreach ($day['tasks'] as $task)
                     <button
                       @click="$flux.modal('gen-task-detail').show(); if ($wire.selectedTaskId !== {{ $task->id }}) { $wire.openTaskDetail({{ $task->id }}); }"
-                      class="flex w-full items-center gap-2 rounded-lg border-l-2 px-2 py-1.5 text-left text-xs font-medium transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                      style="border-left-color: {{ $task->taskList->space->color ?? '#6366f1' }}">
+                      class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium transition hover:bg-zinc-50 dark:hover:bg-zinc-800">
                       @php
                         $calDone = $task->status?->type === 'closed';
                       @endphp

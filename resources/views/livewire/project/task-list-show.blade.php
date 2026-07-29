@@ -68,9 +68,6 @@
                 class="group flex flex-col gap-3 border-b border-zinc-100 px-4 py-3 transition-colors last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/70 lg:flex-row lg:items-center lg:gap-4">
                 <div class="flex flex-1 items-start justify-between gap-3 min-w-0 lg:items-center">
                   <div class="flex min-w-0 items-center gap-3">
-                    <div class="h-5 w-1 shrink-0 rounded-full" style="background-color: {{ $task->priority_color }}">
-                    </div>
-
                     <button wire:click="openTaskDetail({{ $task->id }})"
                       class="truncate text-left text-sm font-medium text-zinc-900 hover:text-indigo-600 hover:underline dark:text-zinc-100 dark:hover:text-indigo-400">
                       <span

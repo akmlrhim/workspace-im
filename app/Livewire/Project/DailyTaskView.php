@@ -27,6 +27,9 @@ class DailyTaskView extends Component
 
     public ?int $reasonModalFor = null;
 
+    /** Cache per-request agar pengecekan izin tidak mengulang query di setiap aksi dan render. */
+    private ?bool $canManageCache = null;
+
     public function mount(Space $space, TaskList $taskList): void
     {
         $this->space = $space;
@@ -65,12 +68,6 @@ class DailyTaskView extends Component
     }
 
     #[Computed]
-    public function isSunday(): bool
-    {
-        return Carbon::parse($this->selectedDate)->isSunday();
-    }
-
-    #[Computed]
     public function selectedCarbon(): Carbon
     {
         return Carbon::parse($this->selectedDate);
@@ -79,11 +76,6 @@ class DailyTaskView extends Component
     #[Computed]
     public function dailyTasks(): Collection
     {
-        // Daily tasks only apply on working days (Mon–Sat)
-        if ($this->isSunday) {
-            return collect();
-        }
-
         $selectedDate = $this->selectedDate;
 
         return $this->taskList->dailyTasks()
@@ -125,7 +117,7 @@ class DailyTaskView extends Component
 
     private function clearComputedCache(): void
     {
-        unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->isSunday, $this->selectedCarbon);
+        unset($this->dailyTasks, $this->pendingCount, $this->completedCount, $this->isToday, $this->selectedCarbon);
     }
 
     public function updatedSelectedDate(): void
@@ -162,6 +154,11 @@ class DailyTaskView extends Component
 
     private function canManage(): bool
     {
+        return $this->canManageCache ??= $this->resolveCanManage();
+    }
+
+    private function resolveCanManage(): bool
+    {
         $user = auth()->user();
 
         if ($user->canManageAllProjects()) {
@@ -179,12 +176,6 @@ class DailyTaskView extends Component
     {
         if (! $this->canManage()) {
             Flux::toast('Anda tidak memiliki izin untuk mengubah ini.', variant: 'danger');
-
-            return;
-        }
-
-        if ($this->isSunday) {
-            Flux::toast('Daily task tidak tersedia di hari Minggu.', variant: 'warning');
 
             return;
         }
@@ -249,12 +240,19 @@ class DailyTaskView extends Component
         Flux::toast('Daily task diperbarui.', variant: 'success');
     }
 
-    public function toggleComplete(int $dailyTaskId): void
+    /**
+     * Membalik status selesai sebuah daily task.
+     *
+     * Mengembalikan status BARU menurut database (true = selesai, false = belum),
+     * atau null bila aksi ditolak. UI selalu menyelaraskan diri ke nilai ini,
+     * sehingga tebakan optimistis yang meleset terkoreksi sendiri tanpa refresh.
+     */
+    public function toggleComplete(int $dailyTaskId): ?bool
     {
         if (! $this->canManage()) {
             Flux::toast('Anda tidak memiliki izin untuk mengubah ini.', variant: 'danger');
 
-            return;
+            return null;
         }
 
         $this->taskList->dailyTasks()->findOrFail($dailyTaskId);
@@ -269,16 +267,24 @@ class DailyTaskView extends Component
             $log->is_completed = false;
             $log->completed_at = null;
             $log->reason = null;
-            $log->save();
         } else {
             $log->is_completed = true;
             $log->completed_at = now();
             $log->reason = null;
-            $log->save();
         }
+
+        $log->save();
 
         unset($this->dailyTasks, $this->pendingCount, $this->completedCount);
         $this->broadcastChange();
+
+        // Baris sudah diperbarui sendiri oleh browser dari nilai balikan ini, jadi
+        // render ulang seluruh list tidak perlu. Selain lebih ringan, ini mencegah
+        // hasil render yang sudah usang menimpa baris lain yang requestnya masih
+        // berjalan saat user mencentang beberapa task beruntun.
+        $this->skipRender();
+
+        return $log->is_completed;
     }
 
     public function openReasonModal(int $dailyTaskId): void
@@ -343,7 +349,6 @@ class DailyTaskView extends Component
     {
         return view('livewire.project.daily-task-view', [
             'canManage' => $this->canManage(),
-            'isSunday' => $this->isSunday,
         ]);
     }
 }
