@@ -3,11 +3,13 @@
 namespace App\Livewire\Project;
 
 use App\Events\TaskListUpdated;
-use App\Livewire\Forms\TaskColumnForm;
+use App\Livewire\Project\Concerns\BatchesPositionUpdates;
+use App\Livewire\Project\Concerns\FiltersBoardTasks;
+use App\Livewire\Project\Concerns\ManagesBoardColumns;
+use App\Livewire\Project\Concerns\OpensTaskDetailPanel;
 use App\Models\Project\Space;
 use App\Models\Project\Task;
 use App\Models\Project\TaskActivity;
-use App\Models\Project\TaskLabel;
 use App\Models\Project\TaskList;
 use App\Models\Project\TaskStatus;
 use Flux\Flux;
@@ -19,34 +21,14 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class TaskBoard extends Component
 {
+    use BatchesPositionUpdates;
+    use FiltersBoardTasks;
+    use ManagesBoardColumns;
+    use OpensTaskDetailPanel;
+
     public Space $space;
 
     public TaskList $taskList;
-
-    // Create column
-    public bool $showNewColumnInput = false;
-
-    public TaskColumnForm $newColumn;
-
-    // Task detail
-    public ?int $selectedTaskId = null;
-
-    public bool $showTaskDetail = false;
-
-    // Delete column confirm
-    public bool $showDeleteColumnConfirm = false;
-
-    public ?int $deletingColumnId = null;
-
-    // Filters
-    public ?int $filterAssigneeId = null;
-
-    public ?string $filterPriority = null;
-
-    public ?int $filterLabelId = null;
-
-    // Search (task title, scoped to current space)
-    public string $search = '';
 
     public function mount(Space $space, TaskList $taskList): void
     {
@@ -75,6 +57,12 @@ class TaskBoard extends Component
         }
 
         unset($this->statuses);
+    }
+
+    public function onTaskUpdated(): void
+    {
+        unset($this->statuses);
+        $this->broadcastChange();
     }
 
     private function broadcastChange(): void
@@ -109,152 +97,9 @@ class TaskBoard extends Component
         });
     }
 
-    // ─── Column CRUD ───────────────────────────────────────────────
+    // ─── Drag & drop ───────────────────────────────────────────────
 
-    public function addColumn(): void
-    {
-        if (! $this->canManageBoard()) {
-            Flux::toast('Anda tidak memiliki izin untuk mengubah tugas ini.', variant: 'danger');
-
-            return;
-        }
-
-        $this->newColumn->validate();
-
-        $maxPosition = TaskStatus::where('task_list_id', $this->taskList->id)
-            ->max('position') ?? -1;
-
-        TaskStatus::create([
-            'task_list_id' => $this->taskList->id,
-            'name' => trim($this->newColumn->name),
-            'color' => $this->newColumn->color,
-            'position' => $maxPosition + 1,
-            'type' => 'active',
-        ]);
-
-        $this->newColumn->reset();
-        $this->showNewColumnInput = false;
-
-        $this->broadcastChange();
-        Flux::toast('Kolom baru berhasil ditambahkan.', variant: 'success');
-    }
-
-    public function saveColumnRename(int $columnId, string $name, string $color): void
-    {
-        if (! $this->canManageBoard()) {
-            Flux::toast('Anda tidak memiliki izin untuk mengubah kolom ini.', variant: 'danger');
-
-            return;
-        }
-
-        $name = trim($name);
-
-        if ($name === '' || strlen($name) > 100) {
-            return;
-        }
-
-        $allowedColors = ['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
-
-        if (! in_array($color, $allowedColors, true)) {
-            $color = '#6b7280';
-        }
-
-        TaskStatus::where('id', $columnId)
-            ->where('task_list_id', $this->taskList->id)
-            ->update(['name' => $name, 'color' => $color]);
-
-        $this->broadcastChange();
-        unset($this->statuses);
-        Flux::toast('Kolom berhasil diperbarui.', variant: 'success');
-    }
-
-    public function confirmDeleteColumn(int $columnId): void
-    {
-        if (! $this->canManageBoard()) {
-            return;
-        }
-        $this->deletingColumnId = $columnId;
-        $this->showDeleteColumnConfirm = true;
-    }
-
-    public function deleteColumn(): void
-    {
-        if (! $this->canManageBoard() || ! $this->deletingColumnId) {
-            return;
-        }
-
-        $columnId = $this->deletingColumnId;
-        $column = TaskStatus::where('id', $columnId)
-            ->where('task_list_id', $this->taskList->id)
-            ->firstOrFail();
-
-        // Prevent deleting the last column
-        $remainingCount = TaskStatus::where('task_list_id', $this->taskList->id)->count();
-        if ($remainingCount <= 1) {
-            $this->reset(['showDeleteColumnConfirm', 'deletingColumnId']);
-            Flux::toast('Tidak bisa menghapus kolom terakhir.', variant: 'danger');
-
-            return;
-        }
-
-        // Move tasks in this column to the first remaining column
-        $firstOther = TaskStatus::where('task_list_id', $this->taskList->id)
-            ->where('id', '!=', $columnId)
-            ->orderBy('position')
-            ->first();
-
-        if ($firstOther) {
-            // This bulk update bypasses model events, so keep the completed_at
-            // invariant (non-null only while in a closed status) in sync here.
-            Task::where('task_status_id', $columnId)
-                ->update([
-                    'task_status_id' => $firstOther->id,
-                    'completed_at' => $firstOther->type === 'closed' ? now() : null,
-                ]);
-        }
-
-        $column->delete();
-
-        $this->reset(['showDeleteColumnConfirm', 'deletingColumnId']);
-        $this->broadcastChange();
-        Flux::toast('Kolom berhasil dihapus.', variant: 'success');
-    }
-
-    public function updateColumnOrder(array $orderedIds): void
-    {
-        if (! $this->canManageBoard()) {
-            Flux::toast('Anda tidak memiliki izin untuk mengatur ulang kolom.', variant: 'danger');
-
-            return;
-        }
-
-        if (empty($orderedIds)) {
-            return;
-        }
-
-        $cases = [];
-        $bindings = [];
-
-        foreach ($orderedIds as $position => $columnId) {
-            $cases[] = 'WHEN id = ? THEN ?';
-            $bindings[] = $columnId;
-            $bindings[] = $position;
-        }
-
-        $bindings[] = $this->taskList->id;
-        $bindings = array_merge($bindings, $orderedIds);
-        $placeholders = implode(',', array_fill(0, count($orderedIds), '?'));
-
-        DB::update(
-            'UPDATE task_statuses SET position = CASE '.implode(' ', $cases).' END WHERE task_list_id = ? AND id IN ('.$placeholders.')',
-            $bindings
-        );
-
-        $this->broadcastChange();
-    }
-
-    // ─── Task CRUD ─────────────────────────────────────────────────
-
+    /** @param  array<int, int>  $orderedIds */
     public function moveTask(int $taskId, int $newStatusId, array $orderedIds): void
     {
         // Load assignees + status only; set taskList from the already-bound component property
@@ -288,8 +133,7 @@ class TaskBoard extends Component
         DB::transaction(function () use ($task, $newStatusId, $oldStatusId, $orderedIds) {
             $task->update(['task_status_id' => $newStatusId]);
 
-            // Batch position update for target column
-            $this->batchUpdatePositions($orderedIds);
+            $this->applyPositionOrder('tasks', $orderedIds);
 
             // Re-index source column if cross-column move
             if ($oldStatusId !== $newStatusId) {
@@ -300,7 +144,7 @@ class TaskBoard extends Component
                     ->pluck('id')
                     ->all();
 
-                $this->batchUpdatePositions($sourceIds);
+                $this->applyPositionOrder('tasks', $sourceIds);
             }
         });
 
@@ -321,67 +165,7 @@ class TaskBoard extends Component
 
         $this->broadcastChange();
 
-        // SortableJS already moved the card to the correct position in the DOM.
-        // Re-rendering would cause a brief rollback when multiple drags happen quickly
-        // because Livewire's morph would overwrite Sortable's visual state mid-drag.
-        // Other users receive the update via broadcast and re-render on their side.
         $this->skipRender();
-    }
-
-    /**
-     * Batch update positions using a single CASE query instead of N individual updates.
-     *
-     * @param  array<int, int>  $orderedIds
-     */
-    private function batchUpdatePositions(array $orderedIds): void
-    {
-        if (empty($orderedIds)) {
-            return;
-        }
-
-        $cases = [];
-        $bindings = [];
-
-        foreach ($orderedIds as $position => $id) {
-            $cases[] = 'WHEN id = ? THEN ?';
-            $bindings[] = $id;
-            $bindings[] = $position;
-        }
-
-        $bindings = array_merge($bindings, $orderedIds);
-        $placeholders = implode(',', array_fill(0, count($orderedIds), '?'));
-
-        DB::update(
-            'UPDATE tasks SET position = CASE '.implode(' ', $cases).' END WHERE id IN ('.$placeholders.')',
-            $bindings
-        );
-    }
-
-    // ─── Task Detail ───────────────────────────────────────────────
-
-    public function openTaskDetail(int $taskId): void
-    {
-        $this->selectedTaskId = $taskId;
-        $this->showTaskDetail = true;
-    }
-
-    public function onTaskUpdated(): void
-    {
-        unset($this->statuses);
-        $this->broadcastChange();
-    }
-
-    public function onTaskDeleted(int $taskId): void
-    {
-        if ($this->selectedTaskId === $taskId) {
-            $this->selectedTaskId = null;
-        }
-        $this->showTaskDetail = false;
-    }
-
-    public function closeTaskDetail(): void
-    {
-        $this->showTaskDetail = false;
     }
 
     #[Computed]
@@ -390,13 +174,8 @@ class TaskBoard extends Component
         $user = auth()->user();
         $this->taskList->loadMissing('space.workspace');
 
-        $filterAssigneeId = $this->filterAssigneeId;
-        $filterPriority = $this->filterPriority;
-        $filterLabelId = $this->filterLabelId;
-        $search = trim($this->search);
-
         $statuses = $this->taskList->statuses()
-            ->with(['tasks' => function ($q) use ($filterAssigneeId, $filterPriority, $filterLabelId, $search) {
+            ->with(['tasks' => function ($q) {
                 $q->whereNull('parent_id')
                     ->with(['assignees', 'labels'])
                     ->withCount([
@@ -407,18 +186,7 @@ class TaskBoard extends Component
                     ])
                     ->orderBy('position');
 
-                if ($filterAssigneeId) {
-                    $q->whereHas('assignees', fn ($q2) => $q2->where('users.id', $filterAssigneeId));
-                }
-                if ($filterPriority) {
-                    $q->where('priority', $filterPriority);
-                }
-                if ($filterLabelId) {
-                    $q->whereHas('labels', fn ($q2) => $q2->where('task_labels.id', $filterLabelId));
-                }
-                if ($search !== '') {
-                    $q->where('title', 'like', '%'.addcslashes($search, '\\%_').'%');
-                }
+                $this->applyTaskFilters($q);
             }])
             ->orderBy('position')
             ->get();
@@ -432,82 +200,6 @@ class TaskBoard extends Component
         }
 
         return $statuses;
-    }
-
-    #[Computed]
-    public function hasActiveFilter(): bool
-    {
-        return filled($this->filterAssigneeId)
-            || filled($this->filterPriority)
-            || filled($this->filterLabelId)
-            || filled(trim($this->search));
-    }
-
-    /**
-     * Task title suggestions while typing, scoped to the current list.
-     */
-    #[Computed]
-    public function searchSuggestions()
-    {
-        $term = trim($this->search);
-
-        if (mb_strlen($term) < 2) {
-            return collect();
-        }
-
-        return Task::query()
-            ->whereNull('parent_id')
-            ->where('task_list_id', $this->taskList->id)
-            ->where('title', 'like', '%'.addcslashes($term, '\\%_').'%')
-            ->with('status:id,name,color')
-            ->orderBy('title')
-            ->limit(8)
-            ->get();
-    }
-
-    #[Computed]
-    public function availableAssignees()
-    {
-        return $this->taskList->members()->orderBy('name')->get();
-    }
-
-    #[Computed]
-    public function availableLabels()
-    {
-        $this->taskList->loadMissing('space.workspace');
-
-        return TaskLabel::where('workspace_id', $this->taskList->space->workspace_id)
-            ->orderBy('name')
-            ->get();
-    }
-
-    public function clearFilters(): void
-    {
-        $this->filterAssigneeId = null;
-        $this->filterPriority = null;
-        $this->filterLabelId = null;
-        $this->search = '';
-        unset($this->statuses);
-    }
-
-    public function updatedSearch(): void
-    {
-        unset($this->statuses);
-    }
-
-    public function updatedFilterAssigneeId(): void
-    {
-        unset($this->statuses);
-    }
-
-    public function updatedFilterPriority(): void
-    {
-        unset($this->statuses);
-    }
-
-    public function updatedFilterLabelId(): void
-    {
-        unset($this->statuses);
     }
 
     public function render()

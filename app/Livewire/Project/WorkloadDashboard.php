@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Project;
 
+use App\Livewire\Project\Concerns\BuildsMemberWorkload;
+use App\Livewire\Project\Concerns\BuildsTaskWorkload;
+use App\Livewire\Project\Concerns\FiltersWorkloadTasks;
+use App\Livewire\Project\Concerns\SummarizesTaskStatus;
 use App\Models\Project\Space;
-use App\Models\Project\Task;
-use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -14,6 +16,11 @@ use Livewire\Component;
 #[Title('Workload Dashboard')]
 class WorkloadDashboard extends Component
 {
+    use BuildsMemberWorkload;
+    use BuildsTaskWorkload;
+    use FiltersWorkloadTasks;
+    use SummarizesTaskStatus;
+
     public string $view = 'task';
 
     public string $selectedMonth = '';
@@ -27,6 +34,7 @@ class WorkloadDashboard extends Component
         $this->selectedMonth = now()->format('Y-m');
     }
 
+    /** @return array<string, string> */
     public function getListeners(): array
     {
         return [
@@ -55,9 +63,7 @@ class WorkloadDashboard extends Component
     #[Computed]
     public function members()
     {
-        return Task::whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
-            ->tap(fn ($q) => $this->applyMonthFilter($q))
-            ->tap(fn ($q) => $this->applySpaceFilter($q))
+        return $this->baseTaskQuery()
             ->with('assignees:id,name')
             ->get()
             ->flatMap
@@ -126,214 +132,5 @@ class WorkloadDashboard extends Component
         };
 
         return view('livewire.project.workload-dashboard', $data);
-    }
-
-    private function getMemberViewData(): array
-    {
-        $tasks = Task::whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
-            ->tap(fn ($q) => $this->applyMonthFilter($q))
-            ->tap(fn ($q) => $this->applySpaceFilter($q))
-            ->tap(fn ($q) => $this->applyMemberFilter($q))
-            ->with(['assignees', 'status', 'taskList.space', 'timeTrackings'])
-            ->get();
-
-        $memberStats = collect();
-        $allAssignees = $tasks->flatMap->assignees->unique('id');
-
-        foreach ($allAssignees as $user) {
-            $userTasks = $tasks->filter(fn (Task $t) => $t->assignees->contains('id', $user->id));
-            $total = $userTasks->count();
-            $completed = $userTasks->filter(fn (Task $t) => $t->status?->type === 'closed')->count();
-            $overdue = $userTasks->filter(fn (Task $t) => $t->status?->type !== 'closed' && $t->due_date && $t->due_date->toDateString() < now()->toDateString())->count();
-            $progress = $total > 0 ? round(($completed / $total) * 100) : 0;
-
-            $totalSeconds = $userTasks->flatMap->timeTrackings
-                ->where('user_id', $user->id)
-                ->sum('duration_seconds');
-
-            $statusBreakdown = $userTasks->groupBy(fn (Task $t) => $t->status?->type ?? 'open');
-
-            $memberStats->push([
-                'user' => $user,
-                'total' => $total,
-                'completed' => $completed,
-                'overdue' => $overdue,
-                'progress' => $progress,
-                'hours' => round($totalSeconds / 3600, 1),
-                'open' => $statusBreakdown->get('open', collect())->count(),
-                'active' => $statusBreakdown->get('active', collect())->count(),
-                'closed' => $statusBreakdown->get('closed', collect())->count(),
-            ]);
-        }
-
-        $memberStats = $memberStats->sort(function ($a, $b) {
-            if ($b['completed'] !== $a['completed']) {
-                return $b['completed'] <=> $a['completed'];
-            }
-
-            return $b['progress'] <=> $a['progress'];
-        })->values();
-
-        $memberTraffic = $memberStats->take(6)->map(fn ($m) => [
-            'name' => $m['user']->name,
-            'open' => $m['open'],
-            'active' => $m['active'],
-            'closed' => $m['closed'],
-        ])->toArray();
-
-        return [
-            'memberStats' => $memberStats,
-            'memberTraffic' => $memberTraffic,
-            'totalMembers' => $allAssignees->count(),
-            'totalTasks' => $tasks->count(),
-            'completedTasks' => $tasks->filter(fn (Task $t) => $t->status?->type === 'closed')->count(),
-            'overdueTasks' => $tasks->filter(fn (Task $t) => $t->status?->type !== 'closed' && $t->due_date && $t->due_date->toDateString() < now()->toDateString())->count(),
-        ];
-    }
-
-    private function getTaskViewData(): array
-    {
-        $tasks = Task::whereDoesntHave('status', fn ($q) => $q->whereIn('name', ['Note', 'note']))
-            ->tap(fn ($q) => $this->applyMonthFilter($q))
-            ->tap(fn ($q) => $this->applySpaceFilter($q))
-            ->tap(fn ($q) => $this->applyMemberFilter($q))
-            ->with(['assignees', 'status', 'taskList.space', 'timeTrackings'])
-            ->get();
-
-        $today = now()->toDateString();
-        $totalTasks = $tasks->count();
-        $completedTasks = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed')->count();
-        // Late means finished after the deadline — compare completion time to the
-        // deadline, not the deadline to today (a task finished on time must not
-        // flip to "late" once its due date passes).
-        $completedLate = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed'
-            && $t->due_date
-            && $t->completed_at
-            && $t->completed_at->toDateString() > $t->due_date->toDateString())->count();
-        $completedNoDeadline = $tasks->filter(fn (Task $t) => $t->status?->type === 'closed' && $t->due_date === null)->count();
-        $completedOnTime = $completedTasks - $completedLate - $completedNoDeadline;
-        $latePercent = $completedTasks > 0 ? round(($completedLate / $completedTasks) * 100) : 0;
-        $noDeadlinePercent = $completedTasks > 0 ? round(($completedNoDeadline / $completedTasks) * 100) : 0;
-        $overdueTasks = $tasks->filter(fn (Task $t) => $t->status?->type !== 'closed' && $t->due_date && $t->due_date->toDateString() < $today)->count();
-        $overduePercent = $totalTasks > 0 ? round(($overdueTasks / $totalTasks) * 100) : 0;
-        $progressPercent = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
-
-        $priorityRank = ['urgent' => 0, 'high' => 1, 'normal' => 2, 'low' => 3];
-
-        $taskGroups = $tasks->groupBy(fn (Task $task) => $task->task_list_id)
-            ->map(function ($groupTasks) use ($priorityRank) {
-                $first = $groupTasks->first();
-                $total = $groupTasks->count();
-                $completed = $groupTasks->filter(fn (Task $t) => $t->status?->type === 'closed')->count();
-                $overdue = $groupTasks->filter(fn (Task $t) => $t->status?->type !== 'closed' && $t->due_date && $t->due_date->toDateString() < now()->toDateString())->count();
-                $progress = $total > 0 ? round(($completed / $total) * 100) : 0;
-
-                $mappedTasks = $groupTasks->map(function (Task $task) {
-                    $totalSeconds = $task->timeTrackings->sum('duration_seconds');
-
-                    return [
-                        'id' => $task->id,
-                        'title' => $task->title,
-                        'priority' => $task->priority,
-                        'status_type' => $task->status?->type ?? 'open',
-                        'status_name' => $task->status?->name ?? 'Terbuka',
-                        'due_date' => $task->due_date,
-                        'is_overdue' => $task->status?->type !== 'closed' && $task->due_date && $task->due_date->toDateString() < now()->toDateString(),
-                        'assignees' => $task->assignees,
-                        'hours' => round($totalSeconds / 3600, 1),
-                    ];
-                })->sort(function ($a, $b) use ($priorityRank) {
-                    return ($b['is_overdue'] <=> $a['is_overdue'])
-                        ?: (($priorityRank[$a['priority']] ?? 99) <=> ($priorityRank[$b['priority']] ?? 99));
-                })->values();
-
-                return [
-                    'id' => $first->task_list_id,
-                    'name' => $first->taskList?->name ?? 'Tanpa Proyek',
-                    'space' => $first->taskList?->space?->name,
-                    'total' => $total,
-                    'completed' => $completed,
-                    'overdue' => $overdue,
-                    'progress' => $progress,
-                    'tasks' => $mappedTasks,
-                ];
-            })
-            ->sortByDesc('overdue')
-            ->values();
-
-        return [
-            'totalTasks' => $totalTasks,
-            'completedTasks' => $completedTasks,
-            'completedOnTime' => $completedOnTime,
-            'completedLate' => $completedLate,
-            'completedNoDeadline' => $completedNoDeadline,
-            'latePercent' => $latePercent,
-            'noDeadlinePercent' => $noDeadlinePercent,
-            'overdueTasks' => $overdueTasks,
-            'overduePercent' => $overduePercent,
-            'progressPercent' => $progressPercent,
-            'taskGroups' => $taskGroups,
-        ];
-    }
-
-    private function applySpaceFilter(Builder $query): void
-    {
-        if ($this->selectedSpaceId === null) {
-            return;
-        }
-
-        $query->whereHas('taskList', fn (Builder $q) => $q->where('space_id', $this->selectedSpaceId));
-    }
-
-    private function applyMemberFilter(Builder $query): void
-    {
-        if ($this->selectedMemberId === null) {
-            return;
-        }
-
-        $query->whereHas('assignees', fn (Builder $q) => $q->where('users.id', $this->selectedMemberId));
-    }
-
-    private function applyMonthFilter(Builder $query): void
-    {
-        // Never skip the month scope: an invalid/transient value (e.g. while the
-        // native month input is mid-edit) falls back to the current month.
-        // Skipping would briefly render every task ever, ballooning the page
-        // height and yanking the user's scroll position to the top.
-        if (preg_match('/^(\d{4})-(\d{2})$/', $this->selectedMonth, $matches)) {
-            $year = (int) $matches[1];
-            $month = (int) $matches[2];
-        } else {
-            $year = now()->year;
-            $month = now()->month;
-        }
-
-        $isCurrentMonth = $year === now()->year && $month === now()->month;
-
-        // A task without a deadline has no natural month. We place it by activity:
-        //   - completed no-deadline tasks land in the month they were completed;
-        //   - still-open no-deadline tasks are live backlog, shown only for the
-        //     current month so they don't pollute past-month reports forever.
-        // (completed_at is non-null exactly while a task sits in a closed status.)
-        $query->where(function (Builder $q) use ($year, $month, $isCurrentMonth): void {
-            $q->where(function (Builder $sub) use ($year, $month): void {
-                $sub->whereNotNull('due_date')
-                    ->whereYear('due_date', $year)
-                    ->whereMonth('due_date', $month);
-            });
-
-            $q->orWhere(function (Builder $sub) use ($year, $month): void {
-                $sub->whereNull('due_date')
-                    ->whereNotNull('completed_at')
-                    ->whereYear('completed_at', $year)
-                    ->whereMonth('completed_at', $month);
-            });
-
-            if ($isCurrentMonth) {
-                $q->orWhere(function (Builder $sub): void {
-                    $sub->whereNull('due_date')->whereNull('completed_at');
-                });
-            }
-        });
     }
 }
