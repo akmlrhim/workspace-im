@@ -3,6 +3,7 @@
 namespace App\Livewire\Project;
 
 use App\Events\DailyTaskUpdated;
+use App\Livewire\Project\Concerns\BroadcastsChangesSafely;
 use App\Livewire\Project\Concerns\LogsDailyTaskCompletion;
 use App\Livewire\Project\Concerns\NavigatesDailyDate;
 use App\Models\Project\DailyTask;
@@ -17,6 +18,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class DailyTaskView extends Component
 {
+    use BroadcastsChangesSafely;
     use LogsDailyTaskCompletion;
     use NavigatesDailyDate;
 
@@ -55,7 +57,7 @@ class DailyTaskView extends Component
 
     private function broadcastChange(): void
     {
-        DailyTaskUpdated::dispatch($this->taskList->id, auth()->id());
+        $this->broadcastSafely(fn () => DailyTaskUpdated::dispatch($this->taskList->id, auth()->id()));
     }
 
     private function clearTaskCache(): void

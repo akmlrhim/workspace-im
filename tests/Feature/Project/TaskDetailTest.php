@@ -11,6 +11,10 @@ use App\Models\Project\TaskStatus;
 use App\Models\Project\TimeTracking;
 use App\Models\Project\Workspace;
 use App\Models\User;
+use Illuminate\Broadcasting\BroadcastException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 /**
@@ -234,4 +238,127 @@ test('a non member sees the task in read only mode and cannot change it', functi
         ->call('saveTitle');
 
     expect($task->refresh()->title)->toBe('Refactor target');
+});
+
+test('it stores task level file uploads on the public disk', function () {
+    Storage::fake('public');
+
+    ['owner' => $owner, 'task' => $task] = taskDetailFixture();
+
+    Livewire::actingAs($owner)
+        ->test(TaskDetail::class, ['taskId' => $task->id])
+        ->set('uploadFiles', [
+            UploadedFile::fake()->create('spesifikasi.pdf', 200, 'application/pdf'),
+            UploadedFile::fake()->image('sketsa.jpg'),
+        ])
+        ->assertSet('uploadFiles', []);
+
+    $attachments = TaskAttachment::where('task_id', $task->id)
+        ->whereNull('task_comment_id')
+        ->whereNull('task_checklist_item_id')
+        ->get();
+
+    expect($attachments)->toHaveCount(2);
+
+    $pdf = $attachments->firstWhere('filename', 'spesifikasi.pdf');
+
+    expect($pdf)->not->toBeNull()
+        ->and($pdf->is_link)->toBeFalse()
+        ->and($pdf->user_id)->toBe($owner->id);
+
+    Storage::disk('public')->assertExists($pdf->path);
+});
+
+test('it rejects an oversized task file without persisting anything', function () {
+    Storage::fake('public');
+
+    ['owner' => $owner, 'task' => $task] = taskDetailFixture();
+
+    $oversized = config('erp.attachments.max_size_kb') + 1;
+
+    Livewire::actingAs($owner)
+        ->test(TaskDetail::class, ['taskId' => $task->id])
+        ->set('uploadFiles', [UploadedFile::fake()->create('terlalu-besar.pdf', $oversized, 'application/pdf')])
+        ->assertSet('uploadFiles', []);
+
+    expect(TaskAttachment::where('task_id', $task->id)->count())->toBe(0);
+});
+
+test('it accepts office documents whose contents sniff as another mime type', function () {
+    Storage::fake('public');
+
+    ['owner' => $owner, 'task' => $task] = taskDetailFixture();
+
+    // docx/xlsx/pptx are zip archives on disk, and csv is indistinguishable
+    // from plain text. Validating with `mimes:` rejected these intermittently;
+    // validation now keys off the user-assigned extension instead.
+    Livewire::actingAs($owner)
+        ->test(TaskDetail::class, ['taskId' => $task->id])
+        ->set('uploadFiles', [
+            UploadedFile::fake()->create('laporan.docx', 40, 'application/zip'),
+            UploadedFile::fake()->create('data.csv', 10, 'text/plain'),
+        ])
+        ->assertSet('uploadFiles', []);
+
+    $filenames = TaskAttachment::where('task_id', $task->id)->pluck('filename');
+
+    expect($filenames)->toContain('laporan.docx')
+        ->and($filenames)->toContain('data.csv');
+});
+
+test('it still saves a task edit when the broadcaster is unreachable', function () {
+    ['owner' => $owner, 'task' => $task] = taskDetailFixture();
+
+    // Broadcasts go out synchronously, so an unreachable Pusher throws right
+    // inside this request. The write must survive it: real-time delivery is
+    // best effort, the save is not.
+    Broadcast::shouldReceive('queue')
+        ->andThrow(new BroadcastException('Pusher unreachable'));
+
+    Livewire::actingAs($owner)
+        ->test(TaskDetail::class, ['taskId' => $task->id])
+        ->set('taskTitle', 'Tetap tersimpan')
+        ->call('saveTitle');
+
+    expect($task->refresh()->title)->toBe('Tetap tersimpan');
+});
+
+test('it rejects a task file with an unsupported format', function () {
+    Storage::fake('public');
+
+    ['owner' => $owner, 'task' => $task] = taskDetailFixture();
+
+    Livewire::actingAs($owner)
+        ->test(TaskDetail::class, ['taskId' => $task->id])
+        ->set('uploadFiles', [UploadedFile::fake()->create('virus.exe', 20, 'application/x-msdownload')])
+        ->assertSet('uploadFiles', []);
+
+    expect(TaskAttachment::where('task_id', $task->id)->count())->toBe(0);
+});
+
+test('it stores file uploads on an open checklist item', function () {
+    Storage::fake('public');
+
+    ['owner' => $owner, 'task' => $task] = taskDetailFixture();
+
+    $checklist = TaskChecklist::create(['task_id' => $task->id, 'name' => 'Persiapan', 'position' => 0]);
+    $item = TaskChecklistItem::create([
+        'task_checklist_id' => $checklist->id,
+        'title' => 'Item',
+        'position' => 0,
+        'created_by' => $owner->id,
+    ]);
+
+    Livewire::actingAs($owner)
+        ->test(TaskDetail::class, ['taskId' => $task->id])
+        ->call('openChecklistItemPanel', $item->id)
+        ->set('activeItemFiles', [UploadedFile::fake()->create('foto.png', 300, 'image/png')])
+        ->assertSet('activeItemFiles', []);
+
+    $attachment = TaskAttachment::where('task_checklist_item_id', $item->id)->firstOrFail();
+
+    expect($attachment->task_id)->toBe($task->id)
+        ->and($attachment->filename)->toBe('foto.png');
+
+    Storage::disk('public')->assertExists($attachment->path);
 });

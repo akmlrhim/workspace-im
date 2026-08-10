@@ -5,8 +5,8 @@ namespace App\Livewire\Project\Concerns;
 use App\Models\Project\ListNote;
 use App\Models\Project\ListNoteAttachment;
 use Flux\Flux;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
@@ -14,6 +14,8 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
  */
 trait ManagesNoteAttachments
 {
+    use ValidatesAttachmentUploads;
+
     /**
      * Pending uploads keyed by the note id they belong to.
      *
@@ -154,22 +156,7 @@ trait ManagesNoteAttachments
      */
     private function validateFiles(array $files): bool
     {
-        $validator = Validator::make(
-            ['files' => $files],
-            ['files.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'],
-            [
-                'files.*.max' => 'Ukuran file maksimal 10 MB.',
-                'files.*.mimes' => 'Format file tidak didukung.',
-            ]
-        );
-
-        if ($validator->fails()) {
-            Flux::toast($validator->errors()->first(), variant: 'danger');
-
-            return false;
-        }
-
-        return true;
+        return $this->validateAttachmentFiles($files);
     }
 
     /**
@@ -181,26 +168,46 @@ trait ManagesNoteAttachments
     private function storeUploadedFiles(ListNote $note, array $files): int
     {
         $uploaded = 0;
+        $failed = 0;
 
         foreach ($files as $file) {
-            $path = $file->store('list-note-attachments', 'public');
+            $path = null;
 
-            if ($path === false) {
-                Flux::toast('Gagal menyimpan file. Coba lagi.', variant: 'danger');
+            try {
+                $path = $file->store('list-note-attachments', 'public');
 
-                continue;
+                if ($path === false) {
+                    $failed++;
+
+                    continue;
+                }
+
+                $note->attachments()->create([
+                    'user_id' => auth()->id(),
+                    'filename' => $file->getClientOriginalName() ?: 'file',
+                    'path' => $path,
+                    'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
+                    'size' => $file->getSize() ?? 0,
+                    'is_link' => false,
+                ]);
+
+                $uploaded++;
+            } catch (\Throwable $e) {
+                $failed++;
+
+                if ($path !== null) {
+                    Storage::disk('public')->delete($path);
+                }
+
+                Log::warning('Gagal menyimpan lampiran catatan #'.$note->id, [
+                    'filename' => $file->getClientOriginalName() ?? 'unknown',
+                    'error' => $e->getMessage(),
+                ]);
             }
+        }
 
-            $note->attachments()->create([
-                'user_id' => auth()->id(),
-                'filename' => $file->getClientOriginalName() ?: 'file',
-                'path' => $path,
-                'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
-                'size' => $file->getSize() ?? 0,
-                'is_link' => false,
-            ]);
-
-            $uploaded++;
+        if ($failed > 0) {
+            Flux::toast($failed === 1 ? '1 file gagal disimpan. Coba lagi.' : "{$failed} file gagal disimpan. Coba lagi.", variant: 'danger');
         }
 
         return $uploaded;

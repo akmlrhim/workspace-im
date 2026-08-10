@@ -9,6 +9,15 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+/*
+ * Tidak ada queue worker di sini dengan sengaja. Broadcast dikirim sinkron
+ * (lihat app/Events/TaskUpdated.php) dan tidak ada ShouldQueue lain di
+ * aplikasi ini, jadi cron `schedule:run` hanya perlu melayani dua reminder
+ * di bawah. Kalau nanti ada job yang benar-benar di-queue, barulah worker
+ * perlu ditambahkan — dan shared hosting butuh `--max-time`, bukan
+ * `--stop-when-empty`, agar update tidak tertunda sampai satu menit.
+ */
+
 Schedule::command('tasks:send-deadline-reminders')
     ->dailyAt('08:00')
     ->timezone(config('app.timezone'))

@@ -3,6 +3,7 @@
 namespace App\Livewire\Project;
 
 use App\Events\TaskUpdated as TaskUpdatedEvent;
+use App\Livewire\Project\Concerns\BroadcastsChangesSafely;
 use App\Livewire\Project\Concerns\BuildsTaskDetailViewData;
 use App\Livewire\Project\Concerns\EditsTaskFields;
 use App\Livewire\Project\Concerns\ManagesChecklistItemDetails;
@@ -22,6 +23,7 @@ use Livewire\WithFileUploads;
 
 class TaskDetail extends Component
 {
+    use BroadcastsChangesSafely;
     use BuildsTaskDetailViewData;
     use EditsTaskFields;
     use ManagesChecklistItemDetails;
@@ -140,7 +142,12 @@ class TaskDetail extends Component
             return;
         }
 
-        TaskUpdatedEvent::dispatch($this->taskId, auth()->id(), $this->taskListId, $this->workspaceId);
+        $this->broadcastSafely(fn () => TaskUpdatedEvent::dispatch(
+            $this->taskId,
+            auth()->id(),
+            $this->taskListId,
+            $this->workspaceId,
+        ));
     }
 
     private function authorizeManageTask(): ?Task

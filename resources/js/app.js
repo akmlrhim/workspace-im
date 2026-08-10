@@ -1,5 +1,6 @@
 import Sortable from "sortablejs";
 import "./echo";
+import "./uploads";
 
 window.Sortable = Sortable;
 

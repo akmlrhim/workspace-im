@@ -31,4 +31,9 @@
 <meta name="pusher-key" content="{{ config('broadcasting.connections.pusher.key') }}">
 <meta name="pusher-cluster" content="{{ config('broadcasting.connections.pusher.options.cluster') }}">
 
+{{-- Attachment upload limits — read at runtime by uploads.js, so the browser
+     check can never disagree with server-side validation. --}}
+<meta name="upload-max-size" content="{{ config('erp.attachments.max_size_kb') * 1024 }}">
+<meta name="upload-extensions" content="{{ implode(',', config('erp.attachments.extensions')) }}">
+
 @fluxAppearance

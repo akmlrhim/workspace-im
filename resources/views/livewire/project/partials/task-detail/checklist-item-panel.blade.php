@@ -44,30 +44,40 @@
     <div class="flex-1 min-w-[200px]">
       <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Tambah
         Lampiran</label>
-      <div class="grid grid-cols-2 gap-2" wire:loading.class="opacity-50 pointer-events-none"
-        wire:target="activeItemFiles,uploadChecklistItemFiles">
-        <label
-          class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 py-2 text-xs font-medium text-zinc-600 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-300">
-          <span wire:loading.remove wire:target="activeItemFiles,uploadChecklistItemFiles">
-            <flux:icon name="cloud-arrow-up" class="size-4" />
-          </span>
-          <span wire:loading wire:target="activeItemFiles,uploadChecklistItemFiles">
-            <flux:icon name="arrow-path" class="size-4 animate-spin text-indigo-500" />
-          </span>
-          <span wire:loading.remove wire:target="activeItemFiles,uploadChecklistItemFiles">Upload File</span>
-          <span wire:loading wire:target="activeItemFiles,uploadChecklistItemFiles" class="text-indigo-500">Mengupload...</span>
-          <input type="file" wire:model="activeItemFiles" multiple class="hidden"
-            accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" />
-        </label>
-        <button type="button" wire:click="$toggle('showItemLinkForm')"
-          class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 py-2 text-xs font-medium text-zinc-600 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-300">
-          <flux:icon name="link" class="size-4" />
-          <span>Sematkan Link</span>
-        </button>
+      <div x-data="fileUpload()" x-on:livewire-upload-start="resetFeedback(); uploading = true"
+        x-on:livewire-upload-finish="uploading = false; progress = 100"
+        x-on:livewire-upload-error="uploading = false; progress = 0; error = 'Gagal mengunggah file. Coba lagi.'"
+        x-on:livewire-upload-progress="uploading = true; progress = Number($event.detail?.progress ?? 0)">
+        <div class="grid grid-cols-2 gap-2" wire:loading.class="opacity-50 pointer-events-none"
+          wire:target="activeItemFiles,uploadChecklistItemFiles">
+          <label
+            class="relative flex cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-lg border border-dashed border-zinc-300 bg-zinc-50 py-2 text-xs font-medium text-zinc-600 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-300">
+            <span x-show="!uploading" x-cloak>
+              <flux:icon name="cloud-arrow-up" class="size-4" />
+            </span>
+            <span x-show="uploading" x-cloak>
+              <flux:icon name="arrow-path" class="size-4 animate-spin text-indigo-500" />
+            </span>
+            <span x-show="!uploading" x-cloak>Upload File</span>
+            <span x-show="uploading" x-cloak class="text-indigo-500">Mengupload... <span
+                x-text="progress + '%'">0%</span></span>
+            <input type="file" wire:model="activeItemFiles" multiple class="hidden" @change.capture="validate($event)"
+              accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" />
+          </label>
+          <button type="button" wire:click="$toggle('showItemLinkForm')"
+            class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 py-2 text-xs font-medium text-zinc-600 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-300">
+            <flux:icon name="link" class="size-4" />
+            <span>Sematkan Link</span>
+          </button>
+        </div>
+        <div x-show="uploading" x-cloak class="mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+          <div class="h-full rounded-full bg-indigo-500 transition-all duration-150" :style="`width: ${progress}%`"></div>
+        </div>
+        <p x-show="error" x-text="error" x-cloak class="mt-1 text-[10px] font-medium text-red-500"></p>
+        <p class="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+          Maks. {{ round(config('erp.attachments.max_size_kb') / 1024) }} MB · Gambar, PDF, Dokumen, Teks, ZIP
+        </p>
       </div>
-      <p class="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
-        Maks. 5 MB · Gambar, PDF, Dokumen, Teks, ZIP
-      </p>
     </div>
   </div>
 

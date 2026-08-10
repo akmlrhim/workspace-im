@@ -4,8 +4,8 @@ namespace App\Livewire\Project\Concerns;
 
 use App\Models\Project\TaskAttachment;
 use Flux\Flux;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Attributes\Rule;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
@@ -13,8 +13,17 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
  */
 trait ManagesTaskAttachments
 {
-    // Attachments (task-level) — 5 MB max
-    #[Rule(['uploadFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'], message: ['uploadFiles.*.max' => 'Ukuran file maksimal 5 MB.', 'uploadFiles.*.mimes' => 'Format file tidak didukung.'])]
+    use ValidatesAttachmentUploads;
+
+    /**
+     * Pending uploads for the current task.
+     *
+     * Limits live in `config/erp.attachments`; validation runs once in
+     * {@see uploadAttachment()} rather than through a `#[Rule]` attribute,
+     * which would re-validate the whole batch on every Livewire round trip.
+     *
+     * @var array<int, TemporaryUploadedFile>
+     */
     public array $uploadFiles = [];
 
     public bool $showLinkForm = false;
@@ -34,10 +43,7 @@ trait ManagesTaskAttachments
         if (! $task) {
             return;
         }
-        if (! $this->validateWithToast(['uploadFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'], [
-            'uploadFiles.*.max' => 'Ukuran file maksimal 5 MB.',
-            'uploadFiles.*.mimes' => 'Format file tidak didukung.',
-        ])) {
+        if (! $this->validateAttachmentFiles($this->uploadFiles)) {
             $this->reset('uploadFiles');
 
             return;
@@ -109,27 +115,47 @@ trait ManagesTaskAttachments
     private function storeUploadedAttachments(array $files, array $extraAttributes = []): int
     {
         $stored = 0;
+        $failed = 0;
 
         foreach ($files as $file) {
-            $path = $file->store('task-attachments', 'public');
+            $path = null;
 
-            if ($path === false) {
-                Flux::toast('Gagal menyimpan file. Coba lagi.', variant: 'danger');
+            try {
+                $path = $file->store('task-attachments', 'public');
 
-                continue;
+                if ($path === false) {
+                    $failed++;
+
+                    continue;
+                }
+
+                TaskAttachment::create([
+                    'task_id' => $this->taskId,
+                    'user_id' => auth()->id(),
+                    'filename' => $file->getClientOriginalName() ?: 'file',
+                    'path' => $path,
+                    'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
+                    'size' => $file->getSize() ?? 0,
+                    ...$extraAttributes,
+                ]);
+
+                $stored++;
+            } catch (\Throwable $e) {
+                $failed++;
+
+                if ($path !== null) {
+                    Storage::disk('public')->delete($path);
+                }
+
+                Log::warning('Gagal menyimpan lampiran task #'.$this->taskId, [
+                    'filename' => $file->getClientOriginalName() ?? 'unknown',
+                    'error' => $e->getMessage(),
+                ]);
             }
+        }
 
-            TaskAttachment::create([
-                'task_id' => $this->taskId,
-                'user_id' => auth()->id(),
-                'filename' => $file->getClientOriginalName() ?: 'file',
-                'path' => $path,
-                'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
-                'size' => $file->getSize() ?? 0,
-                ...$extraAttributes,
-            ]);
-
-            $stored++;
+        if ($failed > 0) {
+            Flux::toast($failed === 1 ? '1 file gagal disimpan. Coba lagi.' : "{$failed} file gagal disimpan. Coba lagi.", variant: 'danger');
         }
 
         return $stored;

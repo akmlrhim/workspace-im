@@ -62,24 +62,36 @@
 
     {{-- Attach actions --}}
     @if ($canManage)
-      <div class="mt-3 flex items-center gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-        <label
-          class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-indigo-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-indigo-400"
-          wire:target="uploadFiles.{{ $note->id }}" wire:loading.class="opacity-50 pointer-events-none">
-          <flux:icon name="paper-clip" class="size-3.5" />
-          <span wire:loading.remove wire:target="uploadFiles.{{ $note->id }}">Lampirkan file</span>
-          <span wire:loading wire:target="uploadFiles.{{ $note->id }}">Mengunggah...</span>
-          <input type="file" multiple wire:model="uploadFiles.{{ $note->id }}" class="hidden" />
-        </label>
-        <button type="button" wire:click="openLinkForm({{ $note->id }})"
-          class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-indigo-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-indigo-400">
-          <flux:icon name="link" class="size-3.5" />
-          Tambah link
-        </button>
+      <div class="mt-3" x-data="fileUpload()"
+        x-on:livewire-upload-start="resetFeedback(); uploading = true"
+        x-on:livewire-upload-finish="uploading = false; progress = 100"
+        x-on:livewire-upload-error="uploading = false; progress = 0; error = 'Gagal mengunggah file. Coba lagi.'"
+        x-on:livewire-upload-progress="uploading = true; progress = Number($event.detail?.progress ?? 0)">
+        <div class="flex items-center gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+          <label
+            class="relative inline-flex cursor-pointer items-center gap-1.5 overflow-hidden rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-indigo-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-indigo-400"
+            wire:target="uploadFiles.{{ $note->id }}" wire:loading.class="opacity-50 pointer-events-none">
+            <flux:icon name="paper-clip" class="size-3.5" />
+            <span x-show="!uploading" x-cloak>Lampirkan file</span>
+            <span x-show="uploading" x-cloak>Mengunggah... <span x-text="progress + '%'">0%</span></span>
+            <input type="file" multiple wire:model="uploadFiles.{{ $note->id }}"
+              @change.capture="validate($event)" class="hidden"
+              accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" />
+          </label>
+          <button type="button" wire:click="openLinkForm({{ $note->id }})"
+            class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-indigo-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-indigo-400">
+            <flux:icon name="link" class="size-3.5" />
+            Tambah link
+          </button>
+        </div>
+        <div x-show="uploading" x-cloak class="mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <div class="h-full rounded-full bg-indigo-500 transition-all duration-150" :style="`width: ${progress}%`"></div>
+        </div>
+        <p x-show="error" x-text="error" x-cloak class="mt-1 text-xs text-red-500"></p>
+        @error('uploadFiles.' . $note->id . '.*')
+          <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+        @enderror
       </div>
-      @error('uploadFiles.' . $note->id . '.*')
-        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-      @enderror
     @endif
 
     {{-- Meta --}}

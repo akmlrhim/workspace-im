@@ -187,6 +187,25 @@ test('a manager can upload a file to a note', function () {
     Storage::disk('public')->assertExists($attachment->path);
 });
 
+test('an oversized note file is rejected without persisting anything', function () {
+    Storage::fake('public');
+
+    [$admin, $space, $list] = makeNotesList();
+
+    $note = $list->notes()->create([
+        'created_by' => $admin->id,
+        'title' => 'Catatan',
+        'position' => 0,
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test(ListNotes::class, ['space' => $space, 'taskList' => $list])
+        ->set("uploadFiles.{$note->id}", [UploadedFile::fake()->create('terlalu-besar.pdf', 11000, 'application/pdf')])
+        ->assertSet('uploadFiles', []);
+
+    expect($note->attachments()->count())->toBe(0);
+});
+
 test('deleting a note removes its stored files', function () {
     Storage::fake('public');
 

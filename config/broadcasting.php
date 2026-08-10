@@ -19,7 +19,13 @@ return [
                 'encrypted' => true,
                 'useTLS' => env('PUSHER_SCHEME', 'https') === 'https',
             ],
-            'client_options' => [],
+            // Broadcasts run inside the user's request, so an unresponsive
+            // Pusher must never hold a page hostage. Bound the round trip
+            // hard; BroadcastsChangesSafely swallows the resulting failure.
+            'client_options' => [
+                'connect_timeout' => env('PUSHER_CONNECT_TIMEOUT', 2),
+                'timeout' => env('PUSHER_TIMEOUT', 4),
+            ],
         ],
 
         'log' => ['driver' => 'log'],

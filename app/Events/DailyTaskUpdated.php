@@ -4,15 +4,14 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Di-queue (bukan ShouldBroadcastNow) supaya request user tidak menunggu
- * HTTP call ke Pusher selesai. Membutuhkan queue worker yang berjalan.
+ * Dikirim sinkron — lihat alasannya di TaskUpdated.
  */
-class DailyTaskUpdated implements ShouldBroadcast
+class DailyTaskUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

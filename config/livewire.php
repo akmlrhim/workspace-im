@@ -130,10 +130,12 @@ return [
 
     'temporary_file_upload' => [
         'disk' => env('LIVEWIRE_TEMPORARY_FILE_UPLOAD_DISK', 'local'), // Example: 'local', 's3'             | Default: 'default'
-        'rules' => null,                                      // Example: ['file', 'mimes:png,jpg'] | Default: ['required', 'file', 'max:12288'] (12MB)
-        'directory' => null,                                  // Example: 'tmp'                     | Default: 'livewire-tmp'
-        'middleware' => null,                                 // Example: 'throttle:5,1'            | Default: 'throttle:60,1'
-        'preview_mimes' => [                                  // Supported file types for temporary pre-signed file URLs...
+        // Must not be stricter than config/erp.attachments.max_size_kb, or files
+        // are rejected here after already being uploaded in full. Same env key.
+        'rules' => ['required', 'file', 'max:'.env('ATTACHMENT_MAX_SIZE_KB', 10240)],
+        'directory' => null,                                          // Example: 'tmp'                     | Default: 'livewire-tmp'
+        'middleware' => null,                                         // Example: 'throttle:5,1'            | Default: 'throttle:60,1'
+        'preview_mimes' => [                                          // Supported file types for temporary pre-signed file URLs...
             'png',
             'gif',
             'bmp',
@@ -151,7 +153,7 @@ return [
             'webp',
             'wma',
         ],
-        'max_upload_time' => 5, // Max duration (in minutes) before an upload is invalidated...
+        'max_upload_time' => 10, // Max duration (in minutes) before an upload is invalidated...
         'cleanup' => true, // Should cleanup temporary uploads older than 24 hrs...
     ],
 

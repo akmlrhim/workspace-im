@@ -6,7 +6,7 @@ use App\Models\Project\Task;
 use App\Models\Project\TaskAttachment;
 use App\Models\Project\TaskChecklistItem;
 use Flux\Flux;
-use Livewire\Attributes\Rule;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
  * The expandable detail panel of a single checklist item:
@@ -14,14 +14,20 @@ use Livewire\Attributes\Rule;
  */
 trait ManagesChecklistItemDetails
 {
+    use ValidatesAttachmentUploads;
+
     public ?int $activeChecklistItemId = null;
 
     public string $activeItemDueDate = '';
 
     public array $activeItemAssigneeIds = [];
 
-    // Checklist item attachments — 5 MB max
-    #[Rule(['activeItemFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'], message: ['activeItemFiles.*.max' => 'Ukuran file maksimal 5 MB.', 'activeItemFiles.*.mimes' => 'Format file tidak didukung.'])]
+    /**
+     * Pending uploads for the open checklist item. Limits come from
+     * `config/erp.attachments`; validation runs once at upload time.
+     *
+     * @var array<int, TemporaryUploadedFile>
+     */
     public array $activeItemFiles = [];
 
     public bool $showItemLinkForm = false;
@@ -106,10 +112,7 @@ trait ManagesChecklistItemDetails
             return;
         }
 
-        if (! $this->validateWithToast(['activeItemFiles.*' => 'file|max:5120|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip'], [
-            'activeItemFiles.*.max' => 'Ukuran file maksimal 5 MB.',
-            'activeItemFiles.*.mimes' => 'Format file tidak didukung.',
-        ])) {
+        if (! $this->validateAttachmentFiles($this->activeItemFiles)) {
             $this->activeItemFiles = [];
 
             return;

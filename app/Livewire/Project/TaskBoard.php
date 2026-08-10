@@ -4,6 +4,7 @@ namespace App\Livewire\Project;
 
 use App\Events\TaskListUpdated;
 use App\Livewire\Project\Concerns\BatchesPositionUpdates;
+use App\Livewire\Project\Concerns\BroadcastsChangesSafely;
 use App\Livewire\Project\Concerns\FiltersBoardTasks;
 use App\Livewire\Project\Concerns\ManagesBoardColumns;
 use App\Livewire\Project\Concerns\OpensTaskDetailPanel;
@@ -22,6 +23,7 @@ use Livewire\Component;
 class TaskBoard extends Component
 {
     use BatchesPositionUpdates;
+    use BroadcastsChangesSafely;
     use FiltersBoardTasks;
     use ManagesBoardColumns;
     use OpensTaskDetailPanel;
@@ -67,11 +69,11 @@ class TaskBoard extends Component
 
     private function broadcastChange(): void
     {
-        TaskListUpdated::dispatch(
+        $this->broadcastSafely(fn () => TaskListUpdated::dispatch(
             $this->taskList->id,
             auth()->id(),
             $this->taskList->space->workspace_id,
-        );
+        ));
     }
 
     private function canManageBoard(): bool

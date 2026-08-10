@@ -3,6 +3,7 @@
 namespace App\Livewire\Project;
 
 use App\Events\SpaceUpdated;
+use App\Livewire\Project\Concerns\BroadcastsChangesSafely;
 use App\Livewire\Project\Concerns\BuildsTaskboardCalendar;
 use App\Livewire\Project\Concerns\ManagesListMembers;
 use App\Livewire\Project\Concerns\ManagesSpaces;
@@ -22,6 +23,7 @@ use Livewire\Component;
 #[Title('General Taskboard')]
 class GeneralTaskboard extends Component
 {
+    use BroadcastsChangesSafely;
     use BuildsTaskboardCalendar;
     use ManagesListMembers;
     use ManagesSpaces;
@@ -94,7 +96,7 @@ class GeneralTaskboard extends Component
 
     private function broadcastChange(): void
     {
-        SpaceUpdated::dispatch($this->workspaceId, auth()->id());
+        $this->broadcastSafely(fn () => SpaceUpdated::dispatch($this->workspaceId, auth()->id()));
     }
 
     // ─── Computed ──────────────────────────────────────────────
