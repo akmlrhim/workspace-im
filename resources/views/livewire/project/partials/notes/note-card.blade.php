@@ -22,16 +22,23 @@
     </div>
 
     @if ($note->content)
-      <p class="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-600 dark:text-zinc-300">
-        {{ $note->content }}</p>
+      {{-- `whitespace-pre-wrap` merender spasi apa adanya, jadi isi catatan harus
+        menempel pada tag pembuka. Kalau dipindah ke baris baru, newline dan
+        indentasi Blade ikut tercetak dan baris pertama tampak menjorok. --}}
+      <p class="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-600 dark:text-zinc-300">{{ $note->content }}</p>
     @endif
 
     {{-- Attachments --}}
     @if ($note->attachments->isNotEmpty())
       <div class="mt-3 space-y-1">
         @foreach ($note->attachments as $attachment)
+          {{-- Link dan file dibedakan warnanya: link mengarah keluar aplikasi,
+            file tersimpan di server. Aksen indigo dipakai konsisten dengan
+            ikon link dan warna hover tautan. --}}
           <div
-            class="group flex items-center justify-between rounded-lg border border-zinc-100 px-2.5 py-1.5 dark:border-zinc-800"
+            class="group flex items-center justify-between rounded-lg border px-2.5 py-1.5 {{ $attachment->is_link
+                ? 'border-indigo-100 bg-indigo-50/50 dark:border-indigo-500/20 dark:bg-indigo-500/5'
+                : 'border-zinc-100 dark:border-zinc-800' }}"
             wire:key="note-att-{{ $attachment->id }}">
             <a href="{{ $attachment->is_link ? $attachment->path : Storage::disk('public')->url($attachment->path) }}"
               target="_blank" rel="noopener noreferrer"
