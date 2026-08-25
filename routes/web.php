@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\ServiceWorkerController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/sw.js', ServiceWorkerController::class)->name('sw');
@@ -18,11 +19,23 @@ Route::get('storage/{path}', function (string $path) {
 
 Route::get('/', function () {
     return auth()->check()
-        ? redirect()->route('project-management.general-taskboard')
+        ? redirect()->route('general-taskboard')
         : redirect()->route('login');
 })->name('home');
 
-Route::redirect('/project-management/{any?}', '/general-taskboard', 301)->where('any', '.*');
+Route::any('/project-management/{path?}', function (?string $path = null) {
+    $target = '/'.trim((string) $path, '/');
+
+    $resolves = $target !== '/' && rescue(
+        fn () => (bool) Route::getRoutes()->match(Request::create($target)),
+        false,
+        false
+    );
+
+    $query = (string) request()->server('QUERY_STRING', '');
+
+    return redirect(($resolves ? $target : '/general-taskboard').($query ? '?'.$query : ''));
+})->where('path', '.*')->name('project-management.legacy');
 
 Route::redirect('/dashboard', '/general-taskboard', 301)->name('dashboard');
 

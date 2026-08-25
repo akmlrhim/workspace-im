@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\Project\Task;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;

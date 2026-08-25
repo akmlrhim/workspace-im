@@ -65,9 +65,6 @@ class GoogleAuthController extends Controller
         return redirect()->route('profile.edit')->with('status', 'google-unlinked');
     }
 
-    /**
-     * Handle authenticated user linking a Google account to their profile.
-     */
     private function handleLinking(int $linkingUserId, ContractsUser $googleUser)
     {
         if (! auth()->check() || (int) auth()->id() !== $linkingUserId) {
@@ -101,9 +98,6 @@ class GoogleAuthController extends Controller
         return redirect()->route('profile.edit')->with('status', 'google-linked');
     }
 
-    /**
-     * Handle login / registration via Google.
-     */
     private function handleLogin(ContractsUser $googleUser)
     {
         $user = User::where('google_id', $googleUser->getId())->first();
@@ -143,13 +137,9 @@ class GoogleAuthController extends Controller
 
         $lastUrl = session()->pull('last_visited_url');
 
-        return redirect()->intended($lastUrl ?: route('project-management.general-taskboard'));
+        return redirect()->intended($lastUrl ?: route('general-taskboard'));
     }
 
-    /**
-     * Download the Google profile photo and store it locally.
-     * Returns the local public URL, or null on failure.
-     */
     private function storeGoogleAvatar(ContractsUser $googleUser): ?string
     {
         $url = $googleUser->getAvatar();
@@ -158,7 +148,6 @@ class GoogleAuthController extends Controller
             return null;
         }
 
-        // Request a larger photo (400px instead of the default 96px)
         $url = preg_replace('/=s\d+-c$/', '=s400-c', $url);
 
         try {
@@ -182,9 +171,6 @@ class GoogleAuthController extends Controller
         }
     }
 
-    /**
-     * Confirm Google asserts the email is verified.
-     */
     private function isVerifiedGoogleEmail(ContractsUser $googleUser): bool
     {
         $raw = $googleUser->getRaw();

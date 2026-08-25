@@ -12,7 +12,7 @@
 
 @theme {
     --font-sans:
-        "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+        "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
     --color-zinc-50: #fafafa;
@@ -68,6 +68,34 @@
     }
 }
 
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-zinc-300) transparent;
+}
+
+.dark .custom-scrollbar {
+    scrollbar-color: var(--color-zinc-600) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--color-zinc-300);
+    border-radius: 9999px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--color-zinc-600);
+}
+
 [data-flux-field]:not(ui-radio, ui-checkbox) {
     @apply grid gap-2;
 }
@@ -76,13 +104,6 @@
     @apply !mb-0 !leading-tight;
 }
 
-/*
- * Focus ring is drawn *inside* the field (ring-inset) instead of floating
- * outside it. An outward ring + ring-offset extends ~4px beyond the field box
- * and gets sliced by any ancestor with overflow-hidden / overflow-*-auto
- * (cards, modals, scrollable lists, the kanban board), which made focused
- * inputs look cut off. An inset ring can never be clipped.
- */
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
@@ -112,6 +133,10 @@ select:focus[data-flux-control] {
         0 8px 16px -4px rgba(0, 0, 0, 0.12);
     border-radius: 10px;
     transform: scale(1.015);
+}
+
+.kanban-column > * {
+    flex-shrink: 0;
 }
 
 body.is-dragging .kanban-column {
@@ -167,11 +192,17 @@ body.is-dragging-column .kanban-col-wrapper {
 }
 
 .kanban-board::-webkit-scrollbar {
+    display: block;
     height: 8px;
 }
 
 .kanban-board::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-zinc-300 dark:bg-zinc-600;
+    background-color: var(--color-zinc-300);
+    border-radius: 9999px;
+}
+
+.dark .kanban-board::-webkit-scrollbar-thumb {
+    background-color: var(--color-zinc-600);
 }
 
 .kanban-board .kanban-col-wrapper {

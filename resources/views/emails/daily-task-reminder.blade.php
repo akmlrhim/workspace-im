@@ -12,7 +12,7 @@
 
   @php
     $space = $taskList->space;
-    $listUrl = $space ? route('project-management.lists.show', [$space, $taskList]) : config('app.url');
+    $listUrl = $space ? route('lists.show', [$space, $taskList]) : config('app.url');
     $todayStr = \Illuminate\Support\Carbon::today()->translatedFormat('l, d F Y');
     $pendingCount = $pendingTasks->count();
   @endphp

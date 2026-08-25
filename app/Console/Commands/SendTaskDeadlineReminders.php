@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Mail\TaskDeadlineReminder;
-use App\Models\Project\Task;
-use App\Models\Project\TaskDeadlineNotification;
+use App\Models\Task;
+use App\Models\TaskDeadlineNotification;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -28,7 +28,6 @@ class SendTaskDeadlineReminders extends Command
             ->whereNull('parent_id')
             ->whereHas('assignees');
 
-        // Skip closed tasks unless running in test mode
         if (! $isTest) {
             $query->whereDoesntHave('status', fn ($q) => $q->where('type', 'closed'));
         }
@@ -50,7 +49,6 @@ class SendTaskDeadlineReminders extends Command
             $this->line("  Task: [{$task->due_date->toDateString()}] {$task->title}");
 
             foreach ($task->assignees as $user) {
-                // Skip users without an email address
                 if (! $user->email) {
                     $this->warn("    ⚠ Skip {$user->name} — no email address.");
                     $skipped++;
@@ -58,7 +56,6 @@ class SendTaskDeadlineReminders extends Command
                     continue;
                 }
 
-                // In test mode: bypass email verification and already-sent checks
                 if (! $isTest) {
                     if (! $user->hasVerifiedEmail()) {
                         $this->warn("    ⚠ Skip {$user->email} — email not verified.");
@@ -67,8 +64,6 @@ class SendTaskDeadlineReminders extends Command
                         continue;
                     }
 
-                    // Check without creating — the record is only created AFTER a
-                    // successful send so that a failed attempt can be retried next run.
                     $alreadySent = TaskDeadlineNotification::where([
                         'task_id' => $task->id,
                         'user_id' => $user->id,
@@ -88,7 +83,6 @@ class SendTaskDeadlineReminders extends Command
                 try {
                     Mail::to($recipient)->send(new TaskDeadlineReminder($task, $user));
 
-                    // Record only after a confirmed send so failures are retried.
                     if (! $isTest) {
                         TaskDeadlineNotification::create([
                             'task_id' => $task->id,

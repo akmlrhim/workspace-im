@@ -1,11 +1,11 @@
 <?php
 
-use App\Models\Project\Space;
-use App\Models\Project\Task;
-use App\Models\Project\TaskList;
-use App\Models\Project\TaskStatus;
-use App\Models\Project\Workspace;
+use App\Models\Space;
+use App\Models\Task;
+use App\Models\TaskList;
+use App\Models\TaskStatus;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

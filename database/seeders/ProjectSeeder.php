@@ -2,20 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\Project\Space;
-use App\Models\Project\Task;
-use App\Models\Project\TaskActivity;
-use App\Models\Project\TaskLabel;
-use App\Models\Project\TaskList;
-use App\Models\Project\Workspace;
-use App\Models\Project\WorkspaceMember;
+use App\Models\Space;
+use App\Models\Task;
+use App\Models\TaskActivity;
+use App\Models\TaskLabel;
+use App\Models\TaskList;
 use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 
 class ProjectSeeder extends Seeder
 {
-    /** @var array<string, TaskLabel> */
+    /**
+     * @var array<string, TaskLabel>
+     */
     private array $labels = [];
 
     public function run(): void
@@ -33,7 +35,6 @@ class ProjectSeeder extends Seeder
 
         $allUsers = collect([$superUser, $admin, $manager, $member])->filter()->values();
 
-        // ── Workspace ──────────────────────────────────────────
         $workspace = Workspace::firstOrCreate(
             ['owner_id' => $admin->id],
             ['name' => 'PT Inovasi Mandiri']
@@ -46,10 +47,8 @@ class ProjectSeeder extends Seeder
             );
         }
 
-        // ── Labels ─────────────────────────────────────────────
         $this->labels = $this->createLabels($workspace->id);
 
-        // ── 3 Spaces ───────────────────────────────────────────
         $this->seedDivisi($workspace, $admin, $allUsers);
         $this->seedProyek($workspace, $admin, $allUsers);
         $this->seedHQ($workspace, $admin, $allUsers);
@@ -57,7 +56,6 @@ class ProjectSeeder extends Seeder
         $this->command->info('✅ Project seeder selesai: 3 spaces (Divisi, Proyek, HQ) dengan lists & tasks lengkap.');
     }
 
-    // Space divisi
     private function seedDivisi(Workspace $workspace, User $admin, Collection $allUsers): void
     {
         $space = Space::firstOrCreate(
@@ -67,7 +65,6 @@ class ProjectSeeder extends Seeder
 
         $this->command->line('  → Seeding space: Divisi');
 
-        // ── List: HR & Rekrutmen ───────────────────────────────
         $hr = $this->makeList($space, 'HR & Rekrutmen', 0);
         $hr->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $hrStatus = $hr->statuses()->orderBy('position')->get();
@@ -84,7 +81,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Rekap biaya rekrutmen Q1 2026', 'priority' => 'normal', 'si' => 3, 'due' => -7, 'labels' => ['Keuangan']],
         ]);
 
-        // ── List: Evaluasi Kinerja ─────────────────────────────
         $evaluasi = $this->makeList($space, 'Evaluasi Kinerja', 1);
         $evaluasi->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $evalStatus = $evaluasi->statuses()->orderBy('position')->get();
@@ -100,7 +96,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Sosialisasi sistem penilaian baru ke karyawan', 'priority' => 'normal', 'si' => 0, 'due' => 21],
         ]);
 
-        // ── List: Pengembangan SDM ─────────────────────────────
         $sdm = $this->makeList($space, 'Pengembangan SDM', 2);
         $sdm->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $sdmStatus = $sdm->statuses()->orderBy('position')->get();
@@ -116,7 +111,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Anggaran pelatihan Q2 2026', 'priority' => 'high', 'si' => 1, 'due' => 5, 'labels' => ['Keuangan']],
         ]);
 
-        // ── List: Administrasi Divisi ──────────────────────────
         $admin2 = $this->makeList($space, 'Administrasi Divisi', 3);
         $admin2->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $admStatus = $admin2->statuses()->orderBy('position')->get();
@@ -131,7 +125,6 @@ class ProjectSeeder extends Seeder
         ]);
     }
 
-    // space proyek
     private function seedProyek(Workspace $workspace, User $admin, Collection $allUsers): void
     {
         $space = Space::firstOrCreate(
@@ -158,7 +151,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Go-live website baru', 'priority' => 'urgent', 'si' => 0, 'due' => 35, 'labels' => ['Mendesak']],
         ]);
 
-        // ── List: Mobile App Development ───────────────────────
         $mobile = $this->makeList($space, 'Mobile App Development', 1);
         $mobile->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $mobileStatus = $mobile->statuses()->orderBy('position')->get();
@@ -175,7 +167,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Submit ke Google Play Store & App Store', 'priority' => 'urgent', 'si' => 0, 'due' => 35, 'labels' => ['Mendesak']],
         ]);
 
-        // ── List: Implementasi ERP ─────────────────────────────
         $erp = $this->makeList($space, 'Implementasi ERP', 2);
         $erp->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $erpStatus = $erp->statuses()->orderBy('position')->get();
@@ -193,7 +184,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Go-live ERP phase 1', 'priority' => 'urgent', 'si' => 0, 'due' => 21, 'labels' => ['Mendesak']],
         ]);
 
-        // ── List: QA & Testing ─────────────────────────────────
         $qa = $this->makeList($space, 'QA & Testing', 3);
         $qa->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $qaStatus = $qa->statuses()->orderBy('position')->get();
@@ -209,10 +199,6 @@ class ProjectSeeder extends Seeder
         ]);
     }
 
-    // ──────────────────────────────────────────────────────────
-    //  SPACE: HQ
-    // ──────────────────────────────────────────────────────────
-
     private function seedHQ(Workspace $workspace, User $admin, Collection $allUsers): void
     {
         $space = Space::firstOrCreate(
@@ -222,7 +208,6 @@ class ProjectSeeder extends Seeder
 
         $this->command->line('  → Seeding space: HQ');
 
-        // ── List: Legal & Compliance ───────────────────────────
         $legal = $this->makeList($space, 'Legal & Compliance', 0);
         $legal->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $legalStatus = $legal->statuses()->orderBy('position')->get();
@@ -237,7 +222,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Finalisasi MOU kemitraan baru', 'priority' => 'high', 'si' => 0, 'due' => 30, 'labels' => ['Legal']],
         ]);
 
-        // ── List: Agenda & Rapat ───────────────────────────────
         $rapat = $this->makeList($space, 'Agenda & Rapat', 1);
         $rapat->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $rapatStatus = $rapat->statuses()->orderBy('position')->get();
@@ -253,7 +237,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Rapat koordinasi antar divisi bulanan', 'priority' => 'normal', 'si' => 0, 'due' => 10],
         ]);
 
-        // ── List: Keuangan ─────────────────────────────────────
         $keuangan = $this->makeList($space, 'Keuangan', 2);
         $keuangan->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $keuStatus = $keuangan->statuses()->orderBy('position')->get();
@@ -268,7 +251,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Proyeksi arus kas Q3 2026', 'priority' => 'normal', 'si' => 0, 'due' => 28, 'labels' => ['Keuangan', 'Dokumentasi']],
         ]);
 
-        // ── List: Strategi & Planning ──────────────────────────
         $strategi = $this->makeList($space, 'Strategi & Planning', 3);
         $strategi->members()->syncWithoutDetaching($allUsers->pluck('id'));
         $strStatus = $strategi->statuses()->orderBy('position')->get();
@@ -283,10 +265,6 @@ class ProjectSeeder extends Seeder
             ['title' => 'Evaluasi target bisnis semester 1 2026', 'priority' => 'high', 'si' => 0, 'due' => 14, 'labels' => ['Dokumentasi']],
         ]);
     }
-
-    // ──────────────────────────────────────────────────────────
-    //  HELPERS
-    // ──────────────────────────────────────────────────────────
 
     private function makeList(Space $space, string $name, int $position): TaskList
     {
@@ -323,7 +301,6 @@ class ProjectSeeder extends Seeder
                 ]
             );
 
-            // Assign 1–2 random members from allUsers
             if ($allUsers->isNotEmpty()) {
                 $count = min($allUsers->count(), rand(1, 2));
                 $task->assignees()->syncWithoutDetaching(
@@ -331,7 +308,6 @@ class ProjectSeeder extends Seeder
                 );
             }
 
-            // Attach labels
             if (! empty($t['labels'])) {
                 $labelIds = collect($t['labels'])
                     ->map(fn ($name) => $this->labels[$name]->id ?? null)
@@ -342,7 +318,6 @@ class ProjectSeeder extends Seeder
                 $task->labels()->syncWithoutDetaching($labelIds);
             }
 
-            // Create activity log
             if ($task->wasRecentlyCreated) {
                 TaskActivity::create([
                     'task_id' => $task->id,

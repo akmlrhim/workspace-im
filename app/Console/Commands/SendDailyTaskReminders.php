@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Mail\DailyTaskReminder;
-use App\Models\Project\DailyTask;
-use App\Models\Project\TaskList;
+use App\Models\DailyTask;
+use App\Models\TaskList;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

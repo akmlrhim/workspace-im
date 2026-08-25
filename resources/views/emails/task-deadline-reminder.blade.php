@@ -14,7 +14,7 @@
     $isCritical = $urgency === 'today';
     $space = $task->taskList?->space;
     $list = $task->taskList;
-    $boardUrl = $list && $space ? route('project-management.lists.board', [$space, $list]) : config('app.url');
+    $boardUrl = $list && $space ? route('lists.board', [$space, $list]) : config('app.url');
     $dueDateStr = $task->due_date->translatedFormat('l, d F Y');
     $priorityLabels = ['urgent' => 'Urgent', 'high' => 'Tinggi', 'normal' => 'Normal', 'low' => 'Rendah'];
     $priorityLabel = $priorityLabels[$task->priority] ?? 'Normal';
@@ -26,24 +26,20 @@
       <td align="center" style="padding:32px 16px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
 
-          {{-- App name --}}
           <tr>
             <td style="padding-bottom:20px;">
               <span style="font-size:13px;font-weight:600;color:#555555;">{{ config('app.name') }}</span>
             </td>
           </tr>
 
-          {{-- Card --}}
           <tr>
             <td style="background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;padding:32px 36px;">
 
-              {{-- Subject label --}}
               <p
                 style="margin:0 0 20px;font-size:12px;font-weight:600;color:#888888;text-transform:uppercase;letter-spacing:.06em;">
                 {{ $isCritical ? 'Deadline Hari Ini' : 'Pengingat Deadline' }}
               </p>
 
-              {{-- Greeting --}}
               <p style="margin:0 0 8px;">Halo <strong>{{ $recipient->name }}</strong>,</p>
 
               <p style="margin:0 0 24px;color:#555555;">
@@ -54,14 +50,12 @@
                 @endif
               </p>
 
-              {{-- Divider --}}
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
                 <tr>
                   <td style="border-top:1px solid #eeeeee;"></td>
                 </tr>
               </table>
 
-              {{-- Task detail --}}
               <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#111111;">{{ $task->title }}</p>
 
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
@@ -102,7 +96,6 @@
                 </p>
               @endif
 
-              {{-- CTA --}}
               <table cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td style="border-radius:4px;background:#4f46e5;">
@@ -117,7 +110,6 @@
             </td>
           </tr>
 
-          {{-- Footer --}}
           <tr>
             <td style="padding:20px 0 0;font-size:12px;color:#aaaaaa;text-align:center;line-height:1.7;">
               Email ini dikirim otomatis karena Anda ditugaskan pada tugas tersebut.<br>

@@ -2,8 +2,8 @@
 
 namespace App\Mail;
 
-use App\Models\Project\DailyTask;
-use App\Models\Project\TaskList;
+use App\Models\DailyTask;
+use App\Models\TaskList;
 use App\Models\User;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -15,7 +15,9 @@ class DailyTaskReminder extends Mailable
 {
     use SerializesModels;
 
-    /** @param Collection<int, DailyTask> $pendingTasks */
+    /**
+     * @param  Collection<int, DailyTask>  $pendingTasks
+     */
     public function __construct(
         public User $recipient,
         public TaskList $taskList,
