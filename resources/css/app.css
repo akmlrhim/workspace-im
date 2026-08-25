@@ -182,13 +182,24 @@ body.is-dragging-column .kanban-col-wrapper {
 }
 
 .kanban-board {
+    cursor: grab;
     scroll-behavior: smooth;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     scroll-snap-type: x proximity;
     scrollbar-width: thin;
+}
+
+.kanban-board.is-panning,
+body.is-dragging .kanban-board,
+body.is-dragging-column .kanban-board {
     will-change: scroll-position;
+}
+
+.kanban-column {
+    scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .kanban-board::-webkit-scrollbar {
@@ -210,9 +221,31 @@ body.is-dragging-column .kanban-col-wrapper {
 }
 
 body.is-dragging .kanban-board,
-body.is-dragging-column .kanban-board {
+body.is-dragging-column .kanban-board,
+.kanban-board.is-panning {
     scroll-behavior: auto;
     scroll-snap-type: none;
+}
+
+.kanban-board input,
+.kanban-board textarea {
+    cursor: auto;
+}
+
+.kanban-board button,
+.kanban-board a,
+.kanban-board select {
+    cursor: pointer;
+}
+
+.kanban-board.is-panning,
+.kanban-board.is-panning * {
+    cursor: grabbing;
+}
+
+.kanban-board.is-panning * {
+    pointer-events: none;
+    user-select: none;
 }
 
 @media (max-width: 640px) {

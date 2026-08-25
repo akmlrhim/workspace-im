@@ -23,13 +23,30 @@
     isDown: false,
     startX: 0,
     scrollLeft: 0,
+    _panPointerId: null,
+    _scrollTops: {},
+    _boardScrollLeft: 0,
+    _onAnyScroll: null,
+    _onWindowPointerUp: null,
 
     init() {
       this.$nextTick(() => this._initAll());
 
+      this._onAnyScroll = () => this._rememberScroll();
+      this.$el.addEventListener('scroll', this._onAnyScroll, { capture: true, passive: true });
+
+      this._onWindowPointerUp = () => this.stopDrag();
+      window.addEventListener('pointerup', this._onWindowPointerUp);
+      window.addEventListener('pointercancel', this._onWindowPointerUp);
+      window.addEventListener('blur', this._onWindowPointerUp);
+
       this._hookCleanup = Livewire.hook('morph.updated', ({
         el
       }) => {
+        if (el?.classList?.contains('kanban-column') || el?.classList?.contains('kanban-col-wrapper')) {
+          this._restoreScroll();
+        }
+
         if (el?.classList?.contains('kanban-column')) {
           clearTimeout(this._taskDebounce);
           this._taskDebounce = setTimeout(() => {
@@ -56,8 +73,32 @@
       });
 
       Livewire.on('task-updated', () => {
-        this.$nextTick(() => this._initAll());
+        this.$nextTick(() => {
+          this._initAll();
+          this._restoreScroll();
+        });
       });
+    },
+
+    _rememberScroll() {
+      if (this.isDown || this._isDraggingTask) return;
+      this.$el.querySelectorAll('.kanban-column').forEach(col => {
+        const id = col.dataset.statusId;
+        if (id) this._scrollTops[id] = col.scrollTop;
+      });
+      this._boardScrollLeft = this.$el.scrollLeft;
+    },
+
+    _restoreScroll() {
+      if (this._isDraggingTask) return;
+      this.$el.querySelectorAll('.kanban-column').forEach(col => {
+        const id = col.dataset.statusId;
+        const top = this._scrollTops[id];
+        if (top != null && col.scrollTop !== top) col.scrollTop = top;
+      });
+      if (this._boardScrollLeft > 0 && this.$el.scrollLeft !== this._boardScrollLeft) {
+        this.$el.scrollTo({ left: this._boardScrollLeft, behavior: 'auto' });
+      }
     },
 
     destroy() {
@@ -69,6 +110,16 @@
       clearTimeout(this._colDebounce);
       if (this._dragFrame) cancelAnimationFrame(this._dragFrame);
       if (typeof this._hookCleanup === 'function') this._hookCleanup();
+      if (this._onAnyScroll) {
+        this.$el.removeEventListener('scroll', this._onAnyScroll, { capture: true });
+        this._onAnyScroll = null;
+      }
+      if (this._onWindowPointerUp) {
+        window.removeEventListener('pointerup', this._onWindowPointerUp);
+        window.removeEventListener('pointercancel', this._onWindowPointerUp);
+        window.removeEventListener('blur', this._onWindowPointerUp);
+        this._onWindowPointerUp = null;
+      }
     },
 
     _initAll() {
@@ -228,14 +279,28 @@
     },
 
     startDrag(e) {
-      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      if (e.pointerType !== 'mouse') return;
       if (document.body.classList.contains('is-dragging-column')) return;
-      if (e.target.closest('.task-card') || e.target.closest('button') ||
-        e.target.closest('input') || e.target.closest('.kanban-col-handle')) return;
+
+      const isMiddle = e.button === 1;
+      if (e.button !== 0 && !isMiddle) return;
+
+      if (!isMiddle && (
+          e.target.closest('.task-card') || e.target.closest('button') ||
+          e.target.closest('input') || e.target.closest('select') ||
+          e.target.closest('.kanban-col-handle'))) return;
+
+      if (isMiddle) e.preventDefault();
+
       this.isDown = true;
-      this.startX = e.pageX - this.$el.offsetLeft;
+      this.startX = e.clientX;
       this.scrollLeft = this.$el.scrollLeft;
-      this.$el.classList.add('cursor-grabbing');
+      this._panPointerId = e.pointerId;
+      this.$el.classList.add('is-panning');
+
+      try {
+        this.$el.setPointerCapture(e.pointerId);
+      } catch (err) {}
     },
 
     stopDrag() {
@@ -245,7 +310,13 @@
         cancelAnimationFrame(this._dragFrame);
         this._dragFrame = null;
       }
-      this.$el.classList.remove('cursor-grabbing');
+      this.$el.classList.remove('is-panning');
+      if (this._panPointerId !== null) {
+        try {
+          this.$el.releasePointerCapture(this._panPointerId);
+        } catch (err) {}
+        this._panPointerId = null;
+      }
     },
 
     doDrag(e) {
@@ -259,11 +330,19 @@
       }
       e.preventDefault();
       if (this._dragFrame) return;
+      const clientX = e.clientX;
       this._dragFrame = requestAnimationFrame(() => {
-        const x = e.pageX - this.$el.offsetLeft;
-        this.$el.scrollLeft = this.scrollLeft - (x - this.startX) * 1.5;
+        this.$el.scrollLeft = this.scrollLeft - (clientX - this.startX);
         this._dragFrame = null;
       });
+    },
+
+    onWheel(e) {
+      if (!e.shiftKey || e.deltaY === 0) return;
+      if (this.$el.scrollWidth - this.$el.clientWidth <= 0) return;
+
+      e.preventDefault();
+      this.$el.scrollBy({ left: e.deltaY, behavior: 'auto' });
     },
   }));
 @endverbatim

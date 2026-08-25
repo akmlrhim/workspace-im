@@ -57,7 +57,7 @@ test('each column is its own scroll container so the page never scrolls', functi
     expect($html)
         ->toContain('kanban-board flex min-h-[20rem] flex-1')
         ->and($html)->toContain('kanban-column custom-scrollbar')
-        ->and($html)->toContain('overflow-y-auto overscroll-contain');
+        ->and($html)->toContain('overflow-y-auto overscroll-y-contain');
 });
 
 test('an empty column shows a drop hint and a filled one does not', function () {
@@ -100,4 +100,50 @@ test('cards keep their natural height instead of being squashed by the column', 
 
     expect(substr_count($html, 'task-card group/card relative shrink-0'))->toBe(13)
         ->and($html)->toContain('Tugas ke-12');
+})->group('layout');
+
+test('horizontal panning is wired up and cannot be fought by smooth scroll or snap', function () {
+    $ctx = makeBoardLayoutContext();
+
+    $html = Livewire::test(TaskBoard::class, ['space' => $ctx['space'], 'taskList' => $ctx['list']])->html();
+    $script = file_get_contents(resource_path('views/livewire/partials/board/kanban-script.blade.php'));
+    $css = file_get_contents(resource_path('css/app.css'));
+
+    expect($html)
+        ->toContain('@wheel="onWheel"')
+        ->and($html)->toContain('@lostpointercapture="stopDrag"')
+        ->and($html)->not->toContain('@pointerleave="stopDrag"')
+        ->and($html)->toContain('overscroll-y-contain')
+        ->and($html)->not->toContain('overscroll-contain px-2');
+
+    expect($script)
+        ->toContain("this.\$el.classList.add('is-panning');")
+        ->toContain('setPointerCapture')
+        ->toContain('e.button === 1');
+
+    expect($css)->toContain('.kanban-board.is-panning {');
+})->group('layout');
+
+test('scroll position is preserved across a re-render', function () {
+    $script = file_get_contents(resource_path('views/livewire/partials/board/kanban-script.blade.php'));
+
+    expect($script)
+        ->toContain("addEventListener('scroll', this._onAnyScroll, { capture: true, passive: true })")
+        ->toContain('_rememberScroll()')
+        ->toContain('_restoreScroll()')
+        ->toContain('this._scrollTops[id] = col.scrollTop;');
+
+    expect(substr_count($script, 'this._restoreScroll();'))->toBeGreaterThanOrEqual(2);
+})->group('layout');
+
+test('a lost pointerup can never leave the board frozen', function () {
+    $script = file_get_contents(resource_path('views/livewire/partials/board/kanban-script.blade.php'));
+    $css = file_get_contents(resource_path('css/app.css'));
+
+    // .is-panning puts pointer-events: none on every child; if the class ever
+    // stuck, the whole board would go dead. Window-level listeners are the escape.
+    expect($css)->toContain('pointer-events: none;')
+        ->and($script)->toContain("window.addEventListener('pointerup', this._onWindowPointerUp);")
+        ->and($script)->toContain("window.addEventListener('blur', this._onWindowPointerUp);")
+        ->and($script)->toContain("window.removeEventListener('pointerup', this._onWindowPointerUp);");
 })->group('layout');

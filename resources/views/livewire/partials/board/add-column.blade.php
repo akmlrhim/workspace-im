@@ -27,7 +27,7 @@
     </div>
   @else
     <button @click="$wire.set('showNewColumnInput', true)"
-      class="group flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 text-sm font-medium text-zinc-400 transition-all hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-indigo-500 dark:border-zinc-600 dark:hover:border-indigo-500/50 dark:hover:bg-indigo-900/10 dark:hover:text-indigo-400">
+      class="group flex h-12 w-full items-center justify-center gap-2 rounded-xl border-1 border-zinc-300 text-sm font-medium text-zinc-400 transition-all hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-indigo-500 dark:border-zinc-600 dark:hover:border-indigo-500/50 dark:hover:bg-indigo-900/10 dark:hover:text-indigo-400">
       <flux:icon name="plus" class="size-5 transition-transform group-hover:rotate-90" />
       <span>Tambah Kolom Baru</span>
     </button>
