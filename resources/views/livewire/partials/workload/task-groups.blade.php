@@ -46,14 +46,14 @@
             @endif
           </div>
           <div class="mt-1 flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-            <span><span class="tabular-nums">{{ $group['total'] }}</span> tugas</span>
+            <span><span>{{ $group['total'] }}</span> tugas</span>
             <span>·</span>
             <span class="{{ $group['completed'] > 0 ? 'text-emerald-600 dark:text-emerald-400 font-medium' : '' }}">
-              <span class="tabular-nums">{{ $group['completed'] }}</span> selesai
+              <span>{{ $group['completed'] }}</span> selesai
             </span>
             @if ($group['overdue'] > 0)
               <span>·</span>
-              <span class="text-red-500"><span class="tabular-nums">{{ $group['overdue'] }}</span> melewati
+              <span class="text-red-500"><span>{{ $group['overdue'] }}</span> melewati
                 tenggat</span>
             @endif
           </div>
@@ -66,7 +66,7 @@
               style="width: {{ $group['progress'] }}%"></div>
           </div>
           <span
-            class="tabular-nums text-xs font-semibold {{ $group['progress'] >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-300' }}">
+            class="text-xs font-semibold {{ $group['progress'] >= 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-300' }}">
             {{ $group['progress'] }}%
           </span>
         </div>

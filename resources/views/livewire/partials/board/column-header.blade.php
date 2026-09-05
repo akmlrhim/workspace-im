@@ -2,7 +2,7 @@
   <div class="flex items-center gap-1.5 min-w-0 flex-1">
     @if ($canManage)
       <div
-        class="kanban-col-handle mr-0.5 flex shrink-0 touch-none cursor-grab items-center opacity-0 transition-opacity group-hover/col:opacity-60 hover:!opacity-100 active:cursor-grabbing">
+        class="kanban-col-handle mr-0.5 flex shrink-0 touch-none cursor-grab items-center opacity-60 transition-opacity hover:opacity-100 active:cursor-grabbing">
         <svg class="size-3.5 text-zinc-400" viewBox="0 0 16 16" fill="currentColor">
           <circle cx="5.5" cy="3" r="1.3" />
           <circle cx="5.5" cy="8" r="1.3" />

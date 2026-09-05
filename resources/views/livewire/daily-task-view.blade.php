@@ -94,7 +94,7 @@
                     <span class="text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                         {{ $section['label'] }}
                     </span>
-                    <span class="text-[11px] tabular-nums text-zinc-400 dark:text-zinc-600">
+                    <span class="text-[11px] text-zinc-400 dark:text-zinc-600">
                         {{ $section['tasks']->count() }}
                     </span>
                 </div>

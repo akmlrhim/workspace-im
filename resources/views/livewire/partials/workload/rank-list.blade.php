@@ -11,7 +11,7 @@
 
         <div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
           <span
-            class="tabular-nums text-xs font-bold text-zinc-500 dark:text-zinc-400">#{{ $loop->index + 4 }}</span>
+            class="text-xs font-bold text-zinc-500 dark:text-zinc-400">#{{ $loop->index + 4 }}</span>
         </div>
 
         <flux:avatar circle size="sm" :name="$member['user']->name" :initials="$member['user']->initials()"
@@ -40,11 +40,11 @@
               style="width: {{ $member['progress'] }}%"></div>
           </div>
           <span
-            class="tabular-nums w-8 text-right text-xs font-semibold text-zinc-500 dark:text-zinc-400">{{ $member['progress'] }}%</span>
+            class="w-8 text-right text-xs font-semibold text-zinc-500 dark:text-zinc-400">{{ $member['progress'] }}%</span>
         </div>
 
         <div class="hidden md:block w-20 shrink-0 text-right">
-          <p class="tabular-nums text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+          <p class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
             {{ $member['completed'] }}/{{ $member['total'] }}</p>
           <p class="text-[10px] text-zinc-400">selesai</p>
         </div>

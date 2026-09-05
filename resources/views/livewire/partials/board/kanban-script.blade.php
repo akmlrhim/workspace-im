@@ -138,7 +138,41 @@
       this._initColumnSortable();
     },
 
+    /**
+     * Called by each column's own x-init, so columns morphed in after the
+     * initial render (a new status, or one broadcast by another user) become
+     * drop targets immediately instead of only after a page reload.
+     */
+    registerColumn(columnEl) {
+      if (!columnEl || !columnEl.isConnected) return;
+
+      if (typeof window.Sortable === 'undefined') {
+        setTimeout(() => this.registerColumn(columnEl), 50);
+        return;
+      }
+
+      this._pruneDetachedSortables();
+
+      if (this._isDraggingTask) {
+        this._pendingReinit.push(columnEl);
+        return;
+      }
+
+      this._createTaskSortable(columnEl);
+    },
+
+    _pruneDetachedSortables() {
+      this._taskSortables.forEach((instance, el) => {
+        if (!el.isConnected) {
+          instance?.destroy();
+          this._taskSortables.delete(el);
+        }
+      });
+    },
+
     _createTaskSortable(columnEl) {
+      if (!columnEl || !columnEl.isConnected) return null;
+
       const stale = this._taskSortables.get(columnEl);
       if (stale) {
         stale.destroy();

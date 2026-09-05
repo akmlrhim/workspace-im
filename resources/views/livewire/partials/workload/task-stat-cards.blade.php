@@ -8,16 +8,16 @@
     class="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
     <div class="min-w-0 flex-1">
       <p class="text-xs text-zinc-500 dark:text-zinc-400">Total Tugas</p>
-      <p class="tabular-nums text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{{ $totalTasks }}
+      <p class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{{ $totalTasks }}
       </p>
       @if ($totalTasks > 0)
         <div class="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-zinc-400">
           <span><span
-              class="tabular-nums font-semibold text-zinc-600 dark:text-zinc-300">{{ $totalTasks - $completedTasks }}</span>
+              class="font-semibold text-zinc-600 dark:text-zinc-300">{{ $totalTasks - $completedTasks }}</span>
             belum selesai</span>
           <span class="text-zinc-300 dark:text-zinc-600">·</span>
           <span><span
-              class="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">{{ $completedTasks }}</span>
+              class="font-semibold text-emerald-600 dark:text-emerald-400">{{ $completedTasks }}</span>
             selesai</span>
         </div>
       @else
@@ -33,7 +33,7 @@
     <div class="min-w-0 flex-1">
       <p class="text-xs text-zinc-500 dark:text-zinc-400">Tugas Selesai</p>
       <p
-        class="tabular-nums text-2xl font-bold tracking-tight {{ $completedTasks > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-zinc-50' }}">
+        class="text-2xl font-bold tracking-tight {{ $completedTasks > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-zinc-50' }}">
         {{ $completedTasks }}</p>
       @if ($completedTasks > 0)
         <div class="mt-1.5 flex h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
@@ -49,14 +49,14 @@
         </div>
         <div class="mt-1 flex flex-wrap gap-x-1 gap-y-0.5 text-xs text-zinc-400">
           <span><span
-              class="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">{{ $completedOnTime }}</span>
+              class="font-semibold text-emerald-600 dark:text-emerald-400">{{ $completedOnTime }}</span>
             tepat waktu</span>
           <span class="text-zinc-300 dark:text-zinc-600">·</span>
-          <span><span class="tabular-nums font-semibold text-red-500 dark:text-red-400">{{ $completedLate }}</span>
+          <span><span class="font-semibold text-red-500 dark:text-red-400">{{ $completedLate }}</span>
             terlambat</span>
           <span class="text-zinc-300 dark:text-zinc-600">·</span>
           <span><span
-              class="tabular-nums font-semibold text-zinc-500 dark:text-zinc-400">{{ $completedNoDeadline }}</span>
+              class="font-semibold text-zinc-500 dark:text-zinc-400">{{ $completedNoDeadline }}</span>
             tanpa tenggat</span>
         </div>
       @else
@@ -72,12 +72,12 @@
     <div class="min-w-0 flex-1">
       <p class="text-xs text-zinc-500 dark:text-zinc-400">Melewati Tenggat</p>
       <p
-        class="tabular-nums text-2xl font-bold tracking-tight {{ $overdueTasks > 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-900 dark:text-zinc-50' }}">
+        class="text-2xl font-bold tracking-tight {{ $overdueTasks > 0 ? 'text-red-600 dark:text-red-400' : 'text-zinc-900 dark:text-zinc-50' }}">
         {{ $overdueTasks }}</p>
       <div class="mt-1 text-xs text-zinc-400">
         @if ($totalTasks > 0)
           <span
-            class="tabular-nums font-semibold {{ $overduePercent > 0 ? 'text-red-500 dark:text-red-400' : 'text-zinc-500' }}">{{ $overduePercent }}%</span>
+            class="font-semibold {{ $overduePercent > 0 ? 'text-red-500 dark:text-red-400' : 'text-zinc-500' }}">{{ $overduePercent }}%</span>
           dari total tugas
         @else
           Belum ada tugas.
@@ -92,7 +92,7 @@
     <div class="min-w-0 flex-1">
       <p class="text-xs text-zinc-500 dark:text-zinc-400">Penyelesaian</p>
       <p
-        class="tabular-nums text-2xl font-bold tracking-tight
+        class="text-2xl font-bold tracking-tight
           {{ $progressPercent >= 70 ? 'text-emerald-600 dark:text-emerald-400' : ($progressPercent >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-900 dark:text-zinc-50') }}">
         {{ $progressPercent }}%
       </p>
@@ -104,7 +104,7 @@
             style="width: {{ $progressPercent }}%"></div>
         </div>
         <p class="mt-1 text-xs text-zinc-400">
-          <span class="tabular-nums font-semibold text-zinc-600 dark:text-zinc-300">{{ $completedTasks }}</span>
+          <span class="font-semibold text-zinc-600 dark:text-zinc-300">{{ $completedTasks }}</span>
           dari {{ $totalTasks }} tugas selesai
         </p>
       @else

@@ -47,6 +47,7 @@ trait ManagesBoardColumns
         $this->showNewColumnInput = false;
 
         $this->broadcastChange();
+        unset($this->statuses);
         Flux::toast('Kolom baru berhasil ditambahkan.', variant: 'success');
     }
 
@@ -110,6 +111,7 @@ trait ManagesBoardColumns
 
         $this->reset(['showDeleteColumnConfirm', 'deletingColumnId']);
         $this->broadcastChange();
+        unset($this->statuses);
         Flux::toast('Kolom berhasil dihapus.', variant: 'success');
     }
 
@@ -131,6 +133,7 @@ trait ManagesBoardColumns
         $this->applyPositionOrder('task_statuses', $orderedIds, ['task_list_id' => $this->taskList->id]);
 
         $this->broadcastChange();
+        unset($this->statuses);
     }
 
     private function moveTasksOutOfColumn(int $columnId): void

@@ -147,3 +147,13 @@ test('a lost pointerup can never leave the board frozen', function () {
         ->and($script)->toContain("window.addEventListener('blur', this._onWindowPointerUp);")
         ->and($script)->toContain("window.removeEventListener('pointerup', this._onWindowPointerUp);");
 })->group('layout');
+
+test('the column drag handle is visible without hovering the column', function () {
+    $ctx = makeBoardLayoutContext();
+
+    $html = Livewire::test(TaskBoard::class, ['space' => $ctx['space'], 'taskList' => $ctx['list']])->html();
+
+    expect($html)->toContain('kanban-col-handle')
+        ->and($html)->not->toContain('group-hover/col:opacity-60')
+        ->and($html)->not->toContain('group/col');
+})->group('layout');

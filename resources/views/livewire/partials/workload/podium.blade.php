@@ -77,7 +77,7 @@
       </div>
 
       <div class="mb-3 text-center">
-        <p class="tabular-nums text-3xl font-bold {{ $style['score'] }}">{{ $member['progress'] }}%</p>
+        <p class="text-3xl font-bold {{ $style['score'] }}">{{ $member['progress'] }}%</p>
         <p class="text-[11px] text-zinc-400 dark:text-zinc-500">tingkat penyelesaian</p>
       </div>
 
@@ -90,14 +90,14 @@
 
       <div class="grid grid-cols-2 gap-2 border-t pt-3 text-center {{ $style['divider'] }}">
         <div>
-          <p class="tabular-nums text-sm font-bold text-zinc-800 dark:text-zinc-100">
+          <p class="text-sm font-bold text-zinc-800 dark:text-zinc-100">
             {{ $member['completed'] }}<span class="text-xs font-normal text-zinc-400">/{{ $member['total'] }}</span>
           </p>
           <p class="text-[10px] text-zinc-400">Selesai</p>
         </div>
         <div>
           <p
-            class="tabular-nums text-sm font-bold {{ $member['overdue'] > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+            class="text-sm font-bold {{ $member['overdue'] > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400' }}">
             {{ $member['overdue'] }}</p>
           <p class="text-[10px] text-zinc-400">Terlambat</p>
         </div>
