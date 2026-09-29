@@ -1,4 +1,4 @@
-<div
+<div wire:key="cli-panel-{{ $activeChecklistItemId }}"
   class="mx-3 mb-3 mt-1 space-y-4 rounded-lg border border-zinc-200/60 bg-white p-4 shadow-sm dark:border-zinc-700/50 dark:bg-zinc-800/80">
 
   <div>
