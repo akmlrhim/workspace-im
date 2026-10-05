@@ -73,7 +73,7 @@
               <flux:button icon="ellipsis-horizontal" size="sm" variant="ghost" inset="top bottom" />
               <flux:menu>
                 <flux:menu.item icon="pencil-square" wire:click="editUser({{ $user->id }})">Edit</flux:menu.item>
-                @if ($user->id !== auth()->id() && $user->id !== \App\Models\User::min('id'))
+                @if ($user->id !== auth()->id())
                   <flux:menu.separator />
                   <flux:menu.item icon="trash" variant="danger" wire:click="confirmDelete({{ $user->id }})">Hapus
                   </flux:menu.item>
