@@ -39,7 +39,7 @@
       </div>
       <p x-show="error" x-text="error" x-cloak class="mb-2 text-[11px] font-medium text-red-500"></p>
       <p class="mb-3 text-[11px] text-zinc-400 dark:text-zinc-500">
-        Maks. {{ round(config('erp.attachments.max_size_kb') / 1024) }} MB · Gambar, PDF, Dokumen Office, Teks, CSV, ZIP
+        Maks. {{ round(config('project.attachments.max_size_kb') / 1024) }} MB · Gambar, PDF, Dokumen Office, Teks, CSV, ZIP
       </p>
 
       @if ($showLinkForm)

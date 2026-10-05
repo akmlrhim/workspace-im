@@ -2,8 +2,8 @@
 
 use App\Models\Task;
 use App\Models\TaskStatus;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 
 function makeCompletedAtContext(): array
 {

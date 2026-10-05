@@ -9,8 +9,8 @@ use App\Models\TaskComment;
 use App\Models\TaskLabel;
 use App\Models\TaskStatus;
 use App\Models\TimeTracking;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Broadcast;
@@ -272,7 +272,7 @@ test('it rejects an oversized task file without persisting anything', function (
 
     ['owner' => $owner, 'task' => $task] = taskDetailFixture();
 
-    $oversized = config('erp.attachments.max_size_kb') + 1;
+    $oversized = config('project.attachments.max_size_kb') + 1;
 
     Livewire::actingAs($owner)
         ->test(TaskDetail::class, ['taskId' => $task->id])

@@ -27,7 +27,7 @@
     <div>
       <label
         class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Tenggat</label>
-      <flux:input type="date" onclick="this.showPicker()" wire:model="taskDueDate" wire:change="updateDueDate"
+      <flux:input type="date" onfocus="this.showPicker()" onclick="this.showPicker()" wire:model="taskDueDate" wire:change="updateDueDate"
         :readonly="$ro" size="sm" />
     </div>
   </div>

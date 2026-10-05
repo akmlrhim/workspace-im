@@ -4,6 +4,7 @@ namespace App\Livewire\Concerns;
 
 use App\Models\TaskActivity;
 use App\Models\User;
+use App\Notifications\TaskAssignedNotification;
 use Flux\Flux;
 
 trait EditsTaskFields
@@ -132,7 +133,23 @@ trait EditsTaskFields
             return;
         }
 
+        $oldAssigneeIds = $task->assignees->pluck('id')->toArray();
         $task->assignees()->sync($this->taskAssigneeIds);
+
+        $newAssigneeIds = $this->taskAssigneeIds;
+        $newlyAssignedIds = array_diff($newAssigneeIds, $oldAssigneeIds);
+
+        // Send notifications to newly assigned users
+        if (! empty($newlyAssignedIds)) {
+            $assignedBy = auth()->user()->name;
+
+            foreach ($newlyAssignedIds as $userId) {
+                $user = User::find($userId);
+                if ($user) {
+                    $user->notify(new TaskAssignedNotification($task, $assignedBy));
+                }
+            }
+        }
 
         $names = User::whereIn('id', $this->taskAssigneeIds)->pluck('name')->join(', ') ?: 'Unassigned';
         $this->logActivity($task->id, 'assignee_changed', null, $names);

@@ -29,7 +29,7 @@
 <meta name="pusher-key" content="{{ config('broadcasting.connections.pusher.key') }}">
 <meta name="pusher-cluster" content="{{ config('broadcasting.connections.pusher.options.cluster') }}">
 
-<meta name="upload-max-size" content="{{ config('erp.attachments.max_size_kb') * 1024 }}">
-<meta name="upload-extensions" content="{{ implode(',', config('erp.attachments.extensions')) }}">
+<meta name="upload-max-size" content="{{ config('project.attachments.max_size_kb') * 1024 }}">
+<meta name="upload-extensions" content="{{ implode(',', config('project.attachments.extensions')) }}">
 
 @fluxAppearance

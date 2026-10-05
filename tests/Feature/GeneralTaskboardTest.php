@@ -2,8 +2,8 @@
 
 use App\Livewire\GeneralTaskboard;
 use App\Models\Task;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 use Livewire\Livewire;
 
 test('taskboard page requires authentication', function () {

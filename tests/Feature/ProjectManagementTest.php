@@ -3,8 +3,8 @@
 use App\Models\Space;
 use App\Models\Task;
 use App\Models\TaskStatus;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 
 test('project management models generate a uuid on creation', function () {
     $owner = User::factory()->create(['role' => 'member']);

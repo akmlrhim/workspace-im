@@ -10,35 +10,35 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaskChecklistItem extends Model
 {
-	use GeneratesUuid;
+    use GeneratesUuid;
 
-	protected $fillable = ['task_checklist_id', 'title', 'is_completed', 'due_date', 'position', 'created_by'];
+    protected $fillable = ['task_checklist_id', 'title', 'is_completed', 'due_date', 'position', 'created_by'];
 
-	protected function casts(): array
-	{
-		return [
-			'is_completed' => 'boolean',
-			'due_date' => 'date',
-		];
-	}
+    protected function casts(): array
+    {
+        return [
+            'is_completed' => 'boolean',
+            'due_date' => 'date',
+        ];
+    }
 
-	public function checklist(): BelongsTo
-	{
-		return $this->belongsTo(TaskChecklist::class, 'task_checklist_id');
-	}
+    public function checklist(): BelongsTo
+    {
+        return $this->belongsTo(TaskChecklist::class, 'task_checklist_id');
+    }
 
-	public function creator(): BelongsTo
-	{
-		return $this->belongsTo(User::class, 'created_by');
-	}
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
-	public function assignees(): BelongsToMany
-	{
-		return $this->belongsToMany(User::class, 'task_checklist_item_user');
-	}
+    public function assignees(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'task_checklist_item_user');
+    }
 
-	public function attachments(): HasMany
-	{
-		return $this->hasMany(TaskAttachment::class);
-	}
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TaskAttachment::class);
+    }
 }

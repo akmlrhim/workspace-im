@@ -19,8 +19,8 @@ Route::get('storage/{path}', function (string $path) {
 
 Route::get('/', function () {
     return auth()->check()
-        ? redirect()->route('general-taskboard')
-        : redirect()->route('login');
+      ? redirect()->route('general-taskboard')
+      : redirect()->route('login');
 })->name('home');
 
 Route::any('/project-management/{path?}', function (?string $path = null) {

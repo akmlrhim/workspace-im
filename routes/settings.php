@@ -19,7 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware(
             when(
                 Features::canManageTwoFactorAuthentication()
-                    && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'),
+                  && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'),
                 ['social.skip-password-confirm', 'password.confirm'],
                 [],
             ),

@@ -46,9 +46,7 @@ class WorkloadDashboard extends Component
         ];
     }
 
-    public function onBroadcastUpdate(): void
-    {
-    }
+    public function onBroadcastUpdate(): void {}
 
     #[Computed]
     public function spaces()

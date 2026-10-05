@@ -22,10 +22,14 @@ yarn-error.log
 /.vscode
 /.zed
 
+# AI Agent 
 .ai
 .claude
 .agents
+.opencode
+graphify-out/
+.mcp.json
 
+# AI Agents Markdown
 CLAUDE.md
 AGENTS.md
-.mcp.json

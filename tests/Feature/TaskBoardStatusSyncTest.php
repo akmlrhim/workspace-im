@@ -5,8 +5,8 @@ use App\Livewire\TaskDetail;
 use App\Models\Task;
 use App\Models\TaskActivity;
 use App\Models\TaskStatus;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 use Livewire\Livewire;
 
 test('moving a kanban card notifies an open task detail modal about the new status', function () {

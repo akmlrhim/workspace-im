@@ -43,9 +43,7 @@ class SidebarSpaces extends Component
         }
     }
 
-    public function refresh(): void
-    {
-    }
+    public function refresh(): void {}
 
     public function render()
     {

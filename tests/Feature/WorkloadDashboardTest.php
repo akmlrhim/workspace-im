@@ -3,8 +3,8 @@
 use App\Livewire\WorkloadDashboard;
 use App\Models\Task;
 use App\Models\TaskStatus;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 use Livewire\Livewire;
 
 function makeWorkloadContext(): array

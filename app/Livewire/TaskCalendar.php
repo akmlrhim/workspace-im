@@ -108,9 +108,7 @@ class TaskCalendar extends Component
         $this->showTaskDetail = false;
     }
 
-    public function onTaskUpdated(): void
-    {
-    }
+    public function onTaskUpdated(): void {}
 
     public function openCreateTask(string $date): void
     {

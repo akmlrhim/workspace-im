@@ -10,36 +10,36 @@ use Illuminate\Support\Str;
 
 class Workspace extends Model
 {
-	use GeneratesUuid;
+    use GeneratesUuid;
 
-	protected $fillable = ['name', 'slug', 'owner_id'];
+    protected $fillable = ['name', 'slug', 'owner_id'];
 
-	protected static function booted(): void
-	{
-		static::creating(function (Workspace $workspace) {
-			if (empty($workspace->slug)) {
-				$workspace->slug = Str::slug($workspace->name) . uniqid();
-			}
-		});
-	}
+    protected static function booted(): void
+    {
+        static::creating(function (Workspace $workspace) {
+            if (empty($workspace->slug)) {
+                $workspace->slug = Str::slug($workspace->name).uniqid();
+            }
+        });
+    }
 
-	public function owner(): BelongsTo
-	{
-		return $this->belongsTo(User::class, 'owner_id');
-	}
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
 
-	public function members(): HasMany
-	{
-		return $this->hasMany(WorkspaceMember::class);
-	}
+    public function members(): HasMany
+    {
+        return $this->hasMany(WorkspaceMember::class);
+    }
 
-	public function spaces(): HasMany
-	{
-		return $this->hasMany(Space::class)->orderBy('position');
-	}
+    public function spaces(): HasMany
+    {
+        return $this->hasMany(Space::class)->orderBy('position');
+    }
 
-	public function labels(): HasMany
-	{
-		return $this->hasMany(TaskLabel::class);
-	}
+    public function labels(): HasMany
+    {
+        return $this->hasMany(TaskLabel::class);
+    }
 }

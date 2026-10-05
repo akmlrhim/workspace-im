@@ -10,7 +10,7 @@ trait ValidatesAttachmentUploads
 {
     private function attachmentMaxSizeKb(): int
     {
-        return (int) config('erp.attachments.max_size_kb', 10240);
+        return (int) config('project.attachments.max_size_kb', 10240);
     }
 
     private function attachmentMaxSizeBytes(): int
@@ -23,7 +23,7 @@ trait ValidatesAttachmentUploads
      */
     private function attachmentExtensions(): array
     {
-        return (array) config('erp.attachments.extensions', []);
+        return (array) config('project.attachments.extensions', []);
     }
 
     private function attachmentRules(): string

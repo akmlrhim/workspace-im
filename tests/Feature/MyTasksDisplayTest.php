@@ -3,8 +3,8 @@
 use App\Livewire\MyTasks;
 use App\Models\Task;
 use App\Models\TaskStatus;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 use Livewire\Livewire;
 
 test('my tasks calendar distinguishes tasks by their list', function () {

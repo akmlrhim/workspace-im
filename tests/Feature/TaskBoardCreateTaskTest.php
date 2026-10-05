@@ -4,8 +4,8 @@ use App\Livewire\TaskBoard;
 use App\Livewire\TaskFormModal;
 use App\Models\Task;
 use App\Models\TaskStatus;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 use Livewire\Livewire;
 
 test('the create-task modal opens with the chosen column preselected and creates the task there', function () {

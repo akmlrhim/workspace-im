@@ -4,8 +4,8 @@ use App\Livewire\DailyTaskView;
 use App\Models\DailyTask;
 use App\Models\Space;
 use App\Models\TaskList;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 use Livewire\Livewire;
 
 /**

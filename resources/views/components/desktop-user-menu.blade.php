@@ -1,6 +1,6 @@
 <flux:dropdown position="top" align="start" teleport>
   <flux:sidebar.profile :name="auth()->user()->name" :initials="auth()->user()->initials()"
-    :avatar="auth()->user()->avatar" icon:trailing="chevrons-up-down" data-test="sidebar-menu-button" />
+    :avatar="auth()->user()->avatar" icon:trailing="chevron-down" data-test="sidebar-menu-button" />
 
   <flux:menu>
     <div class="flex items-center gap-2 px-2 py-1.5 text-start text-sm">

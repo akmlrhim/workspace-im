@@ -9,17 +9,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaskStatus extends Model
 {
-	use GeneratesUuid;
+    use GeneratesUuid;
 
-	protected $fillable = ['task_list_id', 'name', 'color', 'position', 'type'];
+    protected $fillable = ['task_list_id', 'name', 'color', 'position', 'type'];
 
-	public function taskList(): BelongsTo
-	{
-		return $this->belongsTo(TaskList::class);
-	}
+    public function taskList(): BelongsTo
+    {
+        return $this->belongsTo(TaskList::class);
+    }
 
-	public function tasks(): HasMany
-	{
-		return $this->hasMany(Task::class)->orderBy('position');
-	}
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class)->orderBy('position');
+    }
 }

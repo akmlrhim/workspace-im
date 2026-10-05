@@ -3,8 +3,8 @@
 use App\Livewire\ListNotes;
 use App\Models\ListNote;
 use App\Models\ListNoteAttachment;
-use App\Models\Workspace;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;

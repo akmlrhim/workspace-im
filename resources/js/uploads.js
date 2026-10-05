@@ -10,7 +10,7 @@
 // wasting a full upload first.
 //
 // Limits come from meta tags rendered by partials/head.blade.php, which read
-// `config/erp.attachments` — the same config server-side validation uses. That
+// `config/project.attachments` — the same config server-side validation uses. That
 // keeps the browser check and the server from ever disagreeing, which is what
 // previously let a file upload completely and only then be rejected.
 

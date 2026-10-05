@@ -22,10 +22,10 @@ class ProjectSeeder extends Seeder
 
     public function run(): void
     {
-        $superUser = User::where('email', 'superuser@erp.test')->first();
-        $admin = User::where('email', 'admin@erp.test')->first();
-        $manager = User::where('email', 'manager@erp.test')->first();
-        $member = User::where('email', 'member@erp.test')->first();
+        $superUser = User::where('email', 'superuser@project.test')->first();
+        $admin = User::where('email', 'admin@project.test')->first();
+        $manager = User::where('email', 'manager@project.test')->first();
+        $member = User::where('email', 'member@project.test')->first();
 
         if (! $admin) {
             $this->command->warn('Admin user tidak ditemukan. Jalankan UserSeeder terlebih dahulu.');
@@ -167,11 +167,11 @@ class ProjectSeeder extends Seeder
             ['title' => 'Submit ke Google Play Store & App Store', 'priority' => 'urgent', 'si' => 0, 'due' => 35, 'labels' => ['Mendesak']],
         ]);
 
-        $erp = $this->makeList($space, 'Implementasi ERP', 2);
-        $erp->members()->syncWithoutDetaching($allUsers->pluck('id'));
-        $erpStatus = $erp->statuses()->orderBy('position')->get();
+        $proj = $this->makeList($space, 'Implementasi Project', 2);
+        $proj->members()->syncWithoutDetaching($allUsers->pluck('id'));
+        $projStatus = $proj->statuses()->orderBy('position')->get();
 
-        $this->seedTasks($erp, $erpStatus, $admin, $allUsers, [
+        $this->seedTasks($proj, $projStatus, $admin, $allUsers, [
             ['title' => 'Analisis proses bisnis eksisting perusahaan', 'priority' => 'urgent', 'si' => 3, 'due' => -30, 'labels' => ['Dokumentasi']],
             ['title' => 'Mapping kebutuhan modul ERP per divisi', 'priority' => 'high', 'si' => 3, 'due' => -20, 'labels' => ['Dokumentasi']],
             ['title' => 'Konfigurasi modul keuangan & akuntansi', 'priority' => 'high', 'si' => 2, 'due' => -5],

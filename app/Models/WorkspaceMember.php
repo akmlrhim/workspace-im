@@ -8,17 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WorkspaceMember extends Model
 {
-	use GeneratesUuid;
+    use GeneratesUuid;
 
-	protected $fillable = ['workspace_id', 'user_id', 'role'];
+    protected $fillable = ['workspace_id', 'user_id', 'role'];
 
-	public function workspace(): BelongsTo
-	{
-		return $this->belongsTo(Workspace::class);
-	}
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 
-	public function user(): BelongsTo
-	{
-		return $this->belongsTo(User::class);
-	}
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -130,7 +130,7 @@ return [
 
     'temporary_file_upload' => [
         'disk' => env('LIVEWIRE_TEMPORARY_FILE_UPLOAD_DISK', 'local'), // Example: 'local', 's3'             | Default: 'default'
-        // Must not be stricter than config/erp.attachments.max_size_kb, or files
+        // Must not be stricter than config/project.attachments.max_size_kb, or files
         // are rejected here after already being uploaded in full. Same env key.
         'rules' => ['required', 'file', 'max:'.env('ATTACHMENT_MAX_SIZE_KB', 10240)],
         'directory' => null,                                          // Example: 'tmp'                     | Default: 'livewire-tmp'

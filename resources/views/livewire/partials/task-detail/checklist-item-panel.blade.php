@@ -31,7 +31,7 @@
       <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Tenggat
         Waktu</label>
       <div class="flex items-center gap-2">
-        <flux:input type="date" wire:model="activeItemDueDate" onclick="this.showPicker()"
+        <flux:input type="date" wire:model="activeItemDueDate" onfocus="this.showPicker()" onclick="this.showPicker()"
           wire:change="updateChecklistItemDueDate" size="sm" class="w-full max-w-[200px]" />
         @if ($activeItemDueDate)
           <button wire:click="clearChecklistItemDueDate"
@@ -74,7 +74,7 @@
         </div>
         <p x-show="error" x-text="error" x-cloak class="mt-1 text-[10px] font-medium text-red-500"></p>
         <p class="mt-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
-          Maks. {{ round(config('erp.attachments.max_size_kb') / 1024) }} MB · Gambar, PDF, Dokumen, Teks, ZIP
+          Maks. {{ round(config('project.attachments.max_size_kb') / 1024) }} MB · Gambar, PDF, Dokumen, Teks, ZIP
         </p>
       </div>
     </div>

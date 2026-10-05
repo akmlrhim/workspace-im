@@ -1,6 +1,6 @@
 <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
   <flux:heading size="xl">Workload & Traffic</flux:heading>
-  <flux:input onclick="this.showPicker()" type="month" wire:model.live="selectedMonth" size="sm" icon="calendar"
+  <flux:input onfocus="this.showPicker()" onclick="this.showPicker()" type="month" wire:model.live="selectedMonth" size="sm" icon="calendar"
     class="w-full sm:w-56" />
 </div>
 

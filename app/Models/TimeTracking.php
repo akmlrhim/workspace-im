@@ -8,30 +8,30 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TimeTracking extends Model
 {
-	use GeneratesUuid;
+    use GeneratesUuid;
 
-	protected $fillable = ['task_id', 'user_id', 'started_at', 'stopped_at', 'duration_seconds'];
+    protected $fillable = ['task_id', 'user_id', 'started_at', 'stopped_at', 'duration_seconds'];
 
-	protected function casts(): array
-	{
-		return [
-			'started_at' => 'datetime',
-			'stopped_at' => 'datetime',
-		];
-	}
+    protected function casts(): array
+    {
+        return [
+            'started_at' => 'datetime',
+            'stopped_at' => 'datetime',
+        ];
+    }
 
-	public function task(): BelongsTo
-	{
-		return $this->belongsTo(Task::class);
-	}
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class);
+    }
 
-	public function user(): BelongsTo
-	{
-		return $this->belongsTo(User::class);
-	}
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
-	public function getIsRunningAttribute(): bool
-	{
-		return is_null($this->stopped_at);
-	}
+    public function getIsRunningAttribute(): bool
+    {
+        return is_null($this->stopped_at);
+    }
 }

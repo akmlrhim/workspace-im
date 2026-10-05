@@ -11,20 +11,6 @@
 
     <x-app-logo href="{{ route('general-taskboard') }}" wire:navigate />
 
-    @php
-      $modules = config('erp.modules', []);
-      $currentModuleKey = request()->routeIs('users.*') ? 'users' : 'project';
-    @endphp
-
-    <flux:navbar class="-mb-px max-lg:hidden">
-      @foreach ($modules as $key => $module)
-        <flux:navbar.item :icon="$module['icon']" :href="url($module['url'])" :current="$currentModuleKey === $key"
-          wire:navigate>
-          {{ $module['name'] }}
-        </flux:navbar.item>
-      @endforeach
-    </flux:navbar>
-
     <flux:spacer />
 
   </flux:header>

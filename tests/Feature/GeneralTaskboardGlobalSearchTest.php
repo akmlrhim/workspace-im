@@ -3,9 +3,9 @@
 use App\Livewire\GeneralTaskboard;
 use App\Models\Task;
 use App\Models\TaskStatus;
+use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
-use App\Models\User;
 use Livewire\Livewire;
 
 test('global search suggests matching tasks across all accessible spaces', function () {

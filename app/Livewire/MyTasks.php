@@ -112,9 +112,7 @@ class MyTasks extends Component
         $this->showTaskDetail = false;
     }
 
-    public function onTaskUpdated(): void
-    {
-    }
+    public function onTaskUpdated(): void {}
 
     public function render()
     {

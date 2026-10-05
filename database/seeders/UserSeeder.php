@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             // ── Super User ──────────────────────────────────────────
             [
                 'name' => 'Super User',
-                'email' => 'superuser@erp.test',
+                'email' => 'superuser@project.test',
                 'role' => 'super_user',
                 'position' => 'CEO',
             ],
@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
             // ── Administrator ────────────────────────────────────────
             [
                 'name' => 'Administrator',
-                'email' => 'admin@erp.test',
+                'email' => 'admin@project.test',
                 'role' => 'administrator',
                 'position' => 'Admin Operasional',
             ],
@@ -34,13 +34,13 @@ class UserSeeder extends Seeder
             // ── Manager ──────────────────────────────────────────────
             [
                 'name' => 'Budi Santoso',
-                'email' => 'budi.santoso@erp.test',
+                'email' => 'budi.santoso@project.test',
                 'role' => 'manager',
                 'position' => 'HR',
             ],
             [
                 'name' => 'Siti Rahayu',
-                'email' => 'siti.rahayu@erp.test',
+                'email' => 'siti.rahayu@project.test',
                 'role' => 'manager',
                 'position' => 'Finance',
             ],
@@ -48,37 +48,37 @@ class UserSeeder extends Seeder
             // ── Member ───────────────────────────────────────────────
             [
                 'name' => 'Andi Firmansyah',
-                'email' => 'andi.firmansyah@erp.test',
+                'email' => 'andi.firmansyah@project.test',
                 'role' => 'member',
                 'position' => 'Web Developer',
             ],
             [
                 'name' => 'Dewi Kurniawati',
-                'email' => 'dewi.kurniawati@erp.test',
+                'email' => 'dewi.kurniawati@project.test',
                 'role' => 'member',
                 'position' => 'Desain Grafis',
             ],
             [
                 'name' => 'Reza Pratama',
-                'email' => 'reza.pratama@erp.test',
+                'email' => 'reza.pratama@project.test',
                 'role' => 'member',
                 'position' => 'Video Editor',
             ],
             [
                 'name' => 'Nisa Amalia',
-                'email' => 'nisa.amalia@erp.test',
+                'email' => 'nisa.amalia@project.test',
                 'role' => 'member',
                 'position' => 'Performance Marketer',
             ],
             [
                 'name' => 'Fajar Nugroho',
-                'email' => 'fajar.nugroho@erp.test',
+                'email' => 'fajar.nugroho@project.test',
                 'role' => 'member',
                 'position' => 'Advertiser',
             ],
             [
                 'name' => 'Maya Sari',
-                'email' => 'maya.sari@erp.test',
+                'email' => 'maya.sari@project.test',
                 'role' => 'member',
                 'position' => 'SMS',
             ],
