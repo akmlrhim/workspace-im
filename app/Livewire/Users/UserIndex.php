@@ -254,7 +254,6 @@ class UserIndex extends Component
         $user = User::findOrFail($this->deletingUserId);
 
         abort_if($user->id === auth()->id(), 403, 'You cannot delete your own account from here.');
-        abort_if($user->id === User::min('id'), 403, 'The primary admin account cannot be deleted.');
 
         $user->delete();
 
