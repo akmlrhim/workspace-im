@@ -49,6 +49,18 @@ test('the task detail route renders the standalone detail page', function () {
         ->assertSee('Refactor target');
 });
 
+test('the standalone page stretches to the full content width', function () {
+    ['owner' => $owner, 'task' => $task] = taskDetailPageFixture();
+
+    $html = Livewire::actingAs($owner)
+        ->test(TaskDetailPage::class, ['task' => $task])
+        ->html();
+
+    expect($html)
+        ->toContain('class="w-full px-1 py-4"')
+        ->not->toContain('max-w-5xl');
+});
+
 test('the task detail route requires authentication', function () {
     ['task' => $task] = taskDetailPageFixture();
 

@@ -1,4 +1,4 @@
-<div class="mx-auto w-full max-w-5xl px-1 py-4">
+<div class="w-full px-1 py-4">
   @if ($space && $taskList)
     @include('livewire.partials.breadcrumb')
   @endif
