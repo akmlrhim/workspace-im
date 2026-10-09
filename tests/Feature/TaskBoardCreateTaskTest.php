@@ -102,3 +102,80 @@ test('search filters board tasks and shows suggestions scoped to the current lis
     expect($suggestions)->toContain('Rapat internal tim')
         ->not->toContain('Rapat sprint planning', 'Deploy aplikasi');
 });
+
+test('the task form modal is a named flux modal so open and close never fight', function () {
+    $owner = User::factory()->create(['role' => 'member']);
+
+    $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
+    $space = $workspace->spaces()->create(['name' => 'Engineering', 'position' => 0]);
+    $list = $space->lists()->create(['name' => 'Sprint', 'position' => 0]);
+    TaskStatus::create(['task_list_id' => $list->id, 'name' => 'Open', 'position' => 0, 'type' => 'open']);
+
+    $html = Livewire::actingAs($owner)
+        ->test(TaskFormModal::class, ['space' => $space, 'taskList' => $list])
+        ->html();
+
+    expect($html)
+        ->toContain('name="task-form-modal"')
+        ->not->toContain('wire:model="showTaskForm"')
+        ->toContain('@task-form-modal-open.window');
+});
+
+test('opening the create form dispatches the named modal open event', function () {
+    $owner = User::factory()->create(['role' => 'member']);
+
+    $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
+    $space = $workspace->spaces()->create(['name' => 'Engineering', 'position' => 0]);
+    $list = $space->lists()->create(['name' => 'Sprint', 'position' => 0]);
+    TaskStatus::create(['task_list_id' => $list->id, 'name' => 'Open', 'position' => 0, 'type' => 'open']);
+
+    Livewire::actingAs($owner)
+        ->test(TaskFormModal::class, ['space' => $space, 'taskList' => $list])
+        ->call('openCreateForm')
+        ->assertSet('showTaskForm', true)
+        ->assertDispatched('task-form-modal-open');
+});
+
+test('saving a task closes the modal through the named modal close event', function () {
+    $owner = User::factory()->create(['role' => 'member']);
+
+    $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
+    $space = $workspace->spaces()->create(['name' => 'Engineering', 'position' => 0]);
+    $list = $space->lists()->create(['name' => 'Sprint', 'position' => 0]);
+    TaskStatus::create(['task_list_id' => $list->id, 'name' => 'Open', 'position' => 0, 'type' => 'open']);
+
+    Livewire::actingAs($owner)
+        ->test(TaskFormModal::class, ['space' => $space, 'taskList' => $list])
+        ->call('openCreateForm')
+        ->set('formTaskTitle', 'Tugas dengan modal tertutup rapi')
+        ->call('saveTask')
+        ->assertSet('showTaskForm', false)
+        ->assertDispatched('task-form-modal-close');
+});
+
+test('closing the form resets the editing state so a stale task is never saved', function () {
+    $owner = User::factory()->create(['role' => 'member']);
+
+    $workspace = Workspace::create(['name' => 'WS', 'owner_id' => $owner->id]);
+    $space = $workspace->spaces()->create(['name' => 'Engineering', 'position' => 0]);
+    $list = $space->lists()->create(['name' => 'Sprint', 'position' => 0]);
+    $openStatus = TaskStatus::create(['task_list_id' => $list->id, 'name' => 'Open', 'position' => 0, 'type' => 'open']);
+
+    $task = Task::create([
+        'task_list_id' => $list->id,
+        'task_status_id' => $openStatus->id,
+        'title' => 'Tugas asli',
+        'priority' => 'normal',
+        'position' => 0,
+        'created_by' => $owner->id,
+    ]);
+
+    Livewire::actingAs($owner)
+        ->test(TaskFormModal::class, ['space' => $space, 'taskList' => $list])
+        ->call('openEditForm', $task->id)
+        ->assertSet('editingTaskId', $task->id)
+        ->call('closeForm')
+        ->assertSet('editingTaskId', null)
+        ->assertSet('formTaskTitle', '')
+        ->assertSet('showTaskForm', false);
+});

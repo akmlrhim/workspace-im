@@ -1,5 +1,8 @@
-<div>
-  <flux:modal wire:model="showTaskForm"
+<div
+  x-data
+  @task-form-modal-open.window="$flux.modal('{{ $taskFormModalName }}').show()"
+  @task-form-modal-close.window="$flux.modal('{{ $taskFormModalName }}').close()">
+  <flux:modal name="{{ $taskFormModalName }}" @close="$wire.closeForm()"
     class="w-full max-w-lg max-sm:max-w-none max-sm:rounded-none max-sm:h-dvh max-sm:!m-0">
     <div class="space-y-6 max-sm:overflow-y-auto max-sm:pb-8">
       <flux:heading size="lg">{{ $editingTaskId ? 'Edit Task' : 'Create Task' }}</flux:heading>
@@ -55,7 +58,8 @@
         </flux:field>
 
         <div class="flex justify-end gap-2 pt-2">
-          <flux:button variant="ghost" @click="$wire.set('showTaskForm', false)">Cancel</flux:button>
+          <flux:button variant="ghost" type="button"
+            @click="$flux.modal('{{ $taskFormModalName }}').close()">Cancel</flux:button>
           <flux:button type="submit" variant="primary">Save</flux:button>
         </div>
       </form>

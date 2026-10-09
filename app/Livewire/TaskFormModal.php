@@ -21,6 +21,8 @@ class TaskFormModal extends Component
 
     public ?int $editingTaskId = null;
 
+    public string $taskFormModalName = 'task-form-modal';
+
     public string $formTaskTitle = '';
 
     public string $formTaskPriority = 'normal';
@@ -39,6 +41,7 @@ class TaskFormModal extends Component
         }
 
         $this->showTaskForm = true;
+        $this->dispatch('task-form-modal-open');
     }
 
     #[On('open-edit-task-form')]
@@ -58,6 +61,13 @@ class TaskFormModal extends Component
         $this->formTaskStatusId = $task->task_status_id;
         $this->formTaskAssignees = $task->assignees->pluck('id')->toArray();
         $this->showTaskForm = true;
+        $this->dispatch('task-form-modal-open');
+    }
+
+    public function closeForm(): void
+    {
+        $this->showTaskForm = false;
+        $this->resetForm();
     }
 
     public function saveTask(): void
@@ -123,6 +133,7 @@ class TaskFormModal extends Component
 
         $this->resetForm();
         $this->showTaskForm = false;
+        $this->dispatch('task-form-modal-close');
         $this->dispatch('task-updated');
     }
 
