@@ -15,6 +15,7 @@ use App\Livewire\Concerns\ManagesTaskSubtasks;
 use App\Livewire\Concerns\TracksTaskTime;
 use App\Livewire\Concerns\ValidatesWithToast;
 use App\Models\Task;
+use App\Models\TaskList;
 use App\Models\TimeTracking;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -49,8 +50,17 @@ class TaskDetail extends Component
 
     public string $activeTab = 'overview';
 
-    public function mount(?int $taskId = null): void
+    /**
+     * When true the panel is rendered on a standalone page instead of inside a
+     * Flux modal, so the close affordance navigates back instead of closing a
+     * modal dialog.
+     */
+    public bool $standalone = false;
+
+    public function mount(?int $taskId = null, bool $standalone = false): void
     {
+        $this->standalone = $standalone;
+
         if ($taskId) {
             $this->loadTask($taskId);
         }
@@ -179,6 +189,19 @@ class TaskDetail extends Component
     public function close(): void
     {
         $this->dispatch('close-task-detail');
+    }
+
+    public function backUrl(): string
+    {
+        $taskList = $this->taskListId
+            ? TaskList::with('space')->find($this->taskListId)
+            : null;
+
+        if ($taskList?->space) {
+            return route('lists.board', [$taskList->space, $taskList]);
+        }
+
+        return route('my-tasks');
     }
 
     public function render()

@@ -28,9 +28,10 @@
             @php
                 $data = $notification->data;
                 $isUnread = is_null($notification->read_at);
+                $hasTask = ! empty($data['task_id']);
             @endphp
             <div
-                wire:click="markAsRead('{{ $notification->id }}')"
+                @if ($hasTask) wire:click="openNotification('{{ $notification->id }}')" @else wire:click="markAsRead('{{ $notification->id }}')" @endif
                 class="p-3 border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition cursor-pointer {{ $isUnread ? 'bg-zinc-50/80 dark:bg-zinc-800/30' : '' }}"
             >
                 <div class="flex items-start gap-2">

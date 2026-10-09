@@ -6,8 +6,10 @@
   </div>
 @endif
 
-<div
-  class="sticky top-0 z-10 -mx-1 rounded-t-xl border-b border-zinc-200 bg-white/95 px-1 pt-2 backdrop-blur max-sm:rounded-t-none dark:border-zinc-700/60 dark:bg-zinc-800/95">
+<div @class([
+    'sticky top-0 z-10 border-b border-zinc-200 bg-white/95 pt-2 backdrop-blur dark:border-zinc-700/60 dark:bg-zinc-800/95',
+    '-mx-1 rounded-t-xl px-1 max-sm:rounded-t-none' => !$standalone,
+])>
   <div class="flex items-start justify-between gap-2">
     <div class="min-w-0 flex-1">
       <div x-data="{
@@ -78,10 +80,18 @@
           wire:click="$dispatch('open-delete-task-modal', { taskId: {{ $task->id }} })" title="Hapus Tugas" />
       @endif
 
-      <flux:modal.close>
-        <flux:button icon="x-mark" size="sm" variant="ghost"
-          class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!" title="Tutup" />
-      </flux:modal.close>
+      @if ($standalone)
+        <flux:button icon="arrow-left" size="sm" variant="ghost" :href="$this->backUrl()" wire:navigate
+          class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!" title="Kembali" />
+      @else
+        <flux:button icon="arrow-top-right-on-square" size="sm" variant="ghost" :href="route('tasks.show', $task->id)"
+          target="_blank" title="Buka di halaman penuh" class="max-sm:hidden" />
+
+        <flux:modal.close>
+          <flux:button icon="x-mark" size="sm" variant="ghost"
+            class="text-zinc-400! hover:text-zinc-800! dark:text-zinc-500! dark:hover:text-white!" title="Tutup" />
+        </flux:modal.close>
+      @endif
     </div>
   </div>
 

@@ -7,6 +7,7 @@ use App\Livewire\ListNotes;
 use App\Livewire\MyTasks;
 use App\Livewire\TaskBoard;
 use App\Livewire\TaskCalendar;
+use App\Livewire\TaskDetailPage;
 use App\Livewire\TaskGantt;
 use App\Livewire\TaskListShow;
 use App\Livewire\WorkloadDashboard;
@@ -24,5 +25,6 @@ Route::middleware(['auth', 'verified', CheckModuleAccess::class.':project'])->gr
 
     Route::get('/general-taskboard', GeneralTaskboard::class)->name('general-taskboard');
     Route::get('/my-tasks', MyTasks::class)->name('my-tasks');
+    Route::get('/tasks/{task}', TaskDetailPage::class)->name('tasks.show');
     Route::get('/workload', WorkloadDashboard::class)->name('workload');
 });
