@@ -61,6 +61,26 @@ test('the standalone page stretches to the full content width', function () {
         ->not->toContain('max-w-5xl');
 });
 
+test('the standalone header blends with the page surface instead of a gray band', function () {
+    ['owner' => $owner, 'task' => $task] = taskDetailPageFixture();
+
+    $standalone = Livewire::actingAs($owner)
+        ->test(TaskDetail::class, ['taskId' => $task->id, 'standalone' => true])
+        ->html();
+
+    expect($standalone)
+        ->toContain('dark:bg-zinc-900/95')
+        ->not->toContain('dark:bg-zinc-800/95');
+
+    $modal = Livewire::actingAs($owner)
+        ->test(TaskDetail::class, ['taskId' => $task->id])
+        ->html();
+
+    expect($modal)
+        ->toContain('dark:bg-zinc-800/95')
+        ->not->toContain('dark:bg-zinc-900/95');
+});
+
 test('the task detail route requires authentication', function () {
     ['task' => $task] = taskDetailPageFixture();
 

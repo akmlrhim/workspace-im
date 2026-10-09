@@ -7,7 +7,12 @@
 @endif
 
 <div @class([
-    'sticky top-0 z-10 border-b border-zinc-200 bg-white/95 pt-2 backdrop-blur dark:border-zinc-700/60 dark:bg-zinc-800/95',
+    'sticky top-0 z-10 border-b border-zinc-200 bg-white/95 pt-2 backdrop-blur dark:border-zinc-700/60',
+    // Inside a modal the surface is zinc-800, so the sticky header matches it.
+    'dark:bg-zinc-800/95' => !$standalone,
+    // On the standalone page the card is zinc-900, so the header blends with it
+    // instead of showing as a lighter gray band.
+    'dark:bg-zinc-900/95' => $standalone,
     '-mx-1 rounded-t-xl px-1 max-sm:rounded-t-none' => !$standalone,
 ])>
   <div class="flex items-start justify-between gap-2">
