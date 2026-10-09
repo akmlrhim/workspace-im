@@ -25,6 +25,28 @@ trait FiltersBoardTasks
             || filled(trim($this->search));
     }
 
+    /**
+     * Escape a user search term so `%`, `_` and `\` are matched literally.
+     *
+     * MySQL treats `\` as the default LIKE escape character, but SQLite needs
+     * the escape character declared explicitly, so the query always spells out
+     * `ESCAPE '\'` to behave the same on every driver.
+     */
+    private function escapeLike(string $term): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
+    }
+
+    /**
+     * Apply a literal substring match on a column.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Task>|\Illuminate\Database\Eloquent\Relations\Relation<Task, *, *>  $query
+     */
+    private function whereTitleContains($query, string $column, string $term): void
+    {
+        $query->whereRaw("{$column} like ? escape '\\'", ['%'.$this->escapeLike($term).'%']);
+    }
+
     #[Computed]
     public function searchSuggestions()
     {
@@ -34,14 +56,16 @@ trait FiltersBoardTasks
             return collect();
         }
 
-        return Task::query()
+        $query = Task::query()
             ->whereNull('parent_id')
             ->where('task_list_id', $this->taskList->id)
-            ->where('title', 'like', '%'.addcslashes($term, '\\%_').'%')
             ->with('status:id,name,color')
             ->orderBy('title')
-            ->limit(8)
-            ->get();
+            ->limit(8);
+
+        $this->whereTitleContains($query, 'title', $term);
+
+        return $query->get();
     }
 
     #[Computed]
@@ -109,7 +133,7 @@ trait FiltersBoardTasks
         }
 
         if ($search !== '') {
-            $query->where('title', 'like', '%'.addcslashes($search, '\\%_').'%');
+            $this->whereTitleContains($query, 'title', $search);
         }
     }
 }

@@ -172,7 +172,10 @@ class TaskListShow extends Component
         }
 
         if ($this->searchQuery) {
-            $query->where('title', 'like', '%'.$this->searchQuery.'%');
+            $query->whereRaw(
+                "title like ? escape '\\'",
+                ['%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $this->searchQuery).'%']
+            );
         }
 
         return $query->orderBy('position')->limit(500)->get();
