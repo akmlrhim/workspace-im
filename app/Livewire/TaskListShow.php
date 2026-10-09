@@ -115,7 +115,11 @@ class TaskListShow extends Component
     }
 
     #[On('task-updated')]
-    public function refreshList(): void {}
+    public function refreshList(): void
+    {
+        unset($this->tasks);
+        unset($this->statuses);
+    }
 
     #[On('task-deleted')]
     public function onTaskDeleted(int $taskId): void
@@ -136,7 +140,26 @@ class TaskListShow extends Component
     public function tasks(): Collection
     {
         $query = $this->taskList->tasks()
-            ->with(['status', 'assignee', 'assignees', 'labels', 'subtasks'])
+            ->select([
+                'id',
+                'task_list_id',
+                'task_status_id',
+                'parent_id',
+                'title',
+                'description',
+                'priority',
+                'due_date',
+                'position',
+                'created_by',
+                'assigned_to',
+            ])
+            ->with([
+                'status:id,name,color,type',
+                'assignee:id,name,avatar',
+                'assignees:id,name,avatar',
+                'labels:id,name,color',
+                'subtasks:id,parent_id,title,is_completed,position',
+            ])
             ->whereNull('parent_id')
             ->whereHas('status', fn ($q) => $q->whereRaw('LOWER(name) != ?', ['note']));
 

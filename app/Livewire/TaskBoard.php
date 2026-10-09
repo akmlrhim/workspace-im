@@ -174,8 +174,24 @@ class TaskBoard extends Component
 
         $statuses = $this->taskList->statuses()
             ->with(['tasks' => function ($q) {
-                $q->whereNull('parent_id')
-                    ->with(['assignees', 'labels'])
+                $q->select([
+                    'id',
+                    'task_list_id',
+                    'task_status_id',
+                    'parent_id',
+                    'title',
+                    'description',
+                    'priority',
+                    'due_date',
+                    'position',
+                    'created_by',
+                    'assigned_to',
+                ])
+                    ->whereNull('parent_id')
+                    ->with([
+                        'assignees:id,name,avatar',
+                        'labels:id,name,color',
+                    ])
                     ->withCount([
                         'comments',
                         'attachments',
